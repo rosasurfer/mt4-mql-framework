@@ -57,7 +57,7 @@ int init() {
       return(last_error);
    }
 
-   // immediately resolve a missing account server/number so the Expander can find the account configuration
+   // immediately resolve a missing account server/number so the MT4Expander can find the account configuration
    if (!__ExecutionContext[EC.accountServer]) GetAccountServer();
    if (!__ExecutionContext[EC.accountNumber]) GetAccountNumber();
 
@@ -89,14 +89,14 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}              // not yet implemented
 
    // enable auto-trading if disabled
-   int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
-   if (!__isTesting) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
+   int reasons1[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE };
+   if (!__isTesting && !IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                              // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (HandleErrors("init(10)")) return(last_error);
    }
 
    // reset the order context after the expert was reloaded (to prevent the bug when the previously active context is not reset)
-   int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
+   int reasons2[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
       error = GetLastError();

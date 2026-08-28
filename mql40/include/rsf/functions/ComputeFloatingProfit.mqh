@@ -3,21 +3,21 @@
  *
  * @param  _Out_ string symbols[]                  - symbols of open positions
  * @param  _Out_ double profits[]                  - PnL value per symbol
- * @param  _In_  bool   includePendings [optional] - Whether to include symbols with pending orders, returned profit will be 0.00 (default: no).
- * @param  _In_  bool   ignoreSpread    [optional] - Whether not to track the spread of open positions. Not applied to hedged positions.
- *                                                   Use if spread widening shall not impact the result (default: no).
+ * @param  _In_  bool   includePendings [optional] - whether to include pending orders, profit will be EMPTY_VALUE (default: no)
+ * @param  _In_  bool   ignoreSpread    [optional] - whether to discard the spread of open positions (not applied to hedges, default: no)
+ *
  * @return bool - success status
  */
-bool ComputeFloatingProfits(string &symbols[], double &profits[], bool includePendings=false, bool ignoreSpread=false) {
+bool ComputeFloatingProfits(string &symbols[], double &profits[], bool includePendings = false, bool ignoreSpread = false) {
    includePendings = includePendings!=0;
    ignoreSpread    = ignoreSpread!=0;
    string _symbols[]; ArrayResize(_symbols, 0);
-   bool   _pending[]; ArrayResize(_pending, 0);                      // whether only pending orders exist for a symbol
+   bool   _pending[]; ArrayResize(_pending, 0);                   // whether only pending orders exist for a symbol
    double _profits[]; ArrayResize(_profits, 0);
 
    // read open order data
    int orders = OrdersTotal();
-   int    iSymbols    []; ArrayResize(iSymbols,     orders);         // iSymbols[] = symbol index in _symbols[]
+   int    iSymbols    []; ArrayResize(iSymbols,     orders);      // iSymbols[] = symbol index in _symbols[]
    int    tickets     []; ArrayResize(tickets,      orders);
    int    types       []; ArrayResize(types,        orders);
    double lots        []; ArrayResize(lots,         orders);
@@ -26,10 +26,10 @@ bool ComputeFloatingProfits(string &symbols[], double &profits[], bool includePe
    double swaps       []; ArrayResize(swaps,        orders);
    double orderProfits[]; ArrayResize(orderProfits, orders);
 
-   for (int n, si, i=0; i < orders; i++) {                           // si => current symbol index in _symbols[]
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: an open order was closed/deleted in another thread
+   for (int n, si, i=0; i < orders; i++) {                        // si => current symbol index in _symbols[]
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
       if (OrderType() > OP_SELL) {
-         if (!includePendings) continue;                             // skip pending orders or not
+         if (!includePendings) continue;
       }
       if (!n) {
          ArrayPushString(_symbols, OrderSymbol());
