@@ -386,8 +386,8 @@ bool ParseAccountStatement(string content) {
       sProfit = StrTrim(StrLeftTo(StrRightFrom(cells[AS_PROFIT], ">"), "<")); if (!StrIsNumeric(sProfit))             return(!catch("ParseAccountStatement(55)  trade history: unexpected \"Profit\" value in row "+ (i+1) +", col "+ (AS_PROFIT+1) +": \""+ sProfit +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
       dProfit = StrToDouble(sProfit);
 
-      // add new history record
-      if (FindStandardSymbol(symbol) == StdSymbol()) {
+      // add new history record if row belongs to current symbol
+      if (FindStdSymbol(symbol) == StdSymbol()) {
          if (convertTimezones) {
             dtOpenTime  = ReportToServerTime(dtOpenTime);  if (dtOpenTime  == NaT) return(false);
             dtCloseTime = ReportToServerTime(dtCloseTime); if (dtCloseTime == NaT) return(false);

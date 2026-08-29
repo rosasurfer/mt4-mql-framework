@@ -1071,7 +1071,7 @@ bool CreateLabels() {
    label.tradeAccount   = programName +".TradeAccount";
    label.stopoutLevel   = programName +".StopoutLevel";
 
-   int corner, xDist, yDist, build=GetTerminalBuild();
+   int corner, xDist, yDist, build = GetTerminalBuild();
 
    // instrument name (the text is set immediately here)
    if (build <= 509) {                                                           // only builds <= 509, newer builds already display the symbol here
@@ -1079,10 +1079,10 @@ bool CreateLabels() {
       ObjectSet(label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13)); // On builds > 478 the label is inset to account for the arrow of the
       ObjectSet(label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3)); // "One-Click-Trading" feature.
-      string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
-      if      (StrEndsWithI(Symbol(), "_ask")) name = name +" (Ask)";
-      else if (StrEndsWithI(Symbol(), "_avg")) name = name +" (Avg)";
-      ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
+      string text = GetSymbolDescription(StdSymbol(), Symbol());
+      if      (StrEndsWithI(Symbol(), "_ask")) text = text +" (Ask)";
+      else if (StrEndsWithI(Symbol(), "_avg")) text = text +" (Avg)";
+      ObjectSetText(label.instrument, text, 9, "Tahoma Fett", Black);
    }
 
    // price
@@ -5414,8 +5414,6 @@ string InputsToStr() {
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    string   DoublesToStr(double array[], string separator);
    string   GetHostName();
-   string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   string   GetSymbolName(string symbol);
    string   IntsToStr(int array[], string separator);
    string   PricesToStr(double &array[], string separator);
    int      SearchStringArrayI(string haystack[], string needle);

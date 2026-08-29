@@ -341,7 +341,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       else                                { if (lotStep < 100.  ) roundedLots[i] =       MathRound(MathRound(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
 
       // (4.5) Lotsize validieren
-      if (GT(roundedLots[i], maxLot)) return(!catch("OpenLfxOrder.Execute(7)  #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+      if (GT(roundedLots[i], maxLot)) return(!catch("OpenLfxOrder.Execute(7)  #"+ lo.Ticket(lo) +" too large trade volume for "+ symbols[i] +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
       // (4.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
       if (LT(roundedLots[i], minLot)) {

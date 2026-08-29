@@ -178,12 +178,12 @@ int onStart() {
       else                                { if (lotStep < 100.  ) roundedLots[i] =       MathRound(MathRound(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
 
       // (2.5) Lotsize validieren
-      if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)  too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+      if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)  too large trade volume for "+ symbols[i] +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
       // (2.6) bei zu geringer Equity MinLotSize verwenden und Details für spätere Warnung hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
-         overLeverageMsg = StringConcatenate(overLeverageMsg, NL, GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
+         overLeverageMsg = StringConcatenate(overLeverageMsg, NL, symbols[i], ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
       }
       logDebug("onStart(4)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  result="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
 

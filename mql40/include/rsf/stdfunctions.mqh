@@ -874,20 +874,21 @@ double GetCommission(double lots = 1.0, int mode = MODE_MONEY) {
 
 
 /**
- * Return the current standard symbol. Shortcut for FindStandardSymbol(Symbol(), strict=false).
+ * Return the current standard symbol. Caching shortcut for FindStdSymbol(Symbol()).
  *
- * e.g.: Symbol() => "EURUSDm"; StdSymbol() => "EURUSD"
+ * e.g.: Symbol()    => "EURUSDm"
+ *       StdSymbol() => "EURUSD"
  *
- * @return string - standard symbol or the current symbol if the standard symbol is not known
+ * @return string - standard symbol or the current symbol if no standard symbol matches
  */
 string StdSymbol() {
    static string lastSymbol = "", lastResult = "";
-                                       // no direct comparison due to MT4 bug:
-    if (StringLen(lastResult) > 0) {   // in library::deinit() strings are released to early (already a NULL pointer)
-      if (Symbol() == lastSymbol) return(lastResult);
+
+   if (StringLen(lastResult) > 0) {                      // no direct comparison due to MT4 static string bug:
+      if (Symbol() == lastSymbol) return(lastResult);    // in library::deinit() strings are released too early
    }
    lastSymbol = Symbol();
-   lastResult = FindStandardSymbol(Symbol());
+   lastResult = FindStdSymbol(Symbol());
 
    return(lastResult);
 }
@@ -896,18 +897,18 @@ string StdSymbol() {
 /**
  * Find the standard symbol of a broker-specific symbol.
  *
- * e.g.: FindStandardSymbol("EURUSDm") => "EURUSD"
+ * e.g.: FindStdSymbol("EURUSDm") => "EURUSD"
  *
  * @param  string symbol            - broker-specific symbol
- * @param  bool   strict [optional] - value to return if the standard symbol is unknown:
+ * @param  bool   strict [optional] - value to return if no standard symbol was found:
+ *                                     FALSE - normalized input symbol (default)
  *                                     TRUE  - an empty string
- *                                     FALSE - the same symbol (default)
  *
  * @return string - symbol or an empty string in case of errors
  */
-string FindStandardSymbol(string symbol, bool strict = false) {
+string FindStdSymbol(string symbol, bool strict = false) {
    strict = strict!=0;
-   if (!StringLen(symbol)) return(_EMPTY_STR(catch("FindStandardSymbol(1)  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+   if (symbol == "") return(_EMPTY_STR(catch("FindStdSymbol(1)  invalid parameter symbol: \"\" (empty)", ERR_INVALID_PARAMETER)));
 
    string _symbol = StrToUpper(symbol);
    if      (StrStartsWith(_symbol, "." )) _symbol = StrRight(_symbol, -1);
@@ -1182,6 +1183,62 @@ string FindStandardSymbol(string symbol, bool strict = false) {
 
 
 /**
+ * Return the description of a symbol, or the specified alternative value if the description is unknown.
+ *
+ * @param  string symbol
+ * @param  string altValue [optional]
+ *
+ * @return string
+ */
+string GetSymbolDescription(string symbol, string altValue = "") {
+   if (symbol == "") return(_EMPTY_STR(catch("GetSymbolDescription(1)  invalid parameter symbol: \"\" (empty)", ERR_INVALID_PARAMETER)));
+
+   string stdSymbol = FindStdSymbol(symbol, true);
+
+   if (stdSymbol != "") {
+      if      (stdSymbol == "ASX200" ) return("ASX 200");
+      else if (stdSymbol == "AUDLFX" ) return("AUD (LFX)");
+      else if (stdSymbol == "CADLFX" ) return("CAD (LFX)");
+      else if (stdSymbol == "CHFLFX" ) return("CHF (LFX)");
+      else if (stdSymbol == "DJIA"   ) return("Dow Jones Industrial");
+      else if (stdSymbol == "DJTA"   ) return("Dow Jones Transportation");
+      else if (stdSymbol == "EURLFX" ) return("EUR (LFX)");
+      else if (stdSymbol == "EURX"   ) return("EUR Index (ICE)");
+      else if (stdSymbol == "GBPLFX" ) return("GBP (LFX)");
+      else if (stdSymbol == "JPYLFX" ) return("JPY (LFX)");
+      else if (stdSymbol == "LFXJPY" ) return("1/JPY (LFX)");
+      else if (stdSymbol == "NAS100" ) return("Nasdaq 100");
+      else if (stdSymbol == "NASCOMP") return("Nasdaq Composite");
+      else if (stdSymbol == "NIK225" ) return("Nikkei 225");
+      else if (stdSymbol == "NZDLFX" ) return("NZD (LFX)");
+      else if (stdSymbol == "RUSSELL") return("Russell 2000");
+      else if (stdSymbol == "SP500"  ) return("S&P 500");
+      else if (stdSymbol == "USDLFX" ) return("USD (LFX)");
+      else if (stdSymbol == "USDX"   ) return("USD Index (ICE)");
+      else if (stdSymbol == "XAGEUR" ) return("Silver/EUR");
+      else if (stdSymbol == "XAGJPY" ) return("Silver/JPY");
+      else if (stdSymbol == "XAGUSD" ) return("Silver/USD");
+      else if (stdSymbol == "XAUEUR" ) return("Gold/EUR");
+      else if (stdSymbol == "XAUJPY" ) return("Gold/JPY");
+      else if (stdSymbol == "XAUUSD" ) return("Gold/USD");
+      else {
+         string prefix = StrLeft(stdSymbol, -3), suffix = StrRight(stdSymbol, 3);
+         if (StrIsDigits(prefix)) {
+            if      (suffix == ".BA") return(StringConcatenate("Account ", prefix, " Balance"));
+            else if (suffix == ".BX") return(StringConcatenate("Account ", prefix, " Balance + AuM"));
+            else if (suffix == ".EA") return(StringConcatenate("Account ", prefix, " Equity"));
+            else if (suffix == ".EX") return(StringConcatenate("Account ", prefix, " Equity + AuM"));
+            else if (suffix == ".LA") return(StringConcatenate("Account ", prefix, " Leverage"));
+            else if (suffix == ".PL") return(StringConcatenate("Account ", prefix, " Profit/Loss"));
+         }
+      }
+   }
+
+   return(altValue);
+}
+
+
+/**
  * Get the index of the chart subwindow containing the current indicator. The function calls IndicatorShortName() to
  * temporarly assign a unique name to the indicator.
  *
@@ -1196,7 +1253,7 @@ int GetChartWindow(string shortName = "") {
    if (shortName == "") {
       shortName = WindowExpertName();
    }
-   string tmpName = "["+ __ExecutionContext[EC.pid] +"]";
+   string tmpName = StringConcatenate("[", __ExecutionContext[EC.pid], "]");
    IndicatorShortName(tmpName);
 
    int window = WindowFind(tmpName);
@@ -1695,9 +1752,9 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
  */
 string MqlProgramName() {
    static string name = "";
-                                       // no direct comparison due to MT4 bug:
-   if (!StringLen(name)) {             // in library::deinit() strings are released to early (already a NULL pointer)
-      if (IsLibrary()) {
+
+   if (!StringLen(name)) {                         // no direct comparison due to MT4 static string bug:
+      if (IsLibrary()) {                           // in library::deinit() strings are released too early
          if (IsDllsAllowed()) {
             name = ec_ProgramName(__ExecutionContext);
          }
@@ -1726,9 +1783,9 @@ string MqlModuleName(bool fullName = false) {
    if (!fullName) return(WindowExpertName());
 
    static string name = "";
-                                       // no direct comparison due to MT4 bug:
-   if (!StringLen(name)) {             // in library::deinit() strings are released to early (already a NULL pointer)
-      if (IsLibrary()) {
+
+   if (!StringLen(name)) {                         // no direct comparison due to MT4 static string bug:
+      if (IsLibrary()) {                           // in library::deinit() strings are released too early
          string programName = MqlProgramName();
          string libraryName = WindowExpertName();
          if (programName == "???") {
@@ -3297,8 +3354,8 @@ bool CreateDirectory(string path, int flags = MODE_SYSTEM) {
  */
 string GetMqlSandboxPath() {
    static string path = "";
-   if (!StringLen(path)) {                      // no direct comparison due to MT4 bug:
-      path = GetMqlSandboxPathA(__isTesting);   // in library::deinit() strings are released to early (already a NULL pointer)
+   if (!StringLen(path)) {                      // no direct comparison due to MT4 static string bug:
+      path = GetMqlSandboxPathA(__isTesting);   // in library::deinit() strings are released too early 
    }
    return(path);
 }
@@ -4503,7 +4560,7 @@ string GetAccountServer() {
       sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetString() only once
    }
 
-   if (!lpAccountServer || !StringLen(sAccountServer)) { // MT4 bug: in library::deinit() strings are released to early (already a NULL pointer)
+   if (!lpAccountServer || !StringLen(sAccountServer)) { // MT4 static string bug: in library::deinit() strings are released too early
       static bool isRecursion = false; if (isRecursion) return("");
       isRecursion = true;                                // prevent recursion in the log messages (the logger tries to read the account config)
 
@@ -4684,7 +4741,7 @@ string GetAccountCompanyId() {
 
    string server = GetAccountServer(); if (server == "") return("");
    if (StringLen(lastServer) > 0) {             // no direct comparison due to MT4 static string bug:
-      if (server == lastServer) return(lastId); // in library::deinit() strings are released to early (already a NULL pointer)
+      if (server == lastServer) return(lastId); // in library::deinit() strings are released too early 
    }
 
    string mapping = GetUserConfigString("AccountCompanies", server);
@@ -6513,7 +6570,7 @@ void __DummyCalls() {
    EQ(NULL, NULL);
    ErrorDescription(NULL);
    FileAccessModeToStr(NULL);
-   FindStandardSymbol(NULL);
+   FindStdSymbol(NULL);
    Floor(NULL);
    ForceAlert(NULL);
    FxtToGmtTime(NULL);
@@ -6553,6 +6610,7 @@ void __DummyCalls() {
    GetServerTime();
    GetSessionEndTime(NULL, NULL);
    GetSessionStartTime(NULL, NULL);
+   GetSymbolDescription(NULL);
    GmtTimeFormat(NULL, NULL);
    GmtToFxtTime(NULL);
    GmtToServerTime(NULL);

@@ -170,12 +170,6 @@
    bool     IsRawSymbol(string symbol, string hstDirectory = "");
 
    // other
-   string   GetSymbolName(string symbol);                               // alias of GetSymbolNameOrAlt(symbol, symbol)
-   string   GetSymbolNameOrAlt(string symbol, string altName);
-   string   GetSymbolNameStrict(string symbol);
-   string   GetLongSymbolName(string symbol);                           // alias of GetLongSymbolNameOrAlt(symbol, symbol)
-   string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   string   GetLongSymbolNameStrict(string symbol);
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
    bool     SortOpenTickets(int &keys[][]);
