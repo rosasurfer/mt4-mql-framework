@@ -134,7 +134,7 @@ double  config.dData[][6];                                        // data: {BemE
 #define I_PROFIT_MAE                    5                         // current MAE minimum in money
 
 // displayed custom position entries (may be larger than configured entries)
-double  positions.data[][19];                                     // @see indexes of positions.data[]
+double  positions.data[][21];                                     // @see indexes of positions.data[]
 bool    positions.analyzed;                                       //
 bool    positions.showAbsProfits;                                 // for column adjustment (default: online=FALSE, tester=TRUE)
 bool    positions.showMfae;                                       // for column adjustment: whether at least one active config entry has the MFAE tracker enabled
@@ -169,9 +169,11 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_PROFIT_MARKER_PRICE          13                         //
 #define I_PROFIT_MARKER_MONEY          14                         //
 #define I_PROFIT_MARKER_PCT            15                         //
-#define I_LOSS_MARKER_PRICE            16                         //
-#define I_LOSS_MARKER_MONEY            17                         //
-#define I_LOSS_MARKER_PCT              18                         //
+#define I_PROFIT_MARKER_AS_PCT         16                         // whether the marker is configured with a % value
+#define I_LOSS_MARKER_PRICE            17                         //
+#define I_LOSS_MARKER_MONEY            18                         //
+#define I_LOSS_MARKER_PCT              19                         //
+#define I_LOSS_MARKER_AS_PCT           20                         // whether the marker is configured with a % value
 
 // control flags for AnalyzePositions()
 #define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions
@@ -1390,7 +1392,7 @@ bool UpdatePositions() {
       xPrev = 0;
       yDist = yStart + (lines-1)*(positions.fontSize+8);
 
-      // test existence of labels again: on terminal shutdown via power button deinit() is not always executed
+      // test existence of labels again: on OS shutdown via power button deinit() is not executed
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          xDist = xPrev + xOffset[col];
@@ -1433,11 +1435,11 @@ bool UpdatePositions() {
    }
 
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
-   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMin="", sProfitMax="", sProfitMinMax="", sMaxRisk="", sComment="", markerText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
+   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMin="", sProfitMax="", sProfitMinMax="", sMaxRisk="", sComment="", markerValue="", markerText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
    color fontColor;
    int line, configLine, index;
 
-   // update display of internal custom positions
+   // update rows with regular custom positions
    if (mode.intern) {
       if (Digits==2 && Close[0] < 500) priceFormat = PriceFormat +"'";
       else                             priceFormat = PriceFormat;
@@ -1532,7 +1534,7 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            markerText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   BE";
+            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   BE");
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet(label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet(label, OBJPROP_COLOR,      DarkTurquoise);
@@ -1547,10 +1549,12 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            markerText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_PROFIT_MARKER_PCT], 2), "+.+") +"%";
+            if (_bool(positions.data[i][I_PROFIT_MARKER_AS_PCT])) markerValue = NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+") +"%";
+            else                                                  markerValue = DoubleToStr(positions.data[i][I_PROFIT_MARKER_MONEY], 2) +" "+ AccountCurrency();
+            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerValue);
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet(label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-            ObjectSet(label, OBJPROP_COLOR,      ifInt(positions.data[i][I_PROFIT_MARKER_PCT] < 0, OrangeRed, DodgerBlue));
+            ObjectSet(label, OBJPROP_COLOR,      ifInt(positions.data[i][I_PROFIT_MARKER_MONEY] < 0, OrangeRed, DodgerBlue));
             ObjectSet(label, OBJPROP_BACK,       false);
             ObjectSet(label, OBJPROP_PRICE1,     positions.data[i][I_PROFIT_MARKER_PRICE]);
             ObjectSetText(label, markerText);
@@ -1561,10 +1565,12 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            markerText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_LOSS_MARKER_PCT], 2), "+.+") +"%";
+            if (_bool(positions.data[i][I_LOSS_MARKER_AS_PCT])) markerValue = NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+") +"%";
+            else                                                markerValue = DoubleToStr(positions.data[i][I_LOSS_MARKER_MONEY], 2) +" "+ AccountCurrency();
+            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerValue);
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-            ObjectSet    (label, OBJPROP_COLOR,      ifInt(positions.data[i][I_LOSS_MARKER_PCT] < 0, OrangeRed, DodgerBlue));
+            ObjectSet    (label, OBJPROP_COLOR,      ifInt(positions.data[i][I_LOSS_MARKER_MONEY] < 0, OrangeRed, DodgerBlue));
             ObjectSet    (label, OBJPROP_BACK,       false);
             ObjectSet    (label, OBJPROP_PRICE1,     positions.data[i][I_LOSS_MARKER_PRICE]);
             ObjectSetText(label, markerText);
@@ -1576,7 +1582,7 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            markerText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"  MFE  "+ NumberToStr(positions.data[i][I_PROFIT_MFE_PRICE], PriceFormat) +"  "+ sProfitMax +"%";
+            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "  MFE  ", NumberToStr(positions.data[i][I_PROFIT_MFE_PRICE], PriceFormat), "  ", sProfitMax, "%");
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_DASH);
             ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_LONG);
@@ -1587,7 +1593,7 @@ bool UpdatePositions() {
       }
    }
 
-   // update display of external custom positions
+   // update rows with external custom positions
    if (mode.extern) {
       fontColor = positions.fontColor.open;
       for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
@@ -4275,12 +4281,18 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (isNewMae) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
       }
 
-      positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
-      positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
-      positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
-      positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
-      positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
-      positions.data[n][I_LOSS_MARKER_PCT    ] = NULL;
+      positions.data[n][I_PROFIT_MFE_PRICE] = NULL;
+      positions.data[n][I_PROFIT_MAE_PRICE] = NULL;
+
+      positions.data[n][I_PROFIT_MARKER_PRICE ] = NULL;
+      positions.data[n][I_PROFIT_MARKER_MONEY ] = NULL;
+      positions.data[n][I_PROFIT_MARKER_PCT   ] = NULL;
+      positions.data[n][I_PROFIT_MARKER_AS_PCT] = NULL;
+
+      positions.data[n][I_LOSS_MARKER_PRICE ] = NULL;
+      positions.data[n][I_LOSS_MARKER_MONEY ] = NULL;
+      positions.data[n][I_LOSS_MARKER_PCT   ] = NULL;
+      positions.data[n][I_LOSS_MARKER_AS_PCT] = NULL;
 
       pipValue = PipValue(totalPosition, true);                         // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
@@ -4299,36 +4311,42 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
          // re-calculate PnL profit level
          if (profitMarkerPrice != NULL) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
-            positions.data[n][I_PROFIT_MARKER_MONEY] = NormalizeDouble(totalProfit - floatingProfit - (openPrice/totalPosition - profitMarkerPrice)/Pip*pipValue, 2);
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble(positions.data[n][I_PROFIT_MARKER_MONEY] / equity100Pct * 100, 1);
+            positions.data[n][I_PROFIT_MARKER_PRICE ] = profitMarkerPrice;
+            positions.data[n][I_PROFIT_MARKER_MONEY ] = NormalizeDouble(totalProfit - floatingProfit - (openPrice/totalPosition - profitMarkerPrice)/Pip*pipValue, 2);
+            positions.data[n][I_PROFIT_MARKER_PCT   ] = NormalizeDouble(positions.data[n][I_PROFIT_MARKER_MONEY] / equity100Pct * 100, 2);
+            positions.data[n][I_PROFIT_MARKER_AS_PCT] = 1;
          }
          else if (!IsEmptyValue(profitMarkerDD)) {
             if (profitMarkerDDisPct) {
-               positions.data[n][I_PROFIT_MARKER_MONEY] = NormalizeDouble(profitMarkerDD / 100 * equity100Pct, 2);
-               positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerDD;
+               positions.data[n][I_PROFIT_MARKER_MONEY ] = NormalizeDouble(profitMarkerDD / 100 * equity100Pct, 2);
+               positions.data[n][I_PROFIT_MARKER_PCT   ] = NormalizeDouble(profitMarkerDD, 2);
+               positions.data[n][I_PROFIT_MARKER_AS_PCT] = 1;
             }
             else {
-               positions.data[n][I_PROFIT_MARKER_MONEY] = profitMarkerDD;
-               positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble(profitMarkerDD / equity100Pct * 100, 1);
+               positions.data[n][I_PROFIT_MARKER_MONEY ] = profitMarkerDD;
+               positions.data[n][I_PROFIT_MARKER_PCT   ] = NormalizeDouble(profitMarkerDD / equity100Pct * 100, 2);
+               positions.data[n][I_PROFIT_MARKER_AS_PCT] = 0;
             }
             positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-positions.data[n][I_PROFIT_MARKER_MONEY])/pipValue*Pip, 8);
          }
 
          // re-calculate PnL loss level
          if (lossMarkerPrice != NULL) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
-            positions.data[n][I_LOSS_MARKER_MONEY] = NormalizeDouble(totalProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue, 2);
-            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble(positions.data[n][I_LOSS_MARKER_MONEY] / equity100Pct * 100, 1);
+            positions.data[n][I_LOSS_MARKER_PRICE ] = lossMarkerPrice;
+            positions.data[n][I_LOSS_MARKER_MONEY ] = NormalizeDouble(totalProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue, 2);
+            positions.data[n][I_LOSS_MARKER_PCT   ] = NormalizeDouble(positions.data[n][I_LOSS_MARKER_MONEY] / equity100Pct * 100, 2);
+            positions.data[n][I_LOSS_MARKER_AS_PCT] = 1;
          }
          else if (!IsEmptyValue(lossMarkerDD)) {
             if (lossMarkerDDisPct) {
-               positions.data[n][I_LOSS_MARKER_MONEY] = NormalizeDouble(lossMarkerDD / 100 * equity100Pct, 2);
-               positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerDD;
+               positions.data[n][I_LOSS_MARKER_MONEY ] = NormalizeDouble(lossMarkerDD / 100 * equity100Pct, 2);
+               positions.data[n][I_LOSS_MARKER_PCT   ] = NormalizeDouble(lossMarkerDD, 2);
+               positions.data[n][I_LOSS_MARKER_AS_PCT] = 1;
             }
             else {
-               positions.data[n][I_LOSS_MARKER_MONEY] = lossMarkerDD;
-               positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble(lossMarkerDD / equity100Pct * 100, 1);
+               positions.data[n][I_LOSS_MARKER_MONEY ] = lossMarkerDD;
+               positions.data[n][I_LOSS_MARKER_PCT   ] = NormalizeDouble(lossMarkerDD / equity100Pct * 100, 2);
+               positions.data[n][I_LOSS_MARKER_AS_PCT] = 0;
             }
             positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-positions.data[n][I_LOSS_MARKER_MONEY])/pipValue*Pip, 8);
          }
@@ -4405,12 +4423,18 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (isNewMae) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
       }
 
-      positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
-      positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
-      positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
-      positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
-      positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
-      positions.data[n][I_LOSS_MARKER_PCT    ] = NULL;
+      positions.data[n][I_PROFIT_MFE_PRICE] = NULL;
+      positions.data[n][I_PROFIT_MAE_PRICE] = NULL;
+
+      positions.data[n][I_PROFIT_MARKER_PRICE ] = NULL;
+      positions.data[n][I_PROFIT_MARKER_MONEY ] = NULL;
+      positions.data[n][I_PROFIT_MARKER_PCT   ] = NULL;
+      positions.data[n][I_PROFIT_MARKER_AS_PCT] = NULL;
+
+      positions.data[n][I_LOSS_MARKER_PRICE ] = NULL;
+      positions.data[n][I_LOSS_MARKER_MONEY ] = NULL;
+      positions.data[n][I_LOSS_MARKER_PCT   ] = NULL;
+      positions.data[n][I_LOSS_MARKER_AS_PCT] = NULL;
 
       pipValue = PipValue(-totalPosition, true);                        // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
@@ -4429,36 +4453,42 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
          // re-calculate PnL profit level
          if (profitMarkerPrice != NULL) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
-            positions.data[n][I_PROFIT_MARKER_MONEY] = NormalizeDouble(totalProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue, 2);
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble(positions.data[n][I_PROFIT_MARKER_MONEY] / equity100Pct * 100, 1);
+            positions.data[n][I_PROFIT_MARKER_PRICE ] = profitMarkerPrice;
+            positions.data[n][I_PROFIT_MARKER_MONEY ] = NormalizeDouble(totalProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue, 2);
+            positions.data[n][I_PROFIT_MARKER_PCT   ] = NormalizeDouble(positions.data[n][I_PROFIT_MARKER_MONEY] / equity100Pct * 100, 2);
+            positions.data[n][I_PROFIT_MARKER_AS_PCT] = 1;
          }
          else if (!IsEmptyValue(profitMarkerDD)) {
             if (profitMarkerDDisPct) {
-               positions.data[n][I_PROFIT_MARKER_MONEY] = NormalizeDouble(profitMarkerDD / 100 * equity100Pct, 2);
-               positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerDD;
+               positions.data[n][I_PROFIT_MARKER_MONEY ] = NormalizeDouble(profitMarkerDD / 100 * equity100Pct, 2);
+               positions.data[n][I_PROFIT_MARKER_PCT   ] = NormalizeDouble(profitMarkerDD, 2);
+               positions.data[n][I_PROFIT_MARKER_AS_PCT] = 1;
             }
             else {
-               positions.data[n][I_PROFIT_MARKER_MONEY] = profitMarkerDD;
-               positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble(profitMarkerDD / equity100Pct * 100, 1);
+               positions.data[n][I_PROFIT_MARKER_MONEY ] = profitMarkerDD;
+               positions.data[n][I_PROFIT_MARKER_PCT   ] = NormalizeDouble(profitMarkerDD / equity100Pct * 100, 2);
+               positions.data[n][I_PROFIT_MARKER_AS_PCT] = 0;
             }
             positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-positions.data[n][I_PROFIT_MARKER_MONEY])/pipValue*Pip - openPrice/totalPosition, 8);
          }
 
          // re-calculate PnL loss level
          if (lossMarkerPrice != NULL) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
-            positions.data[n][I_LOSS_MARKER_MONEY] = NormalizeDouble(totalProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue, 2);
-            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble(positions.data[n][I_LOSS_MARKER_MONEY] / equity100Pct * 100, 1);
+            positions.data[n][I_LOSS_MARKER_PRICE ] = lossMarkerPrice;
+            positions.data[n][I_LOSS_MARKER_MONEY ] = NormalizeDouble(totalProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue, 2);
+            positions.data[n][I_LOSS_MARKER_PCT   ] = NormalizeDouble(positions.data[n][I_LOSS_MARKER_MONEY] / equity100Pct * 100, 2);
+            positions.data[n][I_LOSS_MARKER_AS_PCT] = 1;
          }
          else if (!IsEmptyValue(lossMarkerDD)) {
             if (lossMarkerDDisPct) {
-               positions.data[n][I_LOSS_MARKER_MONEY] = NormalizeDouble(lossMarkerDD / 100 * equity100Pct, 2);
-               positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerDD;
+               positions.data[n][I_LOSS_MARKER_MONEY ] = NormalizeDouble(lossMarkerDD / 100 * equity100Pct, 2);
+               positions.data[n][I_LOSS_MARKER_PCT   ] = NormalizeDouble(lossMarkerDD, 2);
+               positions.data[n][I_LOSS_MARKER_AS_PCT] = 1;
             }
             else {
-               positions.data[n][I_LOSS_MARKER_MONEY] = lossMarkerDD;
-               positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble(lossMarkerDD / equity100Pct * 100, 1);
+               positions.data[n][I_LOSS_MARKER_MONEY ] = lossMarkerDD;
+               positions.data[n][I_LOSS_MARKER_PCT   ] = NormalizeDouble(lossMarkerDD / equity100Pct * 100, 2);
+               positions.data[n][I_LOSS_MARKER_AS_PCT] = 0;
             }
             positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-positions.data[n][I_LOSS_MARKER_MONEY])/pipValue*Pip - openPrice/totalPosition, 8);
          }
