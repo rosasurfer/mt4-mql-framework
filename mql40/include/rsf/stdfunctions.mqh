@@ -806,8 +806,8 @@ double PipValueEx(string symbol, double lots, int &error, string caller = "") {
 /**
  * Calculate the current symbol's commission for the specified lotsize.
  *
- * - For tests the commission rate stored in the tester's FXT files is used.
- * - Online the commission rate configured by the user is used (subject to configuration errors).
+ * In tester the commission rate stored in the tester's FXT files is used.
+ * Online the commission rate configured by the user is used (subject to configuration errors).
  *
  * @param  double lots [optional] - lotsize (default: 1 lot)
  * @param  int    mode [optional] - MODE_MONEY:  in account currency (default)
@@ -815,8 +815,9 @@ double PipValueEx(string symbol, double lots, int &error, string caller = "") {
  *
  * @return double - commission value or EMPTY (-1) in case of errors
  */
-double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
+double GetCommission(double lots = 1.0, int mode = MODE_MONEY) {
    static double baseCommission = EMPTY_VALUE;
+
    if (baseCommission == EMPTY_VALUE) {
       double dValue = 0;
 
@@ -898,9 +899,9 @@ string StdSymbol() {
  * e.g.: FindStandardSymbol("EURUSDm") => "EURUSD"
  *
  * @param  string symbol            - broker-specific symbol
- * @param  bool   strict [optional] - value to return if a standard symbol is not known:
- *                                    TRUE  - an empty string
- *                                    FALSE - the same symbol (default)
+ * @param  bool   strict [optional] - value to return if the standard symbol is unknown:
+ *                                     TRUE  - an empty string
+ *                                     FALSE - the same symbol (default)
  *
  * @return string - symbol or an empty string in case of errors
  */
@@ -912,16 +913,38 @@ string FindStandardSymbol(string symbol, bool strict = false) {
    if      (StrStartsWith(_symbol, "." )) _symbol = StrRight(_symbol, -1);
    else if (StrStartsWith(_symbol, "_" )) _symbol = StrRight(_symbol, -1);
 
-   if      (StrEndsWith(_symbol, "i"   )) _symbol = StrLeft(_symbol, -1);
+   if      (StrEndsWith(_symbol, ".A"  )) _symbol = StrLeft(_symbol, -2);
+   else if (StrEndsWith(_symbol, ".I"  )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, ".M"  )) _symbol = StrLeft(_symbol, -2);
+   else if (StrEndsWith(_symbol, ".PRO")) _symbol = StrLeft(_symbol, -4);
+   else if (StrEndsWith(_symbol, ".R"  )) _symbol = StrLeft(_symbol, -2);
    else if (StrEndsWith(_symbol, "_ASK")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, "_AVG")) _symbol = StrLeft(_symbol, -4);
-   else if (StrEndsWith(_symbol, "^"   )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, "_CFD")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, "."   )) _symbol = StrLeft(_symbol, -1);
-   else if (StrEndsWith(_symbol, ".a"  )) _symbol = StrLeft(_symbol, -2);
-   else if (StrEndsWith(_symbol, ".m"  )) _symbol = StrLeft(_symbol, -2);
-   else if (StrEndsWith(_symbol, ".pro")) _symbol = StrLeft(_symbol, -4);
-   else if (StrEndsWith(_symbol, ".r"  )) _symbol = StrLeft(_symbol, -2);
    else if (StrEndsWith(_symbol, "+"   )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, "^"   )) _symbol = StrLeft(_symbol, -1);
+
+   if      (StrEndsWith(_symbol, "G25")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "J25")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "M25")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "Q25")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "V25")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "Z25")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "G26")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "J26")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "M26")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "Q26")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "V26")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "Z26")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "G27")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "J27")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "M27")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "Q27")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "V27")) _symbol = StrLeft(_symbol, -3);
+   else if (StrEndsWith(_symbol, "Z27")) _symbol = StrLeft(_symbol, -3);
+
+   if      (StrEndsWith(_symbol, "_"  )) _symbol = StrLeft(_symbol, -1);
 
    string result = "";
 
@@ -1152,7 +1175,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
    }
 
    if (result=="" && !strict) {
-      result = symbol;
+      result = _symbol;
    }
    return(result);
 }
