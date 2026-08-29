@@ -34,8 +34,10 @@ int __DeinitFlags[];
 
 extern bool ShowPrice             = true;          // whether to display the current price
 extern bool ShowUnitSize          = true;          // whether to display the current unit size
+extern bool ShowStopoutLevel      = true;          // whether to display the account's current stopout level
+
 extern bool TrackOrders           = true;          // whether to track position open/close events
-extern bool CustomPositions.Sound = true;          // whether monitoring of custom positions may use sound signals
+extern bool CustomPositions.Sound = true;          // whether position monitoring may use sound signals
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1719,8 +1721,11 @@ bool UpdateAccountDisplay() {
  * @return bool - success status
  */
 bool UpdateStopoutLevel() {
-   if (!positions.analyzed) /*&&*/ if (!AnalyzePositions())
+   if (!ShowPrice) return(true);
+
+   if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) {
       return(false);
+   }
 
    if (!mode.intern || !totalPosition) {                                               // keine effektive Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
@@ -5391,9 +5396,12 @@ string ConfigTermTypeToStr(int type) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ShowPrice=",    BoolToStr(ShowPrice),    ";", NL,
-                            "ShowUnitSize=", BoolToStr(ShowUnitSize), ";", NL,
-                            "TrackOrders=",  BoolToStr(TrackOrders),  ";")
+   return(StringConcatenate("ShowPrice=",             BoolToStr(ShowPrice),             ";", NL,
+                            "ShowUnitSize=",          BoolToStr(ShowUnitSize),          ";", NL,
+                            "ShowStopoutLevel=",      BoolToStr(ShowStopoutLevel),      ";", NL,
+                            "TrackOrders=",           BoolToStr(TrackOrders),           ";", NL,
+                            "CustomPositions.Sound=", BoolToStr(CustomPositions.Sound), ";")
+
    );
 
    // dummy call to prevent compiler warnings
