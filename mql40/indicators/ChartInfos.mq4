@@ -90,14 +90,15 @@ double  virtualLongPosition;
 double  virtualShortPosition;
 
 // parsed configuration of custom positions
-double  config.terms[][5];                                        // @see CustomPositions.ReadConfig() for the format
+double  config.terms[][6];                                        // @see CustomPositions.ReadConfig() for the format
 
 // indexes of config.terms[]
 #define I_TERM_TYPE                     0                         //
 #define I_TERM_VALUE1                   1                         //
 #define I_TERM_VALUE2                   2                         //
-#define I_TERM_RESULT1                  3                         // intermediate calculation results
-#define I_TERM_RESULT2                  4                         // ...
+#define I_TERM_VALUE3                   3                         //
+#define I_TERM_RESULT1                  4                         // intermediate calculation results
+#define I_TERM_RESULT2                  5                         // ...
 
 #define TERM_TICKET                     1                         // supported config terms (possible values of config.terms[][I_TERM_TYPE])
 #define TERM_OPEN_LONG                  2                         //
@@ -133,7 +134,7 @@ double  config.dData[][6];                                        // data: {BemE
 #define I_PROFIT_MAE                    5                         // current MAE minimum in money
 
 // displayed custom position entries (may be larger than configured entries)
-double  positions.data[][17];                                     // data: {ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfitM, TotalProfitPct, MfePrice, MfePct, MaePrice, MaePct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct}
+double  positions.data[][19];                                     // @see indexes of positions.data[]
 bool    positions.analyzed;                                       //
 bool    positions.showAbsProfits;                                 // for column adjustment (default: online=FALSE, tester=TRUE)
 bool    positions.showMfae;                                       // for column adjustment: whether at least one active config entry has the MFAE tracker enabled
@@ -166,9 +167,11 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_PROFIT_MAE_PRICE             11                         // MAE price
 #define I_PROFIT_MAE_PCT               12                         // MAE in percent
 #define I_PROFIT_MARKER_PRICE          13                         //
-#define I_PROFIT_MARKER_PCT            14                         //
-#define I_LOSS_MARKER_PRICE            15                         //
-#define I_LOSS_MARKER_PCT              16                         //
+#define I_PROFIT_MARKER_MONEY          14                         //
+#define I_PROFIT_MARKER_PCT            15                         //
+#define I_LOSS_MARKER_PRICE            16                         //
+#define I_LOSS_MARKER_MONEY            17                         //
+#define I_LOSS_MARKER_PCT              18                         //
 
 // control flags for AnalyzePositions()
 #define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions
@@ -1721,7 +1724,7 @@ bool UpdateAccountDisplay() {
  * @return bool - success status
  */
 bool UpdateStopoutLevel() {
-   if (!ShowPrice) return(true);
+   if (!ShowStopoutLevel) return(true);
 
    if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) {
       return(false);
@@ -1907,12 +1910,13 @@ bool UpdateStopoutLevel() {
 
    // extract individual tickets/partial positions from all open positions and store it in positions.data[]
    int    line, termType, termsSize = ArrayRange(config.terms, 0);
-   double termValue1, termValue2, termResult1, termResult2;
+   double termValue1, termValue2, termValue3, termResult1, termResult2;
    int    filter, filterCondition, filterValue;
    double allLongPositions = longPosition, allShortPositions = shortPosition, allTotalPositions = totalPosition;
    double customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
    int    customTickets[], customTypes[];
-   double profitMarkerPrice, profitMarkerPct=EMPTY_VALUE, lossMarkerPrice, lossMarkerPct=EMPTY_VALUE;
+   double profitMarkerPrice, profitMarkerDD=EMPTY_VALUE, lossMarkerPrice, lossMarkerDD=EMPTY_VALUE;
+   bool   profitMarkerDDisPct, lossMarkerDDisPct;
    bool   lineSkipped, isVirtual;
    string property = "";
 
@@ -1923,6 +1927,7 @@ bool UpdateStopoutLevel() {
       termType    = config.terms[i][I_TERM_TYPE   ];
       termValue1  = config.terms[i][I_TERM_VALUE1 ];
       termValue2  = config.terms[i][I_TERM_VALUE2 ];
+      termValue3  = config.terms[i][I_TERM_VALUE3 ];
       termResult1 = config.terms[i][I_TERM_RESULT1];
       termResult2 = config.terms[i][I_TERM_RESULT2];
 
@@ -1932,7 +1937,11 @@ bool UpdateStopoutLevel() {
          if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
 
          // store custom position for display
-         if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct, line, lineSkipped)) {
+         if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits,
+                                  closedProfit, adjustedProfit, customEquity,
+                                  profitMarkerPrice, profitMarkerDD, profitMarkerDDisPct,
+                                  lossMarkerPrice,   lossMarkerDD,   lossMarkerDDisPct,
+                                  line, lineSkipped)) {
             return(false);
          }
 
@@ -1972,9 +1981,11 @@ bool UpdateStopoutLevel() {
          adjustedProfit      = 0;
          customEquity        = 0;
          profitMarkerPrice   = 0;
-         profitMarkerPct     = EMPTY_VALUE;
+         profitMarkerDD      = EMPTY_VALUE;
+         profitMarkerDDisPct = false;
          lossMarkerPrice     = 0;
-         lossMarkerPct       = EMPTY_VALUE;
+         lossMarkerDD        = EMPTY_VALUE;
+         lossMarkerDDisPct   = false;
          ArrayResize(customTickets,     0);
          ArrayResize(customTypes,       0);
          ArrayResize(customLots,        0);
@@ -1987,11 +1998,12 @@ bool UpdateStopoutLevel() {
       }
 
       // extract individual tickets/partial positions
-      if (!ExtractPosition(termType, termValue1, termValue2, termResult1, termResult2,
+      if (!ExtractPosition(termType, termValue1, termValue2, termValue3, termResult1, termResult2,
                            filter, filterCondition, filterValue,
                            allLongPositions,   allShortPositions,   allTotalPositions,   tickets, magicNumbers, types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
                            customLongPosition, customShortPosition, customTotalPosition, customTickets,         customTypes, customLots,      customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity,
-                           profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct,
+                           profitMarkerPrice, profitMarkerDD, profitMarkerDDisPct,
+                           lossMarkerPrice,   lossMarkerDD,   lossMarkerDDisPct,
                            isVirtual, flags)) {
          return(false);
       }
@@ -2003,7 +2015,7 @@ bool UpdateStopoutLevel() {
    line = -1;
    if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(tickets, line, flags);
 
-   if (!StoreCustomPosition(false, allLongPositions, allShortPositions, allTotalPositions, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, NULL, NULL, NULL, EMPTY_VALUE, NULL, EMPTY_VALUE, line, lineSkipped)) {
+   if (!StoreCustomPosition(false, allLongPositions, allShortPositions, allTotalPositions, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, NULL, NULL, NULL, EMPTY_VALUE, false, NULL, EMPTY_VALUE, false, line, lineSkipped)) {
       return(false);
    }
    positions.analyzed = true;
@@ -2296,69 +2308,71 @@ int SearchLfxTicket(int ticket) {
  * marks the end of a configuration line and also an empty configuration. On return config.terms[] is never empty and
  * holds at least one EOL marker.
  *
- * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
- * | Syntax                                          | Description                                                              | Content of config.terms[][] (7)                                     |
- * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
- * |    #123456                                      | complete unprocessed ticket or remainder of processed ticket             | [TERM_TICKET,         123456,           EMPTY,            ..., ...] |
- * | 0.1#123456                                      | O.1 lot of a ticket (1)                                                  | [TERM_TICKET,         123456,           0.1,              ..., ...] |
- * |    L                                            | without lotsize: all remaining long positions                            | [TERM_OPEN_LONG,      EMPTY,            ...,              ..., ...] |
- * |    S                                            | without lotsize: all remaining short positions                           | [TERM_OPEN_SHORT,     EMPTY,            ...,              ..., ...] |
- * | 0.2L                                            | with lotsize: virtual long position at current price (2)                 | [TERM_OPEN_LONG,      0.2,              NULL,             ..., ...] |
- * | 0.3S[@]1.2345                                   | with lotsize: virtual short position at specified price (2)              | [TERM_OPEN_SHORT,     0.3,              1.2345,           ..., ...] |
- * | O{DateTime}                                     | current symbol: all positions opened in a standard time period (3)       | [TERM_OPEN,           2014.01.01 00:00, 2014.12.31 23:59, ..., ...] |
- * | O{DateTime}-{DateTime}                          | current symbol: all positions opened in the specified time period (3)(4) | [TERM_OPEN,           2014.02.01 08:00, 2014.02.10 18:00, ..., ...] |
- * | H{DateTime}             [Monthly|Weekly|Daily]  | current symbol: all trades closed in a standard time period (3)(5)       | [TERM_HISTORY,        2014.01.01 00:00, 2014.12.31 23:59, ..., ...] |
- * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]  | all symbols: all trades closed in the specified time period (3)(4)(5)    | [TERM_HISTORY_TOTAL,  2014.02.01 08:00, 2014.02.10 18:00, ..., ...] |
- * | 12.34                                           | PnL amount to add to a custom position                                   | [TERM_PNL_ADJUSTMENT, 12.34,            ...,              ..., ...] |
- * | E=123.00                                        | equity value to use                                                      | [TERM_EQUITY,         123.00,           ...,              ..., ...] |
- * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
- * | EA=1                                            | filter: include only EA orders                                           | [TERM_FILTER_EA,      1,                ...,              ..., ...] |
- * | EA=0                                            | filter: exclude all EA orders                                            | [TERM_FILTER_EA,      0,                ...,              ..., ...] |
- * | EAS=123                                         | filter: include only orders of SID 123                                   | [TERM_FILTER_SID,     1,                123,              ..., ...] |
- * | EAS!=123                                        | filter: exlude all orders of SID 123                                     | [TERM_FILTER_SID,     0,                123,              ..., ...] |
- * | EAM=123456789                                   | filter: include only orders with magic number 123456789                  | [TERM_FILTER_MAGIC,   1,                123456789,        ..., ...] |
- * | EAM!=123456789                                  | filter: exclude all orders with magic number 123456789                   | [TERM_FILTER_MAGIC,   0,                123456789,        ..., ...] |
- * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
- * | PM=1.2345                                       | draw a profit marker and calculate % PnL at the specified price          | [TERM_PROFIT_MARKER,  1.2345,           ...,              ..., ...] |
- * | PM=3%                                           | calculate price of the specified % PnL and draw a profit marker          | [TERM_PROFIT_MARKER,  ...,              3.0,              ..., ...] |
- * | LM=2.3456                                       | draw a loss marker and calculate % PnL at the specified price            | [TERM_LOSS_MARKER,    2.3456,           ...,              ..., ...] |
- * | LM=-5%                                          | calculate price of the specified %PnL and draw a loss marker             | [TERM_LOSS_MARKER,    ...,              -5.0,             ..., ...] |
- * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
- * | MFE                                             | track MFE/MAE                                                            | TERM_MFAE, stored in config.dData[]                                 |
- * | MFE[-MS]                                        | track MFE/MAE + flags: (M)ark level, (S)ignal new high/low               | TERM_MFAE + flags, stored in config.dData[]                         |
- * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
- * | any text after a semicolon ";" aka .ini comment | displayed as position description                                        | stored in config.sData[]                                            |
- * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                           |                                                                     |
- * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | Syntax                                          | Description                                                              | Content of config.terms[][] (7)                                          |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * |    #123456                                      | complete unprocessed ticket or remainder of processed ticket             | [TERM_TICKET,         123456,           EMPTY,            ..., ..., ...] |
+ * | 0.1#123456                                      | O.1 lot of a ticket (1)                                                  | [TERM_TICKET,         123456,           0.1,              ..., ..., ...] |
+ * |    L                                            | without lotsize: all remaining long positions                            | [TERM_OPEN_LONG,      EMPTY,            ...,              ..., ..., ...] |
+ * |    S                                            | without lotsize: all remaining short positions                           | [TERM_OPEN_SHORT,     EMPTY,            ...,              ..., ..., ...] |
+ * | 0.2L                                            | with lotsize: virtual long position at current price (2)                 | [TERM_OPEN_LONG,      0.2,              NULL,             ..., ..., ...] |
+ * | 0.3S[@]1.2345                                   | with lotsize: virtual short position at specified price (2)              | [TERM_OPEN_SHORT,     0.3,              1.2345,           ..., ..., ...] |
+ * | O{DateTime}                                     | current symbol: all positions opened in a standard time period (3)       | [TERM_OPEN,           2014.01.01 00:00, 2014.12.31 23:59, ..., ..., ...] |
+ * | O{DateTime}-{DateTime}                          | current symbol: all positions opened in the specified time period (3)(4) | [TERM_OPEN,           2014.02.01 08:00, 2014.02.10 18:00, ..., ..., ...] |
+ * | H{DateTime}             [Monthly|Weekly|Daily]  | current symbol: all trades closed in a standard time period (3)(5)       | [TERM_HISTORY,        2014.01.01 00:00, 2014.12.31 23:59, ..., ..., ...] |
+ * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]  | all symbols: all trades closed in the specified time period (3)(4)(5)    | [TERM_HISTORY_TOTAL,  2014.02.01 08:00, 2014.02.10 18:00, ..., ..., ...] |
+ * | 12.34                                           | PnL amount to add to a custom position                                   | [TERM_PNL_ADJUSTMENT, 12.34,            ...,              ..., ..., ...] |
+ * | E=123.00                                        | equity value to use                                                      | [TERM_EQUITY,         123.00,           ...,              ..., ..., ...] |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | EA=1                                            | filter: include only EA orders                                           | [TERM_FILTER_EA,      1,                ...,              ..., ..., ...] |
+ * | EA=0                                            | filter: exclude all EA orders                                            | [TERM_FILTER_EA,      0,                ...,              ..., ..., ...] |
+ * | EAS=123                                         | filter: include only orders of SID 123                                   | [TERM_FILTER_SID,     1,                123,              ..., ..., ...] |
+ * | EAS!=123                                        | filter: exlude all orders of SID 123                                     | [TERM_FILTER_SID,     0,                123,              ..., ..., ...] |
+ * | EAM=123456789                                   | filter: include only orders with magic number 123456789                  | [TERM_FILTER_MAGIC,   1,                123456789,        ..., ..., ...] |
+ * | EAM!=123456789                                  | filter: exclude all orders with magic number 123456789                   | [TERM_FILTER_MAGIC,   0,                123456789,        ..., ..., ...] |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | PM=3%                                           | calculate price of the specified % PnL and draw a profit marker          | [TERM_PROFIT_MARKER,  ...,              3.0,              1,   ..., ...] |
+ * | PM=100.00                                       | calculate price of the specified money PnL and draw a profit marker      | [TERM_PROFIT_MARKER,  ...,              100.00,           0,   ..., ...] |
+ * | PM@1.2345                                       | draw a profit marker and calculate % PnL at the specified price          | [TERM_PROFIT_MARKER,  1.2345,           ...,              ..., ..., ...] |
+ * | LM=-5%                                          | calculate price of the specified % PnL and draw a loss marker            | [TERM_LOSS_MARKER,    ...,              -5.0,             1,   ..., ...] |
+ * | LM=-200.00                                      | calculate price of the specified money PnL and draw a loss marker        | [TERM_LOSS_MARKER,    ...,              -200.00,          0,   ..., ...] |
+ * | LM@2.3456                                       | draw a loss marker and calculate % PnL at the specified price            | [TERM_LOSS_MARKER,    2.3456,           ...,              ..., ..., ...] |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | MFE                                             | track MFE/MAE                                                            | TERM_MFAE, stored in config.dData[]                                      |
+ * | MFE[-MS]                                        | track MFE/MAE + flags: (M)ark level, (S)ignal new high/low               | TERM_MFAE + flags, stored in config.dData[]                              |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | any text after a semicolon ";" aka .ini comment | displayed as description of the custom position                          | stored in config.sData[]                                                 |
+ * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                           |                                                                          |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
  *
  *  Example configuration (6)
  *  -------------------------
  *  [CustomPositions]
  *  GBPAUD.a = #111111, 0.1#222222        // full ticket #111111, plus 0.1 lot of ticket #222222
- *  GBPAUD.b = 0.2L@1.6500, #222222       // virtual long position of 0.2 lot at 1.6500, plus remainder of #222222 (2)
- *  GBPAUD.c = L, S, -34.56, LM=-3%       // all remaining positions incl. remainder of #222222, plus loss of -34.56, loss marker at PL=-3%
+ *  GBPAUD.b = 0.2L@1.6500, #222222       // virtual long position of 0.2 lot at price 1.6500, plus remainder of #222222 (2)
+ *  GBPAUD.c = L, S, -34.56, LM=-3%       // all remaining positions incl. remainder of #222222, plus loss of -34.56, loss marker at PnL=-3%
  *  GBPAUD.d = 0.3S                       // virtual short position of 0.3 lot at current price
  *
  *
  *  Resulting array config.terms[] for the above example (7)
  *  --------------------------------------------------------
  *  double config.terms = [
- *     [TERM_TICKET,         111111, EMPTY, ..., ...],
- *     [TERM_TICKET,         222222, 0.1,   ..., ...],
- *     [NULL,                ...,    ...,   ..., ...],   // EOL marker of line GBPAUD.a
+ *     [TERM_TICKET,         111111, EMPTY, ..., ..., ...],
+ *     [TERM_TICKET,         222222, 0.1,   ..., ..., ...],
+ *     [NULL,                ...,    ...,   ..., ..., ...],    // EOL marker of line GBPAUD.a
  *
- *     [TERM_OPEN_LONG,      0.2,    NULL,  ..., ...],
- *     [TERM_TICKET,         222222, EMPTY, ..., ...],
- *     [NULL,                ...,    ...,   ..., ...],   // EOL marker of line GBPAUD.b
+ *     [TERM_OPEN_LONG,      0.2,    NULL,  ..., ..., ...],
+ *     [TERM_TICKET,         222222, EMPTY, ..., ..., ...],
+ *     [NULL,                ...,    ...,   ..., ..., ...],    // EOL marker of line GBPAUD.b
  *
- *     [TERM_OPEN_LONG,      EMPTY,  ...,   ..., ...],
- *     [TERM_OPEN_SHORT,     EMPTY,  ...,   ..., ...],
- *     [TERM_PNL_ADJUSTMENT, -34.45, ...,   ..., ...],
- *     [TERM_LOSS_MARKER,    ...,    -3.0,  ..., ...],
- *     [NULL,                ...,    ...,   ..., ...],   // EOL marker of line GBPAUD.c
+ *     [TERM_OPEN_LONG,      EMPTY,  ...,   ..., ..., ...],
+ *     [TERM_OPEN_SHORT,     EMPTY,  ...,   ..., ..., ...],
+ *     [TERM_PNL_ADJUSTMENT, -34.45, ...,   ..., ..., ...],
+ *     [TERM_LOSS_MARKER,    ...,    -3.0,  1,   ..., ...],
+ *     [NULL,                ...,    ...,   ..., ..., ...],    // EOL marker of line GBPAUD.c
  *
- *     [TERM_OPEN_SHORT,     0.3,    NULL,  ..., ...],
- *     [NULL,                ...,    ...,   ..., ...],   // EOL marker of line GBPAUD.d
+ *     [TERM_OPEN_SHORT,     0.3,    NULL,  ..., ..., ...],
+ *     [NULL,                ...,    ...,   ..., ..., ...],    // EOL marker of line GBPAUD.d
  *  ];
  *
  *
@@ -2373,13 +2387,13 @@ int SearchLfxTicket(int ticket) {
  *  (7) "..." denotes fields not used by the term
  */
 bool CustomPositions.ReadConfig() {
-   double confTerms[][5]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(config.terms, 1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match config.terms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
+   double confTerms[][6]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(config.terms, 1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match config.terms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
    string confsData[][2]; ArrayResize(confsData, 0); if (ArrayRange(confsData, 1) != ArrayRange(config.sData, 1)) return(!catch("CustomPositions.ReadConfig(2)  array mis-match config.sData[] / confsData[]", ERR_INCOMPATIBLE_ARRAY));
    double confdData[][6]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
 
    // parse configuration
    string   keys[], values[], iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
-   double   termType, termValue1, termValue2, termResult1, termResult2, dValue, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
+   double   termType, termValue1, termValue2, termValue3, termResult1, termResult2, dValue, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
    int      filterType, filterValue1, filterValue2;
    int      valuesSize, termsSize, pos, len, ticket, nextPositionStartOffset = 0;
    datetime from, to;
@@ -2434,7 +2448,7 @@ bool CustomPositions.ReadConfig() {
 
             for (int n=0; n < valuesSize; n++) {
                values[n] = StrTrim(values[n]);
-               if (!StringLen(values[n])) continue;                  // empty string
+               if (values[n] == "") continue;                        // empty string
 
                if (StrStartsWith(values[n], "BEM")) {                // flag: display BE marker
                   if (values[n] != "BEM")                            return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -2468,6 +2482,7 @@ bool CustomPositions.ReadConfig() {
                   termType    = TERM_TICKET;
                   termValue1  = StrToInteger(sValue);
                   termValue2  = EMPTY;                               // all remaining lots
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2483,6 +2498,7 @@ bool CustomPositions.ReadConfig() {
                   sValue = StrTrim(StrSubstr(values[n], pos+1));
                   if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1  = StrToInteger(sValue);
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2496,6 +2512,7 @@ bool CustomPositions.ReadConfig() {
                   termType    = ifInt(!isTotal, TERM_HISTORY, TERM_HISTORY_TOTAL);
                   termValue1  = from;                                // nicht gruppiert
                   termValue2  = to;
+                  termValue3  = NULL;
                   termResult1 = EMPTY_VALUE;                         // EMPTY_VALUE, da NULL bei TERM_HISTORY_* ein gültiger Wert ist
                   termResult2 = EMPTY_VALUE;
                }
@@ -2507,6 +2524,7 @@ bool CustomPositions.ReadConfig() {
                   termValue1 = StrToDouble(sValue);
                   if (termValue1 <= 0)                               return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in equity term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                   if (hasEquityValue)                                return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple equity terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -2528,6 +2546,7 @@ bool CustomPositions.ReadConfig() {
                   termType   = TERM_FILTER_MAGIC;
                   termValue2 = StrToInteger(sValue);
                   if (!termValue2)                                   return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal magic number in EAM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                   if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -2552,6 +2571,7 @@ bool CustomPositions.ReadConfig() {
                   termType   = TERM_FILTER_SID;
                   termValue2 = StrToInteger(sValue);
                   if (termValue2 < 101 || termValue2 > 1023)         return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal strategy id in EAS term \""+ values[n] +"\", must be from 101-1023) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                   if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -2569,6 +2589,7 @@ bool CustomPositions.ReadConfig() {
                   termType    = TERM_FILTER_EA;
                   termValue1  = StrToInteger(sValue);
                   termValue2  = NULL;
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                   if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -2578,38 +2599,62 @@ bool CustomPositions.ReadConfig() {
                   filterValue2 = termValue2;
                }
 
-               else if (StrStartsWith(values[n], "PM")) {            // profit marker: PM=3.0[%]
+               else if (StrStartsWith(values[n], "PM")) {            // profit marker: PM=3.0[%] | PM@1.2345
                   sValue = StrTrim(StrSubstr(values[n], 2));
-                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  sValue = StrTrim(StrSubstr(sValue, 1));
-                  isPercent = StrEndsWith(sValue, "%");
-                  if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  dValue = StrToDouble(sValue);
-                  termType   = TERM_PROFIT_MARKER;
-                  termValue1 = ifDouble(isPercent, NULL, NormalizeDouble(dValue, Digits));
-                  if (!isPercent && termValue1 <= 0)                 return(!catch("CustomPositions.ReadConfig(30)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  termValue2 = ifDouble(isPercent, dValue, NULL);
-                  if (isPercent && termValue2 <= -100)               return(!catch("CustomPositions.ReadConfig(31)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  termType = TERM_PROFIT_MARKER;
+
+                  if (StrStartsWith(sValue, "=")) {
+                     sValue = StrTrim(StrSubstr(sValue, 1));
+                     isPercent = StrEndsWith(sValue, "%");
+                     if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
+                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     dValue = StrToDouble(sValue);
+                     termValue1 = NULL;
+                     termValue2 = dValue;
+                     if (isPercent && termValue2 <= -100)            return(!catch("CustomPositions.ReadConfig(31)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     termValue3 = isPercent;
+                  }
+                  else if (StrStartsWith(sValue, "@")) {
+                     sValue = StrTrim(StrSubstr(sValue, 1));
+                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     dValue = StrToDouble(sValue);
+                     termValue1 = NormalizeDouble(dValue, Digits);
+                     if (termValue1 <= 0)                            return(!catch("CustomPositions.ReadConfig(30)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     termValue2 = NULL;
+                     termValue3 = NULL;
+                  }
+                  else                                               return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termResult1 = NULL;
                   termResult2 = NULL;
                   if (hasProfitMarker)                               return(!catch("CustomPositions.ReadConfig(32)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple PM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   hasProfitMarker = true;
                }
 
-               else if (StrStartsWith(values[n], "LM")) {            // loss marker: LM=-5.0[%]
+               else if (StrStartsWith(values[n], "LM")) {            // loss marker: LM=-5.0[%] | LM@2.3456
                   sValue = StrTrim(StrSubstr(values[n], 2));
-                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(33)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  sValue = StrTrim(StrSubstr(sValue, 1));
-                  isPercent = StrEndsWith(sValue, "%");
-                  if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  dValue = StrToDouble(sValue);
-                  termType   = TERM_LOSS_MARKER;
-                  termValue1 = ifDouble(isPercent, NULL, NormalizeDouble(dValue, Digits));
-                  if (!isPercent && termValue1 <= 0)                 return(!catch("CustomPositions.ReadConfig(35)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  termValue2 = ifDouble(isPercent, dValue, NULL);
-                  if (isPercent && termValue2 <= -100)               return(!catch("CustomPositions.ReadConfig(36)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  termType = TERM_LOSS_MARKER;
+
+                  if (StrStartsWith(sValue, "=")) {
+                     sValue = StrTrim(StrSubstr(sValue, 1));
+                     isPercent = StrEndsWith(sValue, "%");
+                     if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
+                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     dValue = StrToDouble(sValue);
+                     termValue1 = NULL;
+                     termValue2 = dValue;
+                     if (isPercent && termValue2 <= -100)            return(!catch("CustomPositions.ReadConfig(36)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     termValue3 = isPercent;
+                  }
+                  else if (StrStartsWith(sValue, "@")) {
+                     sValue = StrTrim(StrSubstr(sValue, 1));
+                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     dValue = StrToDouble(sValue);
+                     termValue1 = NormalizeDouble(dValue, Digits);
+                     if (termValue1 <= 0)                            return(!catch("CustomPositions.ReadConfig(35)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     termValue2 = NULL;
+                     termValue3 = NULL;
+                  }
+                  else                                               return(!catch("CustomPositions.ReadConfig(33)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termResult1 = NULL;
                   termResult2 = NULL;
                   if (hasLossMarker)                                 return(!catch("CustomPositions.ReadConfig(37)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple LM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -2621,6 +2666,7 @@ bool CustomPositions.ReadConfig() {
                   termType    = TERM_OPEN_LONG;
                   termValue1  = EMPTY;
                   termValue2  = NULL;
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2630,6 +2676,7 @@ bool CustomPositions.ReadConfig() {
                   termType    = TERM_OPEN_SHORT;
                   termValue1  = EMPTY;
                   termValue2  = NULL;
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2639,6 +2686,7 @@ bool CustomPositions.ReadConfig() {
                   termType    = TERM_OPEN;                           // intentionally TERM_OPEN_TOTAL is not implemented
                   termValue1  = from;
                   termValue2  = to;
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2647,6 +2695,7 @@ bool CustomPositions.ReadConfig() {
                   termType    = TERM_PNL_ADJUSTMENT;
                   termValue1  = StrToDouble(values[n]);
                   termValue2  = NULL;
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2659,6 +2708,7 @@ bool CustomPositions.ReadConfig() {
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(41)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(42)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2671,6 +2721,7 @@ bool CustomPositions.ReadConfig() {
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(44)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(45)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2689,6 +2740,7 @@ bool CustomPositions.ReadConfig() {
                   if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(49)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(sValue);
                   if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(50)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2707,6 +2759,7 @@ bool CustomPositions.ReadConfig() {
                   if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(54)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(sValue);
                   if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(55)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2720,7 +2773,7 @@ bool CustomPositions.ReadConfig() {
                // Die Konfiguration virtueller Positionen muß mit einem virtuellen Term beginnen, damit die realen Lots nicht um die virtuellen Lots reduziert werden.
                if ((termType==TERM_OPEN_LONG || termType==TERM_OPEN_SHORT) && termValue1!=EMPTY) {
                   if (!isEmptyPosition && !isVirtualPosition) {
-                     double dTmp[] = {TERM_OPEN_LONG, 0, NULL, NULL, NULL};    // am Anfang der Zeile virtuellen 0-Term einfügen: 0L
+                     double dTmp[] = {TERM_OPEN_LONG, 0, NULL, NULL, NULL, NULL};   // am Anfang der Zeile virtuellen 0-Term einfügen: 0L
                      ArrayInsertDoubleArray(confTerms, nextPositionStartOffset, dTmp);
                   }
                   isVirtualPosition = true;
@@ -2742,12 +2795,13 @@ bool CustomPositions.ReadConfig() {
                // Konfigurations-Term speichern
                if (termType==TERM_FILTER_EA || termType==TERM_FILTER_SID || termType==TERM_FILTER_MAGIC) {
                   // a filter condition must be stored first, so following positions can see the filter to apply
-                  double dFilter[5];
-                  dFilter[0] = termType;
-                  dFilter[1] = termValue1;
-                  dFilter[2] = termValue2;
-                  dFilter[3] = termResult1;
-                  dFilter[4] = termResult2;
+                  double dFilter[6];
+                  dFilter[I_TERM_TYPE   ] = termType;
+                  dFilter[I_TERM_VALUE1 ] = termValue1;
+                  dFilter[I_TERM_VALUE2 ] = termValue2;
+                  dFilter[I_TERM_VALUE3 ] = termValue3;
+                  dFilter[I_TERM_RESULT1] = termResult1;
+                  dFilter[I_TERM_RESULT2] = termResult2;
                   ArrayInsertDoubleArray(confTerms, nextPositionStartOffset, dFilter);
                }
                else {
@@ -2757,6 +2811,7 @@ bool CustomPositions.ReadConfig() {
                   confTerms[termsSize][I_TERM_TYPE   ] = termType;
                   confTerms[termsSize][I_TERM_VALUE1 ] = termValue1;
                   confTerms[termsSize][I_TERM_VALUE2 ] = termValue2;
+                  confTerms[termsSize][I_TERM_VALUE3 ] = termValue3;
                   confTerms[termsSize][I_TERM_RESULT1] = termResult1;
                   confTerms[termsSize][I_TERM_RESULT2] = termResult2;
                }
@@ -3134,20 +3189,22 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 
          // if a filter condition is active it must be stored first, so following history can be filtered
          if (filterType != NULL) {
-            ArrayResize(confTerms, termsSize+1);
+            ArrayResize(confTerms, termsSize + 1);
             confTerms[termsSize][I_TERM_TYPE   ] = filterType;
             confTerms[termsSize][I_TERM_VALUE1 ] = filterValue1;
             confTerms[termsSize][I_TERM_VALUE2 ] = filterValue2;
+            confTerms[termsSize][I_TERM_VALUE3 ] = NULL;
             confTerms[termsSize][I_TERM_RESULT1] = NULL;
             confTerms[termsSize][I_TERM_RESULT2] = NULL;
             termsSize++;
          }
 
          // now add the history group
-         ArrayResize(confTerms, termsSize+1);
+         ArrayResize(confTerms, termsSize + 1);
          confTerms[termsSize][I_TERM_TYPE   ] = ifInt(!isTotalHistory, TERM_HISTORY, TERM_HISTORY_TOTAL);
          confTerms[termsSize][I_TERM_VALUE1 ] = groupFrom;
          confTerms[termsSize][I_TERM_VALUE2 ] = groupTo;
+         confTerms[termsSize][I_TERM_VALUE3 ] = NULL;
          confTerms[termsSize][I_TERM_RESULT1] = EMPTY_VALUE;
          confTerms[termsSize][I_TERM_RESULT2] = EMPTY_VALUE;
          termsSize++;
@@ -3155,11 +3212,11 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 
          // Zeile mit Zeilenende abschließen (außer bei der letzten Gruppe)
          if (nextGroupFrom <= dtTo) {
-            ArrayResize(confTerms, termsSize+1);
+            ArrayResize(confTerms, termsSize + 1);
             termsSize++;
             int lines = ArrayRange(confdData, 0);
-            ArrayResize(confdData, lines+1);
-            ArrayResize(confsData, lines+1);
+            ArrayResize(confdData, lines + 1);
+            ArrayResize(confsData, lines + 1);
             confsData[lines][I_CONFIG_KEY    ] = "";
             confsData[lines][I_CONFIG_COMMENT] = comment + ifString(StringLen(positionComment), ", ", "") + positionComment;
             if (firstGroup) positionComment = "";                    // für folgende Gruppen wird der konfigurierte Kommentar nicht ständig wiederholt
@@ -3478,11 +3535,12 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer
  * CustomPosition {customVars} hinzu.
  *
- * @param  _In_    int      termType    -
- * @param  _In_    double   termValue1  -
- * @param  _In_    double   termValue2  - struct POSITION_CONFIG_TERM {int type; double value1; double value2; double result1; double result2;}
- * @param  _InOut_ double   termResult1 -
- * @param  _InOut_ double   termResult2 -
+ * @param  _In_    int      termType
+ * @param  _In_    double   termValue1
+ * @param  _In_    double   termValue2
+ * @param  _In_    double   termValue3      - unused
+ * @param  _InOut_ double   termResult1
+ * @param  _InOut_ double   termResult2
  *
  * @param  _InOut_ int      filter          - filter of the custom position: TERM_FILTER_EA|TERM_FILTER_MAGIC|TERM_FILTER_SID
  * @param  _InOut_ int      filterCondition - operator: 1=include, 0=exclude
@@ -3515,21 +3573,25 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * @param  _InOut_ double   adjustedProfit
  * @param  _InOut_ double   customEquity
  *
- * @param  _Out_   double   profitMarkerPrice - configured PnL marker price level (if any)
- * @param  _Out_   double   profitMarkerPct   - configured PnL marker percent level (if any)
- * @param  _Out_   double   lossMarkerPrice   - configured PnL marker price level (if any)
- * @param  _Out_   double   lossMarkerPct     - configured PnL marker percent level (if any)
+ * @param  _InOut_ double   profitMarkerPrice   - PnL marker price level (if any)
+ * @param  _InOut_ double   profitMarkerDD      - PnL marker drawdown level (if any)
+ * @param  _InOut_ bool     profitMarkerDDisPct - whether a drawdown level is in percentage or monetary terms
  *
- * @param  _InOut_ bool     isVirtual         - whether the resulting custom position is virtual
- * @param  _In_    int      flags [optional]  - control flags, supported values:
- *                                              F_SHOW_CUSTOM_HISTORY: call ShowTradeHistory() for the configured history
+ * @param  _InOut_ double   lossMarkerPrice     - PnL marker price level (if any)
+ * @param  _InOut_ double   lossMarkerDD        - PnL marker drawdown level (if any)
+ * @param  _InOut_ bool     lossMarkerDDisPct   - whether a drawdown level is in percentage or monetary terms
+ *
+ * @param  _InOut_ bool     isVirtual           - whether the resulting custom position is virtual
+ * @param  _In_    int      flags [optional]    - control flags, supported values:
+ *                                                F_SHOW_CUSTOM_HISTORY: call ShowTradeHistory() for the configured history
  * @return bool - success status
  */
-bool ExtractPosition(int termType, double termValue1, double termValue2, double &termResult1, double &termResult2,
+bool ExtractPosition(int termType, double termValue1, double termValue2, double termValue3, double &termResult1, double &termResult2,
                      int &filter, int &filterCondition, int &filterValue,
                      double &fromLongPosition,   double &fromShortPosition,   double &fromTotalPosition,   int &fromTickets[], int fromMagicNumbers[], int fromTypes[],    double &fromLots[], datetime fromOpenTimes[], double fromOpenPrices[],    double &fromCommissions[],   double &fromSwaps[],   double &fromProfits[],
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[],                       int &customTypes[], double &customLots[],                         double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &closedProfit, double &adjustedProfit, double &customEquity,
-                     double &profitMarkerPrice, double &profitMarkerPct, double &lossMarkerPrice, double &lossMarkerPct,
+                     double &profitMarkerPrice, double &profitMarkerDD, bool &profitMarkerDDisPct,
+                     double &lossMarkerPrice,   double &lossMarkerDD,   bool &lossMarkerDDisPct,
                      bool &isVirtual, int flags = NULL) {
    isVirtual = isVirtual!=0;
 
@@ -3821,7 +3883,6 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          else    lastProfit = NormalizeDouble(lastProfit, 2);
          termResult1        = lastProfit;
          termResult2        = _orders;
-         //debug("ExtractPosition(0.1)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ ifString(IsEmptyValue(lastProfit), "empty", DoubleToStr(lastProfit, 2)) +"  closed trades="+ n);
       }
 
       // lastProfit zu closedProfit hinzufügen, wenn geschlossene Trades existierten (Ausgangsdaten bleiben unverändert)
@@ -3842,17 +3903,19 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
    }
 
    else if (termType == TERM_PROFIT_MARKER) {
-      profitMarkerPrice = termValue1;
-      profitMarkerPct = termValue2;
+      profitMarkerPrice   = termValue1;
+      profitMarkerDD      = termValue2;
+      profitMarkerDDisPct = (termValue3 != 0);
    }
 
    else if (termType == TERM_LOSS_MARKER) {
-      lossMarkerPrice = termValue1;
-      lossMarkerPct = termValue2;
+      lossMarkerPrice   = termValue1;
+      lossMarkerDD      = termValue2;
+      lossMarkerDDisPct = (termValue3 != 0);
    }
 
    else if (termType == TERM_TICKET) {
-      ticket = termValue1;
+      ticket  = termValue1;
       lotsize = termValue2;
 
       if (lotsize == EMPTY) {
@@ -3887,11 +3950,12 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                if (GT(lotsize, fromLots[i])) return(!catch("ExtractPosition(5)  illegal partial lotsize "+ NumberToStr(lotsize, ".+") +" for ticket #"+ fromTickets[i] +" (only "+ NumberToStr(fromLots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
                if (EQ(lotsize, fromLots[i])) {
                   // komplettes Ticket übernehmen
-                  if (!ExtractPosition(TERM_TICKET, ticket, EMPTY, termResult1, termResult2,
+                  if (!ExtractPosition(TERM_TICKET, ticket, EMPTY, NULL, termResult1, termResult2,
                                        filter, filterCondition, filterValue,
                                        fromLongPosition,   fromShortPosition,   fromTotalPosition,   fromTickets, fromMagicNumbers, fromTypes,   fromLots, fromOpenTimes, fromOpenPrices,   fromCommissions,   fromSwaps,   fromProfits,
                                        customLongPosition, customShortPosition, customTotalPosition, customTickets,                 customTypes, customLots,              customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity,
-                                       profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct,
+                                       profitMarkerPrice, profitMarkerDD, profitMarkerDDisPct,
+                                       lossMarkerPrice,   lossMarkerDD,   lossMarkerDDisPct,
                                        isVirtual))
                      return(false);
                }
@@ -3964,8 +4028,8 @@ bool ApplyFilter(int filter, bool filterCondition, int filterValue, int magicNum
 
 
 /**
- * Stores all collected data of a single custom config line as a new record in positions.data[].
- * The record in positions.data[] represents a single row displayed in the chart.
+ * Stores the collected data of a custom-position configuration line as a new record in positions.data[].
+ * A record in positions.data[] represents a PnL stats row displayed in the chart.
  *
  * @param  _In_    bool   isVirtual
  *
@@ -3984,17 +4048,21 @@ bool ApplyFilter(int filter, bool filterCondition, int filterValue, int magicNum
  * @param  _In_    double closedProfit
  * @param  _In_    double adjustedProfit
  * @param  _In_    double customEquity
+ *
  * @param  _In_    double profitMarkerPrice
- * @param  _In_    double profitMarkerPct
+ * @param  _In_    double profitMarkerDD
+ * @param  _In_    bool   profitMarkerDDisPct
+ *
  * @param  _In_    double lossMarkerPrice
- * @param  _In_    double lossMarkerPct
+ * @param  _In_    double lossMarkerDD
+ * @param  _In_    bool   lossMarkerDDisPct
  *
  * @param  _In_    int    configLine - index of the config line
  * @param  _Out_   bool   skipped    - whether the resulting custom position is empty and the config line can be skipped
  *
  * @return bool - success status
  */
-bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPct, double lossMarkerPrice, double lossMarkerPct, int configLine, bool &skipped) {
+bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerDD, bool profitMarkerDDisPct, double lossMarkerPrice, double lossMarkerDD, bool lossMarkerDDisPct, int configLine, bool &skipped) {
    isVirtual = isVirtual!=0;
 
    double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, swap, commission, hedgedProfit, floatingProfit, pipValue, pipDistance;
@@ -4229,27 +4297,42 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             }
          }
 
-         // re-calculate PM level
+         // re-calculate PnL profit level
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (openPrice/totalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_PROFIT_MARKER_MONEY] = NormalizeDouble(totalProfit - floatingProfit - (openPrice/totalPosition - profitMarkerPrice)/Pip*pipValue, 2);
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble(positions.data[n][I_PROFIT_MARKER_MONEY] / equity100Pct * 100, 1);
          }
-         else if (!IsEmptyValue(profitMarkerPct)) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-profitMarkerPct/100*equity100Pct)/pipValue*Pip, 8);
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
+         else if (!IsEmptyValue(profitMarkerDD)) {
+            if (profitMarkerDDisPct) {
+               positions.data[n][I_PROFIT_MARKER_MONEY] = NormalizeDouble(profitMarkerDD / 100 * equity100Pct, 2);
+               positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerDD;
+            }
+            else {
+               positions.data[n][I_PROFIT_MARKER_MONEY] = profitMarkerDD;
+               positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble(profitMarkerDD / equity100Pct * 100, 1);
+            }
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-positions.data[n][I_PROFIT_MARKER_MONEY])/pipValue*Pip, 8);
          }
 
-         // re-calculate LM level
+         // re-calculate PnL loss level
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
-            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_LOSS_MARKER_MONEY] = NormalizeDouble(totalProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue, 2);
+            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble(positions.data[n][I_LOSS_MARKER_MONEY] / equity100Pct * 100, 1);
          }
-         else if (!IsEmptyValue(lossMarkerPct)) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-lossMarkerPct/100*equity100Pct)/pipValue*Pip, 8);
-            positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPct;
+         else if (!IsEmptyValue(lossMarkerDD)) {
+            if (lossMarkerDDisPct) {
+               positions.data[n][I_LOSS_MARKER_MONEY] = NormalizeDouble(lossMarkerDD / 100 * equity100Pct, 2);
+               positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerDD;
+            }
+            else {
+               positions.data[n][I_LOSS_MARKER_MONEY] = lossMarkerDD;
+               positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble(lossMarkerDD / equity100Pct * 100, 1);
+            }
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-positions.data[n][I_LOSS_MARKER_MONEY])/pipValue*Pip, 8);
          }
       }
-      //debug("StoreCustomPosition(0.2)  long:    totalPL="+ DoubleToStr(totalProfit, 2) +"  equity="+ DoubleToStr(equity, 2) +"  equity100%="+ DoubleToStr(equity100Pct, 2) +"  totalProfitTerminal="+ DoubleToStr(totalProfitTerminal, 2));
       return(!catch("StoreCustomPosition(5)"));
    }
 
@@ -4344,27 +4427,42 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             }
          }
 
-         // re-calculate PM level
+         // re-calculate PnL profit level
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_PROFIT_MARKER_MONEY] = NormalizeDouble(totalProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue, 2);
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble(positions.data[n][I_PROFIT_MARKER_MONEY] / equity100Pct * 100, 1);
          }
-         else if (!IsEmptyValue(profitMarkerPct)) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-profitMarkerPct/100*equity100Pct)/pipValue*Pip - openPrice/totalPosition, 8);
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
+         else if (!IsEmptyValue(profitMarkerDD)) {
+            if (profitMarkerDDisPct) {
+               positions.data[n][I_PROFIT_MARKER_MONEY] = NormalizeDouble(profitMarkerDD / 100 * equity100Pct, 2);
+               positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerDD;
+            }
+            else {
+               positions.data[n][I_PROFIT_MARKER_MONEY] = profitMarkerDD;
+               positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble(profitMarkerDD / equity100Pct * 100, 1);
+            }
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-positions.data[n][I_PROFIT_MARKER_MONEY])/pipValue*Pip - openPrice/totalPosition, 8);
          }
 
-         // re-calculate LM level
+         // re-calculate PnL loss level
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
-            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_LOSS_MARKER_MONEY] = NormalizeDouble(totalProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue, 2);
+            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble(positions.data[n][I_LOSS_MARKER_MONEY] / equity100Pct * 100, 1);
          }
-         else if (!IsEmptyValue(lossMarkerPct)) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-lossMarkerPct/100*equity100Pct)/pipValue*Pip - openPrice/totalPosition, 8);
-            positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPct;
+         else if (!IsEmptyValue(lossMarkerDD)) {
+            if (lossMarkerDDisPct) {
+               positions.data[n][I_LOSS_MARKER_MONEY] = NormalizeDouble(lossMarkerDD / 100 * equity100Pct, 2);
+               positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerDD;
+            }
+            else {
+               positions.data[n][I_LOSS_MARKER_MONEY] = lossMarkerDD;
+               positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble(lossMarkerDD / equity100Pct * 100, 1);
+            }
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-positions.data[n][I_LOSS_MARKER_MONEY])/pipValue*Pip - openPrice/totalPosition, 8);
          }
       }
-      //debug("StoreCustomPosition(0.3)  short:   totalPL="+ DoubleToStr(totalProfit, 2) +"  equity="+ DoubleToStr(equity, 2) +"  equity100%="+ DoubleToStr(equity100Pct, 2) +"  totalProfitTerminal="+ DoubleToStr(totalProfitTerminal, 2));
       return(!catch("StoreCustomPosition(7)"));
    }
 
