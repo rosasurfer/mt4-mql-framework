@@ -2342,52 +2342,52 @@ int SearchLfxTicket(int ticket) {
  *
  * @return bool - success status
  *
- * Fills config.sData[], config.dData[] und config.terms[] with parsed configuration data of the current chart symbol.
- * On return config.terms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL)
- * marks the end of a configuration line and also an empty configuration. On return config.terms[] is never empty and
- * holds at least one EOL marker.
+ * Fills config.terms[], config.dData[] and config.sData[] with parsed configuration data of the current chart symbol.
+ * On return config.terms[] holds parsed config terms followed by an empty termination term, marking the end of a config
+ * line. On return config.terms[] is never empty and holds at least one termination marker (also for an empty configuration).
  *
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
- * | Syntax                                         | Description                                                              | Content of config.terms[][] (7)                                          |
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
- * |    #123456                                     | complete unprocessed ticket or remainder of processed ticket             | [TERM_TICKET,         123456,           EMPTY,            ..., ..., ...] |
- * | 0.1#123456                                     | O.1 lot of a ticket (1)                                                  | [TERM_TICKET,         123456,           0.1,              ..., ..., ...] |
- * |    L                                           | without lotsize: all remaining long positions                            | [TERM_OPEN_LONG,      EMPTY,            ...,              ..., ..., ...] |
- * |    S                                           | without lotsize: all remaining short positions                           | [TERM_OPEN_SHORT,     EMPTY,            ...,              ..., ..., ...] |
- * | 0.2L                                           | with lotsize: virtual long position at current price (2)                 | [TERM_OPEN_LONG,      0.2,              NULL,             ..., ..., ...] |
- * | 0.3S[@]1.2345                                  | with lotsize: virtual short position at specified price (2)              | [TERM_OPEN_SHORT,     0.3,              1.2345,           ..., ..., ...] |
- * | O{DateTime}                                    | current symbol: all positions opened in a standard time period (3)       | [TERM_OPEN,           2014.01.01 00:00, 2014.12.31 23:59, ..., ..., ...] |
- * | O{DateTime}-{DateTime}                         | current symbol: all positions opened in the specified time period (3)(4) | [TERM_OPEN,           2014.02.01 08:00, 2014.02.10 18:00, ..., ..., ...] |
- * | H{DateTime}             [Monthly|Weekly|Daily] | current symbol: all trades closed in a standard time period (3)(5)       | [TERM_HISTORY,        2014.01.01 00:00, 2014.12.31 23:59, ..., ..., ...] |
- * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] | all symbols: all trades closed in the specified time period (3)(4)(5)    | [TERM_HISTORY_TOTAL,  2014.02.01 08:00, 2014.02.10 18:00, ..., ..., ...] |
- * | 12.34                                          | PnL amount to add to a custom position                                   | [TERM_PNL_ADJUSTMENT, 12.34,            ...,              ..., ..., ...] |
- * | E=123.00                                       | equity value to use                                                      | [TERM_EQUITY,         123.00,           ...,              ..., ..., ...] |
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
- * | EA=1                                           | filter: include only EA orders                                           | [TERM_FILTER_EA,      1,                ...,              ..., ..., ...] |
- * | EA=0                                           | filter: exclude all EA orders                                            | [TERM_FILTER_EA,      0,                ...,              ..., ..., ...] |
- * | EAS=123                                        | filter: include only orders of SID 123                                   | [TERM_FILTER_SID,     1,                123,              ..., ..., ...] |
- * | EAS!=123                                       | filter: exlude all orders of SID 123                                     | [TERM_FILTER_SID,     0,                123,              ..., ..., ...] |
- * | EAM=456789                                     | filter: include only orders with magic number 456789                     | [TERM_FILTER_MAGIC,   1,                456789,           ..., ..., ...] |
- * | EAM!=456789                                    | filter: exclude all orders with magic number  456789                     | [TERM_FILTER_MAGIC,   0,                456789,           ..., ..., ...] |
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
- * | BEM                                            | flag: draw a break-even marker (average open price inc. all costs)       | stored in config.dData[]                                                 |
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
- * | PM=3%                                          | calculate price of the specified % PnL and draw a profit marker          | [TERM_PROFIT_MARKER,  ...,              3.0,              1,   ..., ...] |
- * | PM=100.00                                      | calculate price of the specified money PnL and draw a profit marker      | [TERM_PROFIT_MARKER,  ...,              100.00,           0,   ..., ...] |
- * | PM@1.2345                                      | draw a profit marker and calculate % PnL at the specified price          | [TERM_PROFIT_MARKER,  1.2345,           ...,              ..., ..., ...] |
- * | LM=-5%                                         | calculate price of the specified % PnL and draw a loss marker            | [TERM_LOSS_MARKER,    ...,              -5.0,             1,   ..., ...] |
- * | LM=-200.00                                     | calculate price of the specified money PnL and draw a loss marker        | [TERM_LOSS_MARKER,    ...,              -200.00,          0,   ..., ...] |
- * | LM@2.3456                                      | draw a loss marker and calculate % PnL at the specified price            | [TERM_LOSS_MARKER,    2.3456,           ...,              ..., ..., ...] |
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
- * | MFE[-MS]                                       | track MFE/MAE + optional flags: (M)ark level, (S)ignal new high/low      | TERM_MFAE + flags, stored in config.dData[]                              |
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
- * | HIDE:                                          | at begin of configuration: hide stats but display chart markers (flag)   | stored in config.dData[]                                                 |
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
- * | any text after a semicolon ";"                 | description of the custom position                                       | stored in config.sData[]                                                 |
- * | any text after a 2nd semicolon ";...;"         | configuration comment, ignored                                           |                                                                          |
- * +------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | Syntax                                         | Description                                                            | Content of config.terms[][] (6)                                          |
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * |    #123456                                     | complete unprocessed ticket or remainder of processed ticket           | [TERM_TICKET,         123456,           EMPTY,            ..., ..., ...] |
+ * | 0.1#123456                                     | O.1 lot of a ticket (1)                                                | [TERM_TICKET,         123456,           0.1,              ..., ..., ...] |
+ * |    L                                           | without lotsize: all remaining long positions                          | [TERM_OPEN_LONG,      EMPTY,            ...,              ..., ..., ...] |
+ * |    S                                           | without lotsize: all remaining short positions                         | [TERM_OPEN_SHORT,     EMPTY,            ...,              ..., ..., ...] |
+ * | 0.2L                                           | with lotsize: virtual long position at current price (2)               | [TERM_OPEN_LONG,      0.2,              NULL,             ..., ..., ...] |
+ * | 0.3S[@]1.2345                                  | with lotsize: virtual short position at specified price (2)            | [TERM_OPEN_SHORT,     0.3,              1.2345,           ..., ..., ...] |
+ * | O {DateTime}                                   | current symbol: all positions opened in a standard time range (3)      | [TERM_OPEN,           2014.01.01 00:00, 2014.12.31 23:59, ..., ..., ...] |
+ * | O {DateTime}-{DateTime}                        | current symbol: all positions opened in an explicit time range (3)(4)  | [TERM_OPEN,           2014.02.01 08:00, 2014.02.10 18:00, ..., ..., ...] |
+ * | H {DateTime}                                   | current symbol: all trades closed in a standard time range (3)         | [TERM_HISTORY,        2014.01.01 00:00, 2014.12.31 23:59, ..., ..., ...] |
+ * | H {DateTime}-{DateTime}                        | current symbol: all trades closed in an explicit time range (3)(4)     | [TERM_HISTORY,        2014.02.01 08:00, 2014.02.10 18:00, ..., ..., ...] |
+ * | HT{DateTime}-{DateTime}                        | all symbols: all trades closed in the specified time range (3)(4)      | [TERM_HISTORY_TOTAL,  2014.02.01 08:00, 2014.02.10 18:00, ..., ..., ...] |
+ * | 12.34                                          | PnL amount to add to a custom position                                 | [TERM_PNL_ADJUSTMENT, 12.34,            ...,              ..., ..., ...] |
+ * | E=123.00                                       | equity value to use                                                    | [TERM_EQUITY,         123.00,           ...,              ..., ..., ...] |
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | EA=1                                           | filter: include only EA orders                                         | [TERM_FILTER_EA,      1,                ...,              ..., ..., ...] |
+ * | EA=0                                           | filter: exclude all EA orders                                          | [TERM_FILTER_EA,      0,                ...,              ..., ..., ...] |
+ * | EAS=123                                        | filter: include only orders of SID 123                                 | [TERM_FILTER_SID,     1,                123,              ..., ..., ...] |
+ * | EAS!=123                                       | filter: exlude all orders of SID 123                                   | [TERM_FILTER_SID,     0,                123,              ..., ..., ...] |
+ * | EAM=456789                                     | filter: include only orders with magic number 456789                   | [TERM_FILTER_MAGIC,   1,                456789,           ..., ..., ...] |
+ * | EAM!=456789                                    | filter: exclude all orders with magic number  456789                   | [TERM_FILTER_MAGIC,   0,                456789,           ..., ..., ...] |
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | BEM                                            | flag: draw a break-even marker (average open price inc. all costs)     | stored in config.dData[]                                                 |
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | PM=3%                                          | calculate price of the specified % PnL and draw a profit marker        | [TERM_PROFIT_MARKER,  ...,              3.0,              1,   ..., ...] |
+ * | PM=100.00                                      | calculate price of the specified money PnL and draw a profit marker    | [TERM_PROFIT_MARKER,  ...,              100.00,           0,   ..., ...] |
+ * | PM@1.2345                                      | draw a profit marker and calculate % PnL at the specified price        | [TERM_PROFIT_MARKER,  1.2345,           ...,              ..., ..., ...] |
+ * | LM=-5%                                         | calculate price of the specified % PnL and draw a loss marker          | [TERM_LOSS_MARKER,    ...,              -5.0,             1,   ..., ...] |
+ * | LM=-200.00                                     | calculate price of the specified money PnL and draw a loss marker      | [TERM_LOSS_MARKER,    ...,              -200.00,          0,   ..., ...] |
+ * | LM@2.3456                                      | draw a loss marker and calculate % PnL at the specified price          | [TERM_LOSS_MARKER,    2.3456,           ...,              ..., ..., ...] |
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | MFE[-MS]                                       | track MFE/MAE + optional flags: (M)ark level, (S)ignal new high/low    | TERM_MFAE + flags, stored in config.dData[]                              |
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | HIDE:                                          | at begin of configuration: hide stats but display chart markers (flag) | stored in config.dData[]                                                 |
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
+ * | any text after a semicolon ";"                 | description of the custom position                                     | stored in config.sData[]                                                 |
+ * | any text after a 2nd semicolon ";...;"         | configuration comment, ignored                                         |                                                                          |
+ * +------------------------------------------------+------------------------------------------------------------------------+--------------------------------------------------------------------------+
  *
- *  Example configuration (6)
+ *  Example configuration (5)
  *  -------------------------
  *  [CustomPositions]
  *  GBPAUD.a = #111111, 0.1#222222        // full ticket #111111, plus 0.1 lot of ticket #222222
@@ -2396,7 +2396,7 @@ int SearchLfxTicket(int ticket) {
  *  GBPAUD.d = 0.3S                       // virtual short position of 0.3 lot at current price
  *
  *
- *  Resulting array config.terms[] for the above example (7)
+ *  Resulting array config.terms[] for the above example (6)
  *  --------------------------------------------------------
  *  double config.terms = [
  *     [TERM_TICKET,         111111, EMPTY, ..., ..., ...],
@@ -2422,11 +2422,10 @@ int SearchLfxTicket(int ticket) {
  *  (2) Werden reale mit virtuellen Positionen kombiniert, wird die gesamte Position virtuell und nicht von der aktuellen Gesamtposition abgezogen.
  *      Dies kann in Verbindung mit (1) benutzt werden, um eine virtuelle Position zu konfigurieren, die die folgenden Positionen nicht
  *      beeinflußt (z.B. durch "0L").
- *  (3) Zeitangaben im Format: 2014[.01[.15 [W|12:30[:45]]]]
- *  (4) Einer der beiden Zeitpunkte kann leer sein und steht jeweils für "von Beginn" oder "bis Ende".
- *  (5) Ein Historyzeitraum kann tages-, wochen- oder monatsweise gruppiert werden, solange er nicht mit anderen Positionen kombiniert wird.
- *  (6) Die Positionen werden unabhängig von den Schlüsseln in der Reihenfolge ihres Auftretens angezeigt.
- *  (7) "..." denotes fields not used by the term
+ *  (3) dates/times in format: 2014[.01[.15 [W|12:30[:45]]]]
+ *  (4) One of the two times may be omitted and represents either "from beginning" or "until end".
+ *  (5) Die Positionen werden unabhängig von den Schlüsseln in der Reihenfolge ihres Auftretens angezeigt.
+ *  (6) "..." denotes fields not used by the term
  */
 bool CustomPositions.ReadConfig() {
    double confTerms[][6]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(config.terms, 1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match config.terms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
@@ -2439,7 +2438,7 @@ bool CustomPositions.ReadConfig() {
    int      filterType, filterValue1, filterValue2;
    int      valuesSize, termsSize, pos, len, ticket, nextPositionStartOffset = 0;
    datetime from, to;
-   bool     hidePosition, isEmptyPosition, isVirtualPosition, isGroupedPosition, isFilteredPosition, hasEquityValue, hasProfitMarker, hasLossMarker, isBemEnabled, isMfaeEnabled, isMfaeSignal, markMfe, isTotal, isPercent;
+   bool     hidePosition, isEmptyPosition, isVirtualPosition, isFilteredPosition, hasEquityValue, hasProfitMarker, hasLossMarker, isBemEnabled, isMfaeEnabled, isMfaeSignal, markMfe, isTotal, isPercent;
 
    if (!minLotSize || !lotStep) return(false);                       // if MarketInfo() data is not yet available
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(4)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
@@ -2480,10 +2479,9 @@ bool CustomPositions.ReadConfig() {
             // now parse the configuration terms
             isEmptyPosition    = true;                               // whether the position entry specifies open/closed trades (not only flags)
             isVirtualPosition  = false;                              // whether the position entry is virtual
-            isGroupedPosition  = false;                              // whether the position entry is grouped
             hasEquityValue     = false;                              // whether the position entry contains a custom equity value
-            hasProfitMarker    = false;                              // whether the position entry contains a TP marker
-            hasLossMarker      = false;                              // whether the position entry contains a SL marker
+            hasProfitMarker    = false;                              // whether the position entry contains a profit marker
+            hasLossMarker      = false;                              // whether the position entry contains a loss marker
             isBemEnabled       = false;                              // whether to display the BE marker for the position
             isMfaeEnabled      = false;                              // whether to enable the MFE/MAE tracker for the position
             isMfaeSignal       = false;                              // whether the MFE/MAE tracker signals new highs/lows of the position
@@ -2552,13 +2550,9 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "H")) {             // H[T] = History[Total]
-                  if (!CustomPositions.ParseHstTerm(values[n], confComment, hstComment, isEmptyPosition, isGroupedPosition, isTotal, from, to, filterType, filterValue1, filterValue2, confTerms, confsData, confdData)) return(false);
-                  if (isGroupedPosition) {
-                     isEmptyPosition = false;
-                     continue;                                       // gruppiert: die Konfiguration wurde bereits in CustomPositions.ParseHstTerm() gespeichert
-                  }
+                  if (!CustomPositions.ParseHstTerm(values[n], confComment, hstComment, isEmptyPosition, isTotal, from, to)) return(false);
                   termType    = ifInt(!isTotal, TERM_HISTORY, TERM_HISTORY_TOTAL);
-                  termValue1  = from;                                // nicht gruppiert
+                  termValue1  = from;
                   termValue2  = to;
                   termValue3  = NULL;
                   termResult1 = EMPTY_VALUE;                         // EMPTY_VALUE, da NULL bei TERM_HISTORY_* ein gültiger Wert ist
@@ -2813,11 +2807,6 @@ bool CustomPositions.ReadConfig() {
                }
                else                                                  return(!catch("CustomPositions.ReadConfig(58)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
 
-               // a grouping history term must be the last term of the config line
-               if (isGroupedPosition) {
-                  return(!catch("CustomPositions.ReadConfig(59)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (a grouped history can't be followed by other config entries) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-               }
-
                // Die Konfiguration virtueller Positionen muß mit einem virtuellen Term beginnen, damit die realen Lots nicht um die virtuellen Lots reduziert werden.
                if ((termType==TERM_OPEN_LONG || termType==TERM_OPEN_SHORT) && termValue1!=EMPTY) {
                   if (!isEmptyPosition && !isVirtualPosition) {
@@ -2923,7 +2912,7 @@ bool CustomPositions.ReadConfig() {
    ArrayResize(config.terms, 0); if (ArraySize(confTerms) > 0) ArrayCopy(config.terms, confTerms);
    ArrayResize(config.dData, 0); if (ArraySize(confdData) > 0) ArrayCopy(config.dData, confdData);
    ArrayResize(config.sData, 0); if (ArraySize(confsData) > 0) ArrayCopy(config.sData, confsData);
-   return(!catch("CustomPositions.ReadConfig(60)"));
+   return(!catch("CustomPositions.ReadConfig(59)"));
 }
 
 
@@ -3101,43 +3090,33 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, datetime &
 /**
  * Parst einen History-Term (closed position).
  *
- * @param  _In_    string   term              - Konfigurations-Term
- * @param  _InOut_ string   positionComment   - Kommentar der Position (wird bei Gruppierungen nur bei der ersten Gruppe angezeigt)
- * @param  _InOut_ string   hstComments       - dynamisch generierte History-Kommentare (werden ggf. erweitert)
- * @param  _InOut_ bool     isEmptyPosition   - ob die aktuelle Position noch leer ist
- * @param  _InOut_ bool     isGroupedPosition - ob die aktuelle Position eine Gruppierung enthält
- * @param  _Out_   bool     isTotalHistory    - ob die History alle verfügbaren Trades (TRUE) oder nur die des aktuellen Symbols (FALSE) einschließt
- * @param  _Out_   datetime from              - Beginnzeitpunkt der zu berücksichtigenden History
- * @param  _Out_   datetime to                - Endzeitpunkt der zu berücksichtigenden History
- * @param  _In_    int      filterType        - EA filter type
- * @param  _In_    int      filterValue1      - EA filter condition 1
- * @param  _In_    int      filterValue2      - EA filter condition 2
- * @param  _InOut_ double   confTerms[][]     - config terms[] for grouped histories (directly modified here)
- * @param  _InOut_ string   confsData[][]     - config line string data for grouped histories (directly modified here)
- * @param  _InOut_ double   confdData[][]     - config line double data for grouped histories (directly modified here)
+ * @param  _In_    string   term            - Konfigurations-Term
+ * @param  _InOut_ string   positionComment - Kommentar der Position (wird bei Gruppierungen nur bei der ersten Gruppe angezeigt)
+ * @param  _InOut_ string   hstComments     - dynamisch generierte History-Kommentare (werden ggf. erweitert)
+ * @param  _InOut_ bool     isEmptyPosition - ob die aktuelle Position noch leer ist
+ * @param  _Out_   bool     isTotalHistory  - ob die History alle verfügbaren Trades (TRUE) oder nur die des aktuellen Symbols (FALSE) einschließt
+ * @param  _Out_   datetime from            - Beginnzeitpunkt der zu berücksichtigenden History
+ * @param  _Out_   datetime to              - Endzeitpunkt der zu berücksichtigenden History
  *
  * @return bool - success status
  *
  *
  * Supported history formats:
  * --------------------------
- *  H{DateTime}             [Monthly|Weekly|Daily] - trade history of a symbol for a standard date period
- *  HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] - trade history of all symbols from/to a specific datetime
+ *  H {DateTime}            - trade history of the current symbol for a standard time range
+ *  H {DateTime}-{DateTime} - trade history of the current symbol from/to an explicit time range
+ *  HT ...                  - trade history of all symbols for the specified time range
  *
  *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]       or
  *  {DateTime} = (This|Last)(Day|Week|Month|Year)    or
  *  {DateTime} = Today                             - alias of ThisDay
  *  {DateTime} = Yesterday                         - alias of LastDay
  */
-bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &hstComments, bool &isEmptyPosition, bool &isGroupedPosition, bool &isTotalHistory,
-                                  datetime &from, datetime &to, int filterType, int filterValue1, int filterValue2,
-                                  double &confTerms[][], string &confsData[][], double &confdData[][]) {
-   isEmptyPosition   = isEmptyPosition  !=0;
-   isGroupedPosition = isGroupedPosition!=0;
-   isTotalHistory    = isTotalHistory   !=0;
+bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &hstComments, bool &isEmptyPosition, bool &isTotalHistory, datetime &from, datetime &to) {
+   isEmptyPosition = (isEmptyPosition!=0);
+   isTotalHistory  = (isTotalHistory!=0);
 
-   string termOrig = StrTrim(term);
-   term = StrToUpper(termOrig);
+   string termOrig = term;
    if (!StrStartsWith(term, "H")) return(!catch("CustomPositions.ParseHstTerm(1)  invalid parameter term: "+ DoubleQuoteStr(termOrig) +" (not TERM_HISTORY_*)", ERR_INVALID_PARAMETER));
    term = StrTrim(StrSubstr(term, 1));
 
@@ -3147,34 +3126,17 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    else                                   isTotalHistory = true;
    if (isTotalHistory) term = StrTrim(StrSubstr(term, 1));
 
-   bool isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
+   bool isSingleDateTime, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
    string comment = "";
-
-   // auf Group-Modifier prüfen
-   if (StrEndsWith(term, " DAILY")) {
-      groupByDay = true;
-      term = StrTrim(StrLeft(term, -6));
-   }
-   else if (StrEndsWith(term, " WEEKLY")) {
-      groupByWeek = true;
-      term = StrTrim(StrLeft(term, -7));
-   }
-   else if (StrEndsWith(term, " MONTHLY")) {
-      groupByMonth = true;
-      term = StrTrim(StrLeft(term, -8));
-   }
-
-   bool isGroupingTerm = groupByDay || groupByWeek || groupByMonth;
-   if (isGroupingTerm && !isEmptyPosition) return(!catch("CustomPositions.ParseHstTerm(2)  cannot combine grouping configuration "+ DoubleQuoteStr(termOrig) +" with another configuration", ERR_INVALID_CONFIG_VALUE));
-   isGroupedPosition = isGroupedPosition || isGroupingTerm;
 
    // Beginn- und Endzeitpunkt parsen
    int pos = StringFind(term, "-");
    if (pos >= 0) {                                                   // von-bis parsen
       // {DateTime}-{DateTime}
-      // {DateTime}-NULL
-      //       NULL-{DateTime}
+      // {DateTime}-
+      //           -{DateTime}
+      isSingleDateTime = false;
       dtFrom = ParseDateTimeEx(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTimeEx(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
@@ -3188,9 +3150,9 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    }
    else {
       // {DateTime}                                                  // einzelnen Zeitraum parsen
-      isSingleTimespan = true;
+      isSingleDateTime = true;
       dtFrom = ParseDateTimeEx(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                      if (!dtFrom)       return(!catch("CustomPositions.ParseHstTerm(3)  invalid history configuration in "+ DoubleQuoteStr(termOrig), ERR_INVALID_CONFIG_VALUE));
+                                                                                                                      if (!dtFrom)       return(!catch("CustomPositions.ParseHstTerm(2)  invalid history configuration in "+ DoubleQuoteStr(termOrig), ERR_INVALID_CONFIG_VALUE));
       if      (isFullYear1  ) dtTo = DateTime1(TimeYearEx(dtFrom)+1)                    - 1*SECOND;   // Jahresende
       else if (isFullMonth1 ) dtTo = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
@@ -3199,182 +3161,109 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                  - 1*SECOND;   // Ende der Minute
       else                    dtTo = dtFrom;
    }
-   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstTerm(4)  invalid history configuration in "+ DoubleQuoteStr(termOrig), ERR_INVALID_CONFIG_VALUE));
-   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstTerm(5)  invalid history configuration in "+ DoubleQuoteStr(termOrig) +" (history start after history end)", ERR_INVALID_CONFIG_VALUE));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstTerm(3)  invalid history configuration in "+ DoubleQuoteStr(termOrig), ERR_INVALID_CONFIG_VALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstTerm(4)  invalid history configuration in "+ DoubleQuoteStr(termOrig) +" (history start after history end)", ERR_INVALID_CONFIG_VALUE));
 
-
-   if (isGroupingTerm) {
-      //
-      // TODO:  Performance verbessern
-      //
-      // Gruppen anlegen und komplette Zeilen direkt hier einfügen
-      datetime groupFrom, groupTo, nextGroupFrom, now=Tick.time;
-      if      (groupByMonth) groupFrom = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom));
-      else if (groupByWeek ) groupFrom = dtFrom - dtFrom % DAYS - (TimeDayOfWeekEx(dtFrom)+6) % 7 * DAYS;
-      else if (groupByDay  ) groupFrom = dtFrom - dtFrom % DAYS;
-
-      if (!dtTo) {                                                                                          // {DateTime} - NULL
-         if      (groupByMonth) dtTo = DateTime1(TimeYearEx(now), TimeMonth(now)+1)           - 1*SECOND;   // aktuelles Monatsende
-         else if (groupByWeek ) dtTo = now - now % DAYS + (7-TimeDayOfWeekEx(now)) % 7 * DAYS - 1*SECOND;   // aktuelles Wochenende
-         else if (groupByDay  ) dtTo = now - now % DAYS + 1*DAY                               - 1*SECOND;   // aktuelles Tagesende
-      }
-
-      for (bool firstGroup=true; groupFrom < dtTo; groupFrom=nextGroupFrom) {
-         if      (groupByMonth) nextGroupFrom = DateTime1(TimeYearEx(groupFrom), TimeMonth(groupFrom)+1);
-         else if (groupByWeek ) nextGroupFrom = groupFrom + 7*DAYS;
-         else if (groupByDay  ) nextGroupFrom = groupFrom + 1*DAY;
-         groupTo   = nextGroupFrom - 1*SECOND;
-         groupFrom = Max(groupFrom, dtFrom);
-         groupTo   = Min(groupTo,   dtTo  );
-
-         // Kommentar erstellen
-         if      (groupByMonth) comment =             GmtTimeFormat(groupFrom, "%Y %B");
-         else if (groupByWeek ) comment = "Week of "+ GmtTimeFormat(groupFrom, "%d.%m.%Y");
-         else if (groupByDay  ) comment =             GmtTimeFormat(groupFrom, "%d.%m.%Y");
-         if (isTotalHistory)    comment = comment +" (total)";
-
-         // add group to the parsed configuration
-         int termsSize = ArrayRange(confTerms, 0);
-
-         // if a filter condition is active it must be stored first, so following history can be filtered
-         if (filterType != NULL) {
-            ArrayResize(confTerms, termsSize + 1);
-            confTerms[termsSize][I_TERM_TYPE   ] = filterType;
-            confTerms[termsSize][I_TERM_VALUE1 ] = filterValue1;
-            confTerms[termsSize][I_TERM_VALUE2 ] = filterValue2;
-            confTerms[termsSize][I_TERM_VALUE3 ] = NULL;
-            confTerms[termsSize][I_TERM_RESULT1] = NULL;
-            confTerms[termsSize][I_TERM_RESULT2] = NULL;
-            termsSize++;
-         }
-
-         // now add the history group
-         ArrayResize(confTerms, termsSize + 1);
-         confTerms[termsSize][I_TERM_TYPE   ] = ifInt(!isTotalHistory, TERM_HISTORY, TERM_HISTORY_TOTAL);
-         confTerms[termsSize][I_TERM_VALUE1 ] = groupFrom;
-         confTerms[termsSize][I_TERM_VALUE2 ] = groupTo;
-         confTerms[termsSize][I_TERM_VALUE3 ] = NULL;
-         confTerms[termsSize][I_TERM_RESULT1] = EMPTY_VALUE;
-         confTerms[termsSize][I_TERM_RESULT2] = EMPTY_VALUE;
-         termsSize++;
-         isEmptyPosition = false;
-
-         // Zeile mit Zeilenende abschließen (außer bei der letzten Gruppe)
-         if (nextGroupFrom <= dtTo) {
-            ArrayResize(confTerms, termsSize + 1);
-            termsSize++;
-            int lines = ArrayRange(confdData, 0);
-            ArrayResize(confdData, lines + 1);
-            ArrayResize(confsData, lines + 1);
-            confsData[lines][I_CONFIG_KEY    ] = "";
-            confsData[lines][I_CONFIG_COMMENT] = comment + ifString(StringLen(positionComment), ", ", "") + positionComment;
-            if (firstGroup) positionComment = "";                    // für folgende Gruppen wird der konfigurierte Kommentar nicht ständig wiederholt
-         }
-      }
+   if (isSingleDateTime) {
+      if      (isFullYear1  ) comment =             GmtTimeFormat(dtFrom, "%Y");
+      else if (isFullMonth1 ) comment =             GmtTimeFormat(dtFrom, "%Y %B");
+      else if (isFullWeek1  ) comment = "Week of "+ GmtTimeFormat(dtFrom, "%d.%m.%Y");
+      else if (isFullDay1   ) comment =             GmtTimeFormat(dtFrom, "%d.%m.%Y");
+      else if (isFullHour1  ) comment =             GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M") + GmtTimeFormat(dtTo+1*SECOND, "-%H:%M");
+      else if (isFullMinute1) comment =             GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M");
+      else                    comment =             GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S");
+   }
+   else if (!dtTo) {
+      if      (isFullYear1  ) comment = "since "+   GmtTimeFormat(dtFrom, "%Y");
+      else if (isFullMonth1 ) comment = "since "+   GmtTimeFormat(dtFrom, "%B %Y");
+      else if (isFullWeek1  ) comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y");
+      else if (isFullDay1   ) comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y");
+      else if (isFullHour1  ) comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M");
+      else if (isFullMinute1) comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M");
+      else                    comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S");
+   }
+   else if (!dtFrom) {
+      if      (isFullYear2  ) comment = "to "+      GmtTimeFormat(dtTo,          "%Y");
+      else if (isFullMonth2 ) comment = "to "+      GmtTimeFormat(dtTo,          "%B %Y");
+      else if (isFullWeek2  ) comment = "to "+      GmtTimeFormat(dtTo,          "%d.%m.%Y");
+      else if (isFullDay2   ) comment = "to "+      GmtTimeFormat(dtTo,          "%d.%m.%Y");
+      else if (isFullHour2  ) comment = "to "+      GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");
+      else if (isFullMinute2) comment = "to "+      GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");
+      else                    comment = "to "+      GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S");
    }
    else {
-      // normale Rückgabewerte ohne Gruppierung
-      if (isSingleTimespan) {
-         if      (isFullYear1  ) comment =             GmtTimeFormat(dtFrom, "%Y");
-         else if (isFullMonth1 ) comment =             GmtTimeFormat(dtFrom, "%Y %B");
-         else if (isFullWeek1  ) comment = "Week of "+ GmtTimeFormat(dtFrom, "%d.%m.%Y");
-         else if (isFullDay1   ) comment =             GmtTimeFormat(dtFrom, "%d.%m.%Y");
-         else if (isFullHour1  ) comment =             GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M") + GmtTimeFormat(dtTo+1*SECOND, "-%H:%M");
-         else if (isFullMinute1) comment =             GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M");
-         else                    comment =             GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S");
+      // von und bis angegeben
+      if      (isFullYear1) {
+         if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%Y")                +" to "+ GmtTimeFormat(dtTo,          "%Y");                // 2014 - 2015
+         else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%B %Y")             +" to "+ GmtTimeFormat(dtTo,          "%B %Y");             // 2014 - 2015.01
+         else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014 - 2015.01.15W
+         else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014 - 2015.01.15
+         else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014 - 2015.01.15 12:34
+         else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014 - 2015.01.15 12:34:56
       }
-      else if (!dtTo) {
-         if      (isFullYear1  ) comment = "since "+   GmtTimeFormat(dtFrom, "%Y");
-         else if (isFullMonth1 ) comment = "since "+   GmtTimeFormat(dtFrom, "%B %Y");
-         else if (isFullWeek1  ) comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y");
-         else if (isFullDay1   ) comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y");
-         else if (isFullHour1  ) comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M");
-         else if (isFullMinute1) comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M");
-         else                    comment = "since "+   GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S");
+      else if (isFullMonth1) {
+         if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%B %Y")             +" to "+ GmtTimeFormat(dtTo,          "%B %Y");             // 2014.01 - 2015
+         else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%B %Y")             +" to "+ GmtTimeFormat(dtTo,          "%B %Y");             // 2014.01 - 2015.01
+         else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01 - 2015.01.15W
+         else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01 - 2015.01.15
+         else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01 - 2015.01.15 12:34
+         else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01 - 2015.01.15 12:34:56
       }
-      else if (!dtFrom) {
-         if      (isFullYear2  ) comment = "to "+      GmtTimeFormat(dtTo,          "%Y");
-         else if (isFullMonth2 ) comment = "to "+      GmtTimeFormat(dtTo,          "%B %Y");
-         else if (isFullWeek2  ) comment = "to "+      GmtTimeFormat(dtTo,          "%d.%m.%Y");
-         else if (isFullDay2   ) comment = "to "+      GmtTimeFormat(dtTo,          "%d.%m.%Y");
-         else if (isFullHour2  ) comment = "to "+      GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");
-         else if (isFullMinute2) comment = "to "+      GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");
-         else                    comment = "to "+      GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S");
+      else if (isFullWeek1) {
+         if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15W - 2015
+         else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15W - 2015.01
+         else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15W - 2015.01.15W
+         else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15W - 2015.01.15
+         else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15W - 2015.01.15 12:00
+         else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15W - 2015.01.15 12:34
+         else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15W - 2015.01.15 12:34:56
+      }
+      else if (isFullDay1) {
+         if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 - 2015
+         else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 - 2015.01
+         else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 - 2015.01.15W
+         else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 - 2015.01.15
+         else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 - 2015.01.15 12:34
+         else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 - 2015.01.15 12:34:56
+      }
+      else if (isFullHour1) {
+         if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:00 - 2015
+         else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:00 - 2015.01
+         else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:00 - 2015.01.15W
+         else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:00 - 2015.01.15
+         else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:00 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:00 - 2015.01.15 12:34
+         else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 12:00 - 2015.01.15 12:34:56
+      }
+      else if (isFullMinute1) {
+         if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34 - 2015
+         else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34 - 2015.01
+         else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34 - 2015.01.15W
+         else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34 - 2015.01.15
+         else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:34 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:34 - 2015.01.15 12:34
+         else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 12:34 - 2015.01.15 12:34:56
       }
       else {
-         // von und bis angegeben
-         if      (isFullYear1  ) {
-            if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%Y")                +" to "+ GmtTimeFormat(dtTo,          "%Y");                // 2014 - 2015
-            else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%B %Y")             +" to "+ GmtTimeFormat(dtTo,          "%B %Y");             // 2014 - 2015.01
-            else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014 - 2015.01.15W
-            else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014 - 2015.01.15
-            else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014 - 2015.01.15 12:00
-            else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014 - 2015.01.15 12:34
-            else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014 - 2015.01.15 12:34:56
-         }
-         else if (isFullMonth1 ) {
-            if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%B %Y")             +" to "+ GmtTimeFormat(dtTo,          "%B %Y");             // 2014.01 - 2015
-            else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%B %Y")             +" to "+ GmtTimeFormat(dtTo,          "%B %Y");             // 2014.01 - 2015.01
-            else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01 - 2015.01.15W
-            else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01 - 2015.01.15
-            else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01 - 2015.01.15 12:00
-            else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01 - 2015.01.15 12:34
-            else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01 - 2015.01.15 12:34:56
-         }
-         else if (isFullWeek1  ) {
-            if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15W - 2015
-            else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15W - 2015.01
-            else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15W - 2015.01.15W
-            else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15W - 2015.01.15
-            else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15W - 2015.01.15 12:00
-            else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15W - 2015.01.15 12:34
-            else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15W - 2015.01.15 12:34:56
-         }
-         else if (isFullDay1   ) {
-            if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 - 2015
-            else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 - 2015.01
-            else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 - 2015.01.15W
-            else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 - 2015.01.15
-            else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 - 2015.01.15 12:00
-            else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 - 2015.01.15 12:34
-            else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y")          +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 - 2015.01.15 12:34:56
-         }
-         else if (isFullHour1  ) {
-            if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:00 - 2015
-            else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:00 - 2015.01
-            else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:00 - 2015.01.15W
-            else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:00 - 2015.01.15
-            else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:00 - 2015.01.15 12:00
-            else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:00 - 2015.01.15 12:34
-            else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 12:00 - 2015.01.15 12:34:56
-         }
-         else if (isFullMinute1) {
-            if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34 - 2015
-            else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34 - 2015.01
-            else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34 - 2015.01.15W
-            else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34 - 2015.01.15
-            else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:34 - 2015.01.15 12:00
-            else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:34 - 2015.01.15 12:34
-            else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M")    +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 12:34 - 2015.01.15 12:34:56
-         }
-         else {
-            if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34:56 - 2015
-            else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34:56 - 2015.01
-            else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34:56 - 2015.01.15W
-            else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34:56 - 2015.01.15
-            else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:34:56 - 2015.01.15 12:00
-            else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:34:56 - 2015.01.15 12:34
-            else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 12:34:56 - 2015.01.15 12:34:56
-         }
+         if      (isFullYear2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34:56 - 2015
+         else if (isFullMonth2 ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34:56 - 2015.01
+         else if (isFullWeek2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34:56 - 2015.01.15W
+         else if (isFullDay2   ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y");          // 2014.01.15 12:34:56 - 2015.01.15
+         else if (isFullHour2  ) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:34:56 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo+1*SECOND, "%d.%m.%Y %H:%M");    // 2014.01.15 12:34:56 - 2015.01.15 12:34
+         else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 12:34:56 - 2015.01.15 12:34:56
       }
-      if (isTotalHistory) comment = comment +" (total)";
-      from = dtFrom;
-      to   = dtTo;
    }
+   if (isTotalHistory) comment = comment +" (total)";
+   from = dtFrom;
+   to   = dtTo;
 
    if (!StringLen(hstComments)) hstComments = comment;
    else                         hstComments = hstComments +", "+ comment;
-   return(!catch("CustomPositions.ParseHstTerm(6)"));
+   return(!catch("CustomPositions.ParseHstTerm(5)"));
 }
 
 
