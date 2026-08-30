@@ -1455,8 +1455,10 @@ bool UpdatePositions() {
          if (configLine > -1) {
             hiddenLine = (config.dData[configLine][I_HIDE_POSITION] != 0);
          }
-         line++;
+         if (!positions.data[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.data[i][I_DIRECTIONAL_LOTS], ".+");
+         else                                   sLotSize = NumberToStr(positions.data[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.data[i][I_HEDGED_LOTS], ".+");
 
+         line++;
          if (!hiddenLine) {
             if      (positions.data[i][I_CUSTOM_TYPE  ] == CUSTOM_VIRTUAL_POSITION) fontColor = positions.fontColor.virtual;
             else if (positions.data[i][I_POSITION_TYPE] == POSITION_HISTORY)        fontColor = positions.fontColor.history;
@@ -1515,8 +1517,6 @@ bool UpdatePositions() {
                // not hedged
                else {
                   ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col0"), sPositionType,                                                 positions.fontSize, positions.fontName, fontColor);
-                     if (!positions.data[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.data[i][I_DIRECTIONAL_LOTS], ".+");
-                     else                                   sLotSize = NumberToStr(positions.data[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.data[i][I_HEDGED_LOTS], ".+");
                   ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col1"), sLotSize +" lot",                                              positions.fontSize, positions.fontName, fontColor);
                   ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col2"), "BE:",                                                         positions.fontSize, positions.fontName, fontColor);
                      if (!positions.data[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
@@ -2869,8 +2869,8 @@ bool CustomPositions.ReadConfig() {
             confdData[lines][I_HIDE_POSITION] = hidePosition;
             confdData[lines][I_BEM_ENABLED  ] = isBemEnabled;
             confdData[lines][I_MFAE_ENABLED ] = isMfaeEnabled;
-            confdData[lines][I_MFAE_SIGNAL  ] = isMfaeSignal;
-            confdData[lines][I_MARK_MFE     ] = markMfe;
+            confdData[lines][I_MFAE_SIGNAL  ] = isMfaeSignal && !hidePosition;
+            confdData[lines][I_MARK_MFE     ] = markMfe      && !hidePosition;
 
             ArrayResize(confsData, lines + 1);
             if (!StringLen(confComment)) comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
