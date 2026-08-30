@@ -58,30 +58,30 @@ extern bool CustomPositions.Sound = true;          // whether position monitorin
 #property indicator_chart_window
 
 // unitsize calculation
-bool    mm.done;                                                  // processing flag
-double  mm.externalAssets;                                        // external assets
-bool    mm.externalAssetsCached;                                  // whether mm.externalAssets holds a valid cached value
-double  mm.equity;                                                // equity value used for calculations, incl. external assets and floating losses (but w/o floating/unrealized profits)
+bool    mm.done;                                   // processing flag
+double  mm.externalAssets;                         // external assets
+bool    mm.externalAssetsCached;                   // whether mm.externalAssets holds a valid cached value
+double  mm.equity;                                 // equity value used for calculations, incl. external assets and floating losses (but w/o floating/unrealized profits)
 
-bool    mm.cfgIsValid;                                            // whether the unitsize configuration is valid/initialized
-double  mm.cfgRiskRange;                                          //
-bool    mm.cfgRiskRangeIsADR;                                     // whether the price range is configured as "ADR"
-double  mm.cfgRiskPercent;                                        //
-double  mm.cfgLeverage;                                           //
+bool    mm.cfgIsValid;                             // whether the unitsize configuration is valid/initialized
+double  mm.cfgRiskRange;                           //
+bool    mm.cfgRiskRangeIsADR;                      // whether the price range is configured as "ADR"
+double  mm.cfgRiskPercent;                         //
+double  mm.cfgLeverage;                            //
 
-double  mm.lotValue;                                              // value of 1 lot in account currency
-double  mm.unleveragedLots;                                       // unleveraged unitsize
-double  mm.leveragedLots;                                         // leveraged unitsize
-double  mm.leveragedLotsNormalized;                               // leveraged unitsize normalized to MODE_LOTSTEP
-double  mm.leveragePerUnit;                                       // resulting leverage per unit
-bool    mm.usesLeverage;                                          // whether the calculated unitsize uses leverage or a risk range
+double  mm.lotValue;                               // value of 1 lot in account currency
+double  mm.unleveragedLots;                        // unleveraged unitsize
+double  mm.leveragedLots;                          // leveraged unitsize
+double  mm.leveragedLotsNormalized;                // leveraged unitsize normalized to MODE_LOTSTEP
+double  mm.leveragePerUnit;                        // resulting leverage per unit
+bool    mm.usesLeverage;                           // whether the calculated unitsize uses leverage or a risk range
 
 // internal or external position data
-bool    isPendings;                                               // ob Pending-Limits im Markt liegen (Orders oder Positions)
-bool    isPosition;                                               // ob offene Positionen existieren, die Gesamtposition kann flat sein: longPosition || shortPosition
-double  totalPosition;
-double  longPosition;
-double  shortPosition;
+bool    isPendings;                                // whether working limits exist (entry or exit limits)
+bool    isPosition;                                // whether open positions exist: longPosition || shortPosition (the total position may be flat)
+double  totalPosition;                             // whether an open total position exist (the total position is not flat)
+double  longPosition;                              // whether open long positions exist (the total position may be flat)
+double  shortPosition;                             // whether open short positions exist (the total position may be flat)
 
 // a custom virtual position (if any)
 bool    isVirtualPosition;
@@ -90,107 +90,107 @@ double  virtualLongPosition;
 double  virtualShortPosition;
 
 // parsed configuration of custom positions
-double  config.terms[][6];                                        // @see CustomPositions.ReadConfig() for the format
+double  config.terms[][6];                         // @see CustomPositions.ReadConfig() for the format
 
 // indexes of config.terms[]
-#define I_TERM_TYPE                     0                         //
-#define I_TERM_VALUE1                   1                         //
-#define I_TERM_VALUE2                   2                         //
-#define I_TERM_VALUE3                   3                         //
-#define I_TERM_RESULT1                  4                         // intermediate calculation results
-#define I_TERM_RESULT2                  5                         // ...
+#define I_TERM_TYPE                     0          //
+#define I_TERM_VALUE1                   1          //
+#define I_TERM_VALUE2                   2          //
+#define I_TERM_VALUE3                   3          //
+#define I_TERM_RESULT1                  4          // intermediate calculation results
+#define I_TERM_RESULT2                  5          // ...
 
-#define TERM_TICKET                     1                         // supported config terms (possible values of config.terms[][I_TERM_TYPE])
-#define TERM_OPEN_LONG                  2                         //
-#define TERM_OPEN_SHORT                 3                         //
-#define TERM_OPEN                       4                         // intentionally there's no TERM_OPEN_TOTAL
-#define TERM_HISTORY                    5                         //
-#define TERM_HISTORY_TOTAL              6                         //
-#define TERM_PNL_ADJUSTMENT             7                         //
-#define TERM_EQUITY                     8                         //
-#define TERM_FILTER_EA                  9                         //
-#define TERM_FILTER_SID                10                         //
-#define TERM_FILTER_MAGIC              11                         //
-#define TERM_MFAE                      12                         //
-#define TERM_MFAE_SIGNAL               13                         //
-#define TERM_BE_MARKER                 14                         //
-#define TERM_PROFIT_MARKER             15                         //
-#define TERM_LOSS_MARKER               16                         //
+#define TERM_TICKET                     1          // supported config terms (possible values of config.terms[][I_TERM_TYPE])
+#define TERM_OPEN_LONG                  2          //
+#define TERM_OPEN_SHORT                 3          //
+#define TERM_OPEN                       4          // intentionally there's no TERM_OPEN_TOTAL
+#define TERM_HISTORY                    5          //
+#define TERM_HISTORY_TOTAL              6          //
+#define TERM_PNL_ADJUSTMENT             7          //
+#define TERM_EQUITY                     8          //
+#define TERM_FILTER_EA                  9          //
+#define TERM_FILTER_SID                10          //
+#define TERM_FILTER_MAGIC              11          //
+#define TERM_MFAE                      12          //
+#define TERM_MFAE_SIGNAL               13          //
+#define TERM_BE_MARKER                 14          //
+#define TERM_PROFIT_MARKER             15          //
+#define TERM_LOSS_MARKER               16          //
 
 // data of configured custom positions: size(config.sData) == size(config.dData) == number-of-configured-custom-positions
-string  config.sData[][2];                                        // data: {Key, Comment}
-double  config.dData[][6];                                        // data: {BemEnabled, MfaeEnabled, MfaeSignal, MfeMark, MfeValueM, MaeValueM}
+string  config.sData[][2];                         // @see indexes of config.sData[]
+double  config.dData[][6];                         // @see indexes of config.dData[]
 
 // indexes of config.sData[]
-#define I_CONFIG_KEY                    0                         //
-#define I_CONFIG_COMMENT                1                         //
+#define I_CONFIG_KEY                    0          //
+#define I_CONFIG_COMMENT                1          //
 
 // indexes of config.dData[]
-#define I_BEM_ENABLED                   0                         // whether to display the breakeven marker of a custom position
-#define I_MFAE_ENABLED                  1                         // whether to track MFE/MAE of a custom position
-#define I_MFAE_SIGNAL                   2                         // whether to signal new MFE/MAE of a custom position
-#define I_MARK_MFE                      3                         // whether to mark MFE levels
-#define I_PROFIT_MFE                    4                         // current MFE maximum in money
-#define I_PROFIT_MAE                    5                         // current MAE minimum in money
+#define I_BEM_ENABLED                   0          // whether to display the breakeven marker of a custom position
+#define I_MFAE_ENABLED                  1          // whether to track MFE/MAE of a custom position
+#define I_MFAE_SIGNAL                   2          // whether to signal new MFE/MAE of a custom position
+#define I_MARK_MFE                      3          // whether to mark MFE levels
+#define I_PROFIT_MFE                    4          // current MFE maximum in money
+#define I_PROFIT_MAE                    5          // current MAE minimum in money
 
 // displayed custom position entries (may be larger than configured entries)
-double  positions.data[][21];                                     // @see indexes of positions.data[]
-bool    positions.analyzed;                                       //
-bool    positions.showAbsProfits;                                 // for column adjustment (default: online=FALSE, tester=TRUE)
-bool    positions.showMfae;                                       // for column adjustment: whether at least one active config entry has the MFAE tracker enabled
+double  positions.data[][21];                      // @see indexes of positions.data[]
+bool    positions.analyzed;                        //
+bool    positions.showAbsProfits;                  // whether to display PnL in % or money (for column adjustments, default: online=FALSE, tester=TRUE)
+bool    positions.showMfae;                        // whether MFAE tracking is active (for column adjustments)
 
-#define CUSTOM_REAL_POSITION            1                         // config line types: real position
-#define CUSTOM_VIRTUAL_POSITION         2                         //                    virtual position (pure virtual or composite virtual/real)
+#define CUSTOM_REAL_POSITION            1          // config line types: real position
+#define CUSTOM_VIRTUAL_POSITION         2          //                    virtual position (pure virtual or composite virtual/real)
 
-#define VIRTUAL_TICKET_LONG            -1                         // synthetic tickets of virtual positions
-#define VIRTUAL_TICKET_SHORT           -2                         //
+#define VIRTUAL_TICKET_LONG            -1          // synthetic tickets of virtual positions
+#define VIRTUAL_TICKET_SHORT           -2          //
 
-#define POSITION_LONG                   1                         // position type ids, also array indexes of typeDescriptions[]
-#define POSITION_SHORT                  2                         //
-#define POSITION_HEDGE                  3                         //
-#define POSITION_HISTORY                4                         //
+#define POSITION_LONG                   1          // position type ids, match indexes of typeDescriptions[]
+#define POSITION_SHORT                  2          //
+#define POSITION_HEDGE                  3          //
+#define POSITION_HISTORY                4          //
 string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 
 // indexes of positions.data[]
-#define I_CONFIG_LINE                   0                         //
-#define I_CUSTOM_TYPE                   1                         //
-#define I_POSITION_TYPE                 2                         //
-#define I_DIRECTIONAL_LOTS              3                         //
-#define I_HEDGED_LOTS                   4                         //
-#define I_PIP_DISTANCE                  5                         //
-#define I_BREAKEVEN_PRICE  I_PIP_DISTANCE                         // union: on-position=BreakevenPrice, on-hedged=PipDistance
-#define I_ADJUSTED_PROFIT               6                         //
-#define I_PROFIT                        7                         // total profit in money
-#define I_PROFIT_PCT                    8                         // total profit in percent
-#define I_PROFIT_MFE_PRICE              9                         // MFE price
-#define I_PROFIT_MFE_PCT               10                         // MFE in percent
-#define I_PROFIT_MAE_PRICE             11                         // MAE price
-#define I_PROFIT_MAE_PCT               12                         // MAE in percent
-#define I_PROFIT_MARKER_PRICE          13                         //
-#define I_PROFIT_MARKER_MONEY          14                         //
-#define I_PROFIT_MARKER_PCT            15                         //
-#define I_PROFIT_MARKER_AS_PCT         16                         // whether the marker is configured with a % value
-#define I_LOSS_MARKER_PRICE            17                         //
-#define I_LOSS_MARKER_MONEY            18                         //
-#define I_LOSS_MARKER_PCT              19                         //
-#define I_LOSS_MARKER_AS_PCT           20                         // whether the marker is configured with a % value
+#define I_CONFIG_LINE                   0          //
+#define I_CUSTOM_TYPE                   1          //
+#define I_POSITION_TYPE                 2          //
+#define I_DIRECTIONAL_LOTS              3          //
+#define I_HEDGED_LOTS                   4          //
+#define I_PIP_DISTANCE                  5          //
+#define I_BREAKEVEN_PRICE  I_PIP_DISTANCE          // union: on-position = BreakevenPrice, on-hedged = PipDistance
+#define I_ADJUSTED_PROFIT               6          //
+#define I_PROFIT                        7          // total profit in money
+#define I_PROFIT_PCT                    8          // total profit in percent
+#define I_PROFIT_MFE_PRICE              9          // MFE price
+#define I_PROFIT_MFE_PCT               10          // MFE in percent
+#define I_PROFIT_MAE_PRICE             11          // MAE price
+#define I_PROFIT_MAE_PCT               12          // MAE in percent
+#define I_PROFIT_MARKER_PRICE          13          //
+#define I_PROFIT_MARKER_MONEY          14          //
+#define I_PROFIT_MARKER_PCT            15          //
+#define I_PROFIT_MARKER_AS_PCT         16          // whether the PnL marker is configured using a % value
+#define I_LOSS_MARKER_PRICE            17          //
+#define I_LOSS_MARKER_MONEY            18          //
+#define I_LOSS_MARKER_PCT              19          //
+#define I_LOSS_MARKER_AS_PCT           20          // whether the PnL marker is configured using a % value
 
 // control flags for AnalyzePositions()
-#define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions
-#define F_LOG_SKIP_EMPTY                2                         // skip empty array elements when logging tickets
-#define F_SHOW_CUSTOM_POSITIONS         4                         // call ShowOpenOrders() for custom positions
-#define F_SHOW_CUSTOM_HISTORY           8                         // call ShowTradeHistory() for custom history
+#define F_LOG_TICKETS                   1          // log tickets of resulting custom positions
+#define F_LOG_SKIP_EMPTY                2          // skip empty array elements when logging tickets
+#define F_SHOW_CUSTOM_POSITIONS         4          // call ShowOpenOrders() for custom positions
+#define F_SHOW_CUSTOM_HISTORY           8          // call ShowTradeHistory() for custom history
 
 // Cache-Variablen für LFX-Orders. Ihre Größe entspricht der Größe von lfxOrders[].
 // Dienen der Beschleunigung, um nicht ständig die LFX_ORDER-Getter aufrufen zu müssen.
-int     lfxOrders.iCache[][1];                                    // = [Ticket]
-bool    lfxOrders.bCache[][3];                                    // = [IsPendingOrder, IsOpenPosition, IsPendingPosition]
-double  lfxOrders.dCache[][7];                                    // = [OpenEquity, Profit, LastProfit, TP-Amount, TP-Percent, SL-Amount, SL-Percent]
-int     lfxOrders.pendingOrders;                                  // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
-int     lfxOrders.openPositions;                                  // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
-int     lfxOrders.pendingPositions;                               // Anzahl der offenen Positionen mit Exit-Limit: lo.IsPendingPosition() = 1
+int     lfxOrders.iCache[][1];                     // = [Ticket]
+bool    lfxOrders.bCache[][3];                     // = [IsPendingOrder, IsOpenPosition, IsPendingPosition]
+double  lfxOrders.dCache[][7];                     // = [OpenEquity, Profit, LastProfit, TP-Amount, TP-Percent, SL-Amount, SL-Percent]
+int     lfxOrders.pendingOrders;                   // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
+int     lfxOrders.openPositions;                   // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
+int     lfxOrders.pendingPositions;                // Anzahl der offenen Positionen mit Exit-Limit: lo.IsPendingPosition() = 1
 
-#define IC.ticket                   0                             // Arrayindizes für Cache-Arrays
+#define IC.ticket                   0              // Arrayindizes für Cache-Arrays
 
 #define BC.isPendingOrder           0
 #define BC.isOpenPosition           1
@@ -198,17 +198,17 @@ int     lfxOrders.pendingPositions;                               // Anzahl der 
 
 #define DC.openEquity               0
 #define DC.profit                   1
-#define DC.lastProfit               2                             // der letzte vorherige Profit-Wert, um PL-Aktionen nur bei Änderungen durchführen zu können
+#define DC.lastProfit               2              // der letzte vorherige Profit-Wert, um PL-Aktionen nur bei Änderungen durchführen zu können
 #define DC.takeProfitAmount         3
 #define DC.takeProfitPercent        4
 #define DC.stopLossAmount           5
 #define DC.stopLossPercent          6
 
-// text labels for the different chart infos
+// text labels for various chart objects
 string  label.instrument     = "";
 string  label.price          = "";
 string  label.spread         = "";
-string  label.customPosition = "";                                // base value create actual row + column labels
+string  label.customPosition = "";                 // base value for actual row + column labels
 string  label.totalPosition  = "";
 string  label.unitSize       = "";
 string  label.accountBalance = "";
@@ -228,17 +228,17 @@ color   positions.fontColor.open    = Blue;
 color   positions.fontColor.virtual = Green;
 color   positions.fontColor.history = C'128,128,0';
 
-// order tracking
-#define TI_TICKET          0                                      // order tracker indexes
-#define TI_ORDERTYPE       1
-#define TI_ENTRYLIMIT      2
-
-int     hWndDesktop;                                              // handle of the desktop main window (for listener registration)
-double  trackedOrders[][3];                                       // {ticket, orderType, openLimit}
-string  orderTracker.key = "";                                    // prefix for listener registration
+int     hWndDesktop;                               // handle of the desktop main window (for listener registration)
+double  trackedOrders[][3];                        // @see indexes of trackedOrders[]
+string  orderTracker.key = "";                     // prefix for listener registration
 string  orderTracker.orderFailed    = "speech/OrderCancelled.wav";
 string  orderTracker.positionOpened = "speech/OrderFilled.wav";
 string  orderTracker.positionClosed = "speech/PositionClosed.wav";
+
+// indexes of trackedOrders[]
+#define TI_TICKET          0
+#define TI_ORDERTYPE       1
+#define TI_ENTRYLIMIT      2
 
 // display flags
 bool    display.balance         = false;
@@ -911,7 +911,7 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
       ObjectSet(openLabel, OBJPROP_COLOR,     markerColors[type]);
       ObjectSet(openLabel, OBJPROP_TIME1,     openTime);
       ObjectSet(openLabel, OBJPROP_PRICE1,    openPrice);
-         if (positions.showAbsProfits || !openEquity) textOpen = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
+         if (positions.showAbsProfits || !openEquity) textOpen = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2) +" "+ AccountCurrency();
          else                                         textOpen = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
       ObjectSetText(openLabel, textOpen);
 
@@ -988,7 +988,7 @@ string OrderMarkerText(int type, int magic, string comment) {
 
 
 /**
- * Toggle PnL amounts of custom positions between "absolute" und "percentage".
+ * Toggle PnL amounts of custom positions between percentage and absolute money values.
  *
  * @return bool - success status
  */
@@ -1435,7 +1435,7 @@ bool UpdatePositions() {
    }
 
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
-   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMin="", sProfitMax="", sProfitMinMax="", sMaxRisk="", sComment="", markerValue="", markerText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
+   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMin="", sProfitMax="", sProfitMinMax="", sMaxRisk="", sComment="", markerText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
    color fontColor;
    int line, configLine, index;
 
@@ -1544,14 +1544,21 @@ bool UpdatePositions() {
          }
 
          // update PL markers
+         bool configAsPercent;
          label = StringConcatenate(label.customPosition, ".line", line, "_pm");
          if (!positions.data[i][I_PROFIT_MARKER_PRICE]) {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            if (_bool(positions.data[i][I_PROFIT_MARKER_AS_PCT])) markerValue = NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+") +"%";
-            else                                                  markerValue = DoubleToStr(positions.data[i][I_PROFIT_MARKER_MONEY], 2) +" "+ AccountCurrency();
-            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerValue);
+            configAsPercent = (positions.data[i][I_PROFIT_MARKER_AS_PCT] != 0);
+            // marker text with configured unit
+            if (configAsPercent) markerText = StringConcatenate(NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+"), "%");
+            else                 markerText = StringConcatenate(DoubleToStr(positions.data[i][I_PROFIT_MARKER_MONEY], 2), " ", AccountCurrency());
+            if (positions.showAbsProfits) {  // add the remaining unit
+               if (configAsPercent) markerText = StringConcatenate(markerText, " = ", DoubleToStr(positions.data[i][I_PROFIT_MARKER_MONEY], 2), " ", AccountCurrency());
+               else                 markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+"), "%");
+            }
+            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerText);
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet(label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet(label, OBJPROP_COLOR,      ifInt(positions.data[i][I_PROFIT_MARKER_MONEY] < 0, OrangeRed, DodgerBlue));
@@ -1565,9 +1572,15 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            if (_bool(positions.data[i][I_LOSS_MARKER_AS_PCT])) markerValue = NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+") +"%";
-            else                                                markerValue = DoubleToStr(positions.data[i][I_LOSS_MARKER_MONEY], 2) +" "+ AccountCurrency();
-            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerValue);
+            configAsPercent = (positions.data[i][I_LOSS_MARKER_AS_PCT] != 0);
+            // marker text with configured unit
+            if (configAsPercent) markerText = StringConcatenate(NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+"), "%");
+            else                 markerText = StringConcatenate(DoubleToStr(positions.data[i][I_LOSS_MARKER_MONEY], 2), " ", AccountCurrency());
+            if (positions.showAbsProfits) {  // add the remaining unit
+               if (configAsPercent) markerText = StringConcatenate(markerText, " = ", DoubleToStr(positions.data[i][I_LOSS_MARKER_MONEY], 2), " ", AccountCurrency());
+               else                 markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+"), "%");
+            }
+            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerText);
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet    (label, OBJPROP_COLOR,      ifInt(positions.data[i][I_LOSS_MARKER_MONEY] < 0, OrangeRed, DodgerBlue));
@@ -4884,9 +4897,8 @@ bool AnalyzePos.ProcessLfxProfits() {
 
 
 /**
- * Store runtime status.
- *  - in the chart:        for init cycles and terminal restart
- *  - in the chart window: for loading of templates
+ * Store runtime status in the chart (for init cycles and terminal restart) and in
+ * the chart window (for loading of new templates).
  *
  * @return bool - success status
  */
@@ -4944,7 +4956,7 @@ bool StoreStatus() {
 
 
 /**
- * Restore a stored runtime status.
+ * Restore the stored runtime status.
  *
  * @return bool - success status
  */
