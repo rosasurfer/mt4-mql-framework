@@ -152,11 +152,11 @@ string ReadFile(string filename) {
    int fileSize = FileSize(hFile);
    if (!fileSize) {
       FileClose(hFile);
-      return(_EMPTY_STR(catch("ReadFile(2)  invalid file "+ DoubleQuoteStr(filename) +" (size: 0)", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("ReadFile(2)  invalid file "+ DoubleQuoteStr(filename) +" (file size: 0)", ERR_RUNTIME_ERROR)));
    }
 
    string content="", chunk="";
-   int chunkSize = 4000;                              // MQL4.0 bug: FileReadString() stops reading after 4095 chars
+   int chunkSize = 4000;                              // MQL4.0 bug: FileReadString() stops reading after 4095 byte
 
    while (!FileIsEnding(hFile)) {
       chunk = FileReadString(hFile, chunkSize);
