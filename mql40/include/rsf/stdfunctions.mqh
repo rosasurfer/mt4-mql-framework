@@ -3355,7 +3355,7 @@ bool CreateDirectory(string path, int flags = MODE_SYSTEM) {
 string GetMqlSandboxPath() {
    static string path = "";
    if (!StringLen(path)) {                      // no direct comparison due to MT4 static string bug:
-      path = GetMqlSandboxPathA(__isTesting);   // in library::deinit() strings are released too early 
+      path = GetMqlSandboxPathA(__isTesting);   // in library::deinit() strings are released too early
    }
    return(path);
 }
@@ -4741,7 +4741,7 @@ string GetAccountCompanyId() {
 
    string server = GetAccountServer(); if (server == "") return("");
    if (StringLen(lastServer) > 0) {             // no direct comparison due to MT4 static string bug:
-      if (server == lastServer) return(lastId); // in library::deinit() strings are released too early 
+      if (server == lastServer) return(lastId); // in library::deinit() strings are released too early
    }
 
    string mapping = GetUserConfigString("AccountCompanies", server);
@@ -5404,7 +5404,9 @@ int StrToOperationType(string value) {
          str = StrSubstr(str, 3);
       }
       if (str == "buy"       ) return(OP_BUY);
+      if (str == "long"      ) return(OP_BUY);
       if (str == "sell"      ) return(OP_SELL);
+      if (str == "short"     ) return(OP_SELL);
 
       if (str == "buylimit"  ) return(OP_BUY_LIMIT);
       if (str == "buy-limit" ) return(OP_BUY_LIMIT);

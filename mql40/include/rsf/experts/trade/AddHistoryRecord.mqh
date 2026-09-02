@@ -1,6 +1,6 @@
 /**
- * Add a trade record to history[] or partialClose[] array. Records are ordered ascending by {OpenTime, Ticket} and the record
- * is inserted at the correct position. No data is overwritten.
+ * Add a trade record to the history[] or partialClose[] array. Records are ordered ascending by {OpenTime, Ticket} and
+ * the record is inserted at the correct position. No data is overwritten.
  *
  * @param  int      ticket
  * @param  int      fromTicket
