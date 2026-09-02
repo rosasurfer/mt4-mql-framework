@@ -104,7 +104,7 @@
    string   CreateTempFile(string path, string prefix="");
    string   GetTempPath();
    int      FindFileNames(string pattern, string results[], int flags);
-   int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
+   int      FileReadLines(string filename, string &lines[], bool skipEmptyLines);
    bool     EditFile(string filename);
    bool     EditFiles(string filenames[]);
 

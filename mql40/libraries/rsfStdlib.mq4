@@ -2600,23 +2600,23 @@ int WinExecWait(string cmdLine, int cmdShow) {
 
 
 /**
- * Read a file into an array. Each element of the array will hold a line of the file, with the end-of-line separator removed.
+ * Read a file into an array. Each element of the array will hold a single line, with end-of-line separators removed.
  *
- * @param  string filename                  - name relative to "{data-directory}\mql4\files" with "\" or "/" separators
- * @param  string result[]                  - array receiving the read lines
- * @param  bool   skipEmptyLines [optional] - whether to skip empty lines (default: no)
+ * @param  _In_  string filename                  - name relative to "{data-directory}\mql4\files" with "\" or "/" separators
+ * @param  _Out_ string result[]                  - array receiving the read lines
+ * @param  _In_  bool   skipEmptyLines [optional] - whether to skip empty lines (default: no)
  *
  * @return int - number of lines stored in result[] or EMPTY (-1) in case of errors
  */
-int FileReadLines(string filename, string result[], bool skipEmptyLines = false) {
-   skipEmptyLines = skipEmptyLines!=0;
+int FileReadLines(string filename, string &result[], bool skipEmptyLines = false) {
+   skipEmptyLines = (skipEmptyLines != 0);
    ArrayResize(result, 0);
 
    int hFile, hFileBin, fieldSeparator='\t';
 
    // open the file
    hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);
-   if (hFile < 0) return(_EMPTY(catch("FileReadLines(1)->FileOpen(\""+ filename +"\")")));
+   if (hFile < 0) return(_EMPTY(catch("FileReadLines(1)->FileOpen(\""+ filename +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
 
    // quick return on an empty file
    if (!FileSize(hFile)) {
@@ -2626,28 +2626,29 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
    // read file line by line
    bool newLine=true, blankLine=false, lineEnd=true, wasSeparator;
-   string line="", value="", lines[]; ArrayResize(lines, 0);      // cache for read lines
-   int i, len, fPointer;                                          // line counter and length of the read string
+   string line="", value="", lines[];
+   ArrayResize(lines, 0);
+   int i, len, fPosition;                             // line counter and length of the read string
 
    while (!FileIsEnding(hFile)) {
       newLine = false;
-      if (lineEnd) {                                              // if the last loop reached EOF
-         newLine   = true;                                        // mark begin of a new line = BOL
+      if (lineEnd) {                                  // if the last loop reached EOF
+         newLine   = true;                            // mark begin of a new line = BOL
          blankLine = false;
          lineEnd   = false;
-         fPointer  = FileTell(hFile);                             // points to the start of the current line
+         fPosition = FileTell(hFile);                 // points to the start of the current line
       }
 
       // read line
-      value = FileReadString(hFile);                              // MQL4.0 bug: FileReadString() stops reading after 4095 chars
+      value = FileReadString(hFile);                  // MQL4.0 bug: FileReadString() stops reading after 4095 bytes
 
       // check for EOL and EOF
       if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
          lineEnd  = true;
          if (newLine) {
             if (!StringLen(value)) {
-               if (FileIsEnding(hFile)) break;                    // BOL + EOF => not a line => break
-               blankLine = true;                                  // BOL + EOL => empty line
+               if (FileIsEnding(hFile)) break;        // BOL + EOF => not a line => break
+               blankLine = true;                      // BOL + EOL => empty line
             }
          }
       }
@@ -2662,7 +2663,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
          lines[i-1] = value;
       }
       else {
-         // FileReadString() reads max. 4095 chars: check longer lines for a separator
+         // FileReadString() reads max. 4095 bytes: check longer lines for a separator
          len = StringLen(lines[i-1]);
          if (len < 4095) {
             wasSeparator = true;
@@ -2672,13 +2673,13 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
                hFileBin = FileOpen(filename, FILE_BIN|FILE_READ);
                if (hFileBin < 0) {
                   FileClose(hFile);
-                  return(_EMPTY(catch("FileReadLines(3)->FileOpen(\""+ filename +"\")")));
+                  return(_EMPTY(catch("FileReadLines(3)->FileOpen(\""+ filename +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
                }
             }
-            if (!FileSeek(hFileBin, fPointer+len, SEEK_SET)) {
+            if (!FileSeek(hFileBin, fPosition+len, SEEK_SET)) {
                FileClose(hFile);
                FileClose(hFileBin);
-               return(_EMPTY(catch("FileReadLines(4)->FileSeek(hFileBin, "+ (fPointer+len) +", SEEK_SET)", GetLastError())));
+               return(_EMPTY(catch("FileReadLines(4)->FileSeek(hFileBin, "+ (fPosition+len) +", SEEK_SET)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
             }
             wasSeparator = (fieldSeparator == FileReadInteger(hFileBin, CHAR_VALUE));
          }
@@ -2688,7 +2689,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
       }
    }
 
-   // check whether the end of file triggered ERR_END_OF_FILE
+   // check whether end of file triggered ERR_END_OF_FILE
    int error = GetLastError();
    if (error && error!=ERR_END_OF_FILE) {
       FileClose(hFile);
@@ -2703,7 +2704,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
    // copy read lines into result[] array
    ArrayResize(result, i);
    if (i > 0) ArrayCopy(result, lines);
-   if (ArraySize(lines) > 0) ArrayResize(lines, 0);               // free allocated memory
+   ArrayResize(lines, 0);                             // free allocated memory
 
    if (!catch("FileReadLines(6)"))
       return(i);
