@@ -71,18 +71,18 @@ int onInit() {
    }
 
    // reset the command handler
-   string sValues[];
-   GetChartCommand("", sValues);
+   string sNull[];
+   GetChartCommand("", sNull);
 
    // parse the specified file
    int initReason = ProgramInitReason();
    if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE || initReason==IR_SYMBOLCHANGE) {
       if (ValidateInputs()) {
          string content = ReadFile(HtmlFilename);
-         if (content == "") return(last_error);
-         ParseFileContent(content);
+         if (content == "")              return(last_error);
+         if (!ParseFileContent(content)) return(last_error);
 
-         // delete existing trades and show current ones
+         // hide existing trade markers and show imported trades
          status.showTradeHistory = true;
          if (ToggleTradeHistory(false)) {
             ToggleTradeHistory(true);
@@ -155,7 +155,7 @@ string ReadFile(string filename) {
       return(_EMPTY_STR(catch("ReadFile(2)  invalid file "+ DoubleQuoteStr(filename) +" (file size: 0)", ERR_RUNTIME_ERROR)));
    }
 
-   string content="", chunk="";
+   string content = "", chunk = "";
    int chunkSize = 4000;                              // MQL4.0 bug: FileReadString() stops reading after 4095 byte
 
    while (!FileIsEnding(hFile)) {
