@@ -71,11 +71,11 @@ int onInit() {
    int initReason = ProgramInitReason();
    if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE || initReason==IR_SYMBOLCHANGE) {
       if (ValidateInputs()) {
-         string content = ReadFile(CsvFileName);
-         if (content == "") return(last_error);
-         ParseFileContent(content);
+         string lines[];
+         if (!ReadFile(CsvFileName, lines)) return(last_error);
+         if (!ParseLines(lines))            return(last_error);
 
-         // delete existing trades and show current ones
+         // hide existing trade markers and show imported trades
          status.showTradeHistory = true;
          if (ToggleTradeHistory(false)) {
             ToggleTradeHistory(true);
@@ -134,47 +134,66 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Read the specified file into a string.
+ * Read the specified file into an array of lines.
  *
- * @param  string fileName
+ * @param  _In_  string fileName
+ * @param  _Out_ string lines[]
  *
- * @return string - file content or an empty string in case of errors
+ * @return bool - success status
  */
-string ReadFile(string fileName) {
-   int hFile = FileOpen(fileName, FILE_BIN|FILE_READ);
-   if (hFile <= 0) return(_EMPTY_STR(catch("ReadFile(1)->FileOpen("+ DoubleQuoteStr(fileName) +") failed", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
-
-   int fileSize = FileSize(hFile);
-   if (!fileSize) {
-      FileClose(hFile);
-      return(_EMPTY_STR(catch("ReadFile(2)  invalid file "+ DoubleQuoteStr(fileName) +" (file size: 0)", ERR_RUNTIME_ERROR)));
-   }
-
-   string content="", chunk="";
-   int chunkSize = 4000;                              // MQL4.0 bug: FileReadString() stops reading after 4095 byte
-
-   while (!FileIsEnding(hFile)) {
-      chunk = FileReadString(hFile, chunkSize);
-      content = StringConcatenate(content, chunk);
-   }
-   FileClose(hFile);
-
-   int error = GetLastError();
-   if (error && error!=ERR_END_OF_FILE) return(_EMPTY_STR(catch("ReadFile(3)", error)));
-   if (fileSize != StringLen(content))  return(_EMPTY_STR(catch("ReadFile(4)  error reading file, size="+ fileSize +" vs. read-bytes="+ StringLen(content), ERR_FILE_READ_ERROR)));
-
-   return(content);
+bool ReadFile(string fileName, string &lines[]) {
+   int size = FileReadLines(fileName, lines, false);
+   if (size < 0)  return(false);
+   if (size == 0) return(!catch("ReadFile(1)  invalid file "+ DoubleQuoteStr(fileName) +" (empty)", ERR_RUNTIME_ERROR));
+   return(true);
 }
 
 
 /**
- * Parse the passed file content.
+ * Parse the lines of the CSV file.
  *
- * @param  string content - file content
+ * @param  string lines[]
  *
  * @return bool - success status
  */
-bool ParseFileContent(string content) {
+bool ParseLines(string lines[]) {
+   int size = ArraySize(lines);
+   if (!size) return(!catch("ParseLines(1)  invalid parameter lines[]: empty", ERR_INVALID_FILE_FORMAT));
+
+   string sValues[], line = "", csvHeader = "Id,ContractName,EnteredAt,ExitedAt,EntryPrice,ExitPrice,Fees,PnL,Size,Type,TradeDay,TradeDuration,Commissions";
+   int cols = 13;
+
+   for (int i=0; i < size; i++) {
+      line = StrTrim(lines[i]);
+
+      // validate file format
+      if (i == 0) {
+         if (StrStartsWith(line, "﻿")) {        // remove an existing UTF-8 BOM header
+            line = StrSubstr(line, 3);
+         }
+         if (!StrCompareI(line, csvHeader)) return(!catch("ParseLines(2)  invalid file format: TopStep CSV header not found", ERR_INVALID_FILE_FORMAT));
+         continue;
+      }
+      if (line == "") continue;                // skip empty lines
+
+      // split line into columns
+      int foundCols = Explode(line, ",", sValues, NULL);
+      if (foundCols != cols) return(!catch("ParseLines(3)  invalid file format in line "+ (i+1) +": found "+ foundCols +" cols (expected "+ cols +")", ERR_INVALID_FILE_FORMAT));
+
+      // Id
+      // ContractName
+      // EnteredAt
+      // ExitedAt
+      // EntryPrice
+      // ExitPrice
+      // Fees
+      // PnL
+      // Size
+      // Type
+      // TradeDay: skip
+      // TradeDuration: skip
+      // Commissions
+   }
    return(true);
 }
 
