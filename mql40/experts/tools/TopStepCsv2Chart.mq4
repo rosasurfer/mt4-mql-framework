@@ -157,44 +157,220 @@ bool ReadFile(string fileName, string &lines[]) {
  * @return bool - success status
  */
 bool ParseLines(string lines[]) {
-   int size = ArraySize(lines);
-   if (!size) return(!catch("ParseLines(1)  invalid parameter lines[]: empty", ERR_INVALID_FILE_FORMAT));
+   int sizeLines = ArraySize(lines);
+   if (!sizeLines) return(!catch("ParseLines(1)  invalid parameter lines[]: empty", ERR_INVALID_FILE_FORMAT));
 
-   string sValues[], line = "", csvHeader = "Id,ContractName,EnteredAt,ExitedAt,EntryPrice,ExitPrice,Fees,PnL,Size,Type,TradeDay,TradeDuration,Commissions";
-   int cols = 13;
+   debug("ParseLines(0.1)  found "+ sizeLines +" lines");
 
-   for (int i=0; i < size; i++) {
-      line = StrTrim(lines[i]);
+   // define file format
+   string csvHeader = "Id,ContractName,EnteredAt,ExitedAt,EntryPrice,ExitPrice,Fees,PnL,Size,Type,TradeDay,TradeDuration,Commissions";
+   int sizeCols = 13;
 
-      // validate file format
+   #define I_TICKET            0    // Id
+   #define I_SYMBOL            1    // ContractName
+   #define I_OPENTIME          2    // EnteredAt (with TZ offset)
+   #define I_CLOSETIME         3    // ExitedAt (with TZ offset)
+   #define I_OPENPRICE         4    // EntryPrice
+   #define I_CLOSEPRICE        5    // ExitPrice
+   #define I_FEE               6    // Fees (absolute value)
+   #define I_PROFIT            7    // PnL
+   #define I_LOTS              8    // Size
+   #define I_TYPE              9    // Type
+   #define I_TRADE_DAY        10    // TradeDay (skipped)
+   #define I_TRADE_DURATION   11    // TradeDuration (skipped)
+   #define I_COMMISSION       12    // Commissions (absolute value)
+
+   // parse lines
+   for (int i=0; i < sizeLines; i++) {
+      string line = StrTrim(lines[i]), cols[];
+
+      // validate file header
       if (i == 0) {
-         if (StrStartsWith(line, "﻿")) {        // remove an existing UTF-8 BOM header
-            line = StrSubstr(line, 3);
+         if (StrStartsWith(line, UTF8_BOM)) {            // remove an existing UTF-8 BOM
+            line = StrSubstr(line, StringLen(UTF8_BOM));
          }
          if (!StrCompareI(line, csvHeader)) return(!catch("ParseLines(2)  invalid file format: TopStep CSV header not found", ERR_INVALID_FILE_FORMAT));
          continue;
       }
-      if (line == "") continue;                // skip empty lines
+      if (line == "") continue;                          // skip empty lines
 
-      // split line into columns
-      int foundCols = Explode(line, ",", sValues, NULL);
-      if (foundCols != cols) return(!catch("ParseLines(3)  invalid file format in line "+ (i+1) +": found "+ foundCols +" cols (expected "+ cols +")", ERR_INVALID_FILE_FORMAT));
+      // split line into columns and parse cells
+      int foundCols = Explode(line, ",", cols, NULL);
+      if (foundCols != sizeCols) return(!catch("ParseLines(3)  invalid file format in line "+ (i+1) +": found "+ foundCols +" cols (expected "+ sizeCols +")", ERR_INVALID_FILE_FORMAT));
 
-      // Id
-      // ContractName
-      // EnteredAt
-      // ExitedAt
-      // EntryPrice
-      // ExitPrice
-      // Fees
-      // PnL
-      // Size
-      // Type
-      // TradeDay: skip
-      // TradeDuration: skip
-      // Commissions
+      // ticket
+      string sTicket = StrTrim(cols[I_TICKET]);
+      if (!StrIsDigits(sTicket)) return(!catch("ParseLines(4)  invalid ticket in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
+      int ticket = StrToInteger(sTicket);
+      if (!ticket)               return(!catch("ParseLines(5)  invalid ticket in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
+
+      // symbol
+      string symbol = StrTrim(cols[I_SYMBOL]);
+      if (symbol == "")          return(!catch("ParseLines(6)  invalid symbol in line "+ (i+1) +": \"\" (empty)", ERR_INVALID_FILE_FORMAT));
+
+      // type
+      string sType = StrToLower(StrTrim(cols[I_TYPE]));
+      if      (sType == "long") int type = OP_BUY;
+      else if (sType == "short")    type = OP_SELL;
+      else                       return(!catch("ParseLines(7)  invalid trade type in line "+ (i+1) +": "+ DoubleQuoteStr(sType), ERR_INVALID_FILE_FORMAT));
+
+      // lots
+      string sLots = StrTrim(cols[I_LOTS]);
+      if (!StrIsDigits(sLots))   return(!catch("ParseLines(8)  invalid amount of traded contracts in line "+ (i+1) +": "+ DoubleQuoteStr(sLots), ERR_INVALID_FILE_FORMAT));
+      int lots = StrToInteger(sLots);
+      if (!lots)                 return(!catch("ParseLines(9)  invalid amount of traded contracts in line "+ (i+1) +": "+ DoubleQuoteStr(sLots), ERR_INVALID_FILE_FORMAT));
+
+      // --- validation done ------------------------------------------------------------------------------------------------
+
+
+
+      // openTime: 08/31/2026 02:13:26 +03:00
+      string sOpenTime = StrTrim(cols[I_OPENTIME]);
+      datetime openTime;
+
+      // closeTime: 08/31/2026 02:13:26 +03:00
+      string sCloseTime = StrTrim(cols[I_CLOSETIME]);
+      datetime closeTime;
+
+      // openPrice
+      string sOpenPrice = StrTrim(cols[I_OPENPRICE]);
+      double openPrice;
+
+      // closePrice
+      string sClosePrice = StrTrim(cols[I_CLOSEPRICE]);
+      double closePrice;
+
+      // profit
+      string sProfit = StrTrim(cols[I_PROFIT]);
+      double profit;
+
+      // commission (absolute value)
+      string sCommission = StrTrim(cols[I_COMMISSION]);
+      double commission;
+
+      // fee (absolute value)
+      string sFee = StrTrim(cols[I_FEE]);
+      double fee;
+
+      // add history record if the row belongs to the mapped symbol
+      if (symbol == MapSymbol) {
+         if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, commission+fee, profit, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
+      }
    }
    return(true);
+}
+
+
+/**
+ * Parse and validate a datetime string in format "08/31/2026 02:30:46 +03:00".
+ * Without a timezone offset GMT time (offset +00:00) is assumed.
+ *
+ * @param  string value - datetime string to parse
+ * @param  int    line  - CSV line containing the string (for error messages)
+ *
+ * @return datetime - GMT timestamp or NaT (Not-A-Time) in case of errors
+ */
+datetime ParseDateTimeEx(string value, int line) {
+   string sValue, sValues[], sDate, sYY, sMM, sDD, sTime, sHH, sII, sSS, sOffsetHH, sOffsetII;
+   string sError = "unsupported datetime format in line "+ line +": "+ DoubleQuoteStr(value);
+   int size, iYY, iMM, iDD, iHH, iII, iSS, iTzOffset, iOffsetHH, iOffsetII, chr;
+
+   value = StrTrim(value);
+
+   // explode words by " " (space)
+   size = Explode(value, " ", sValues, NULL);
+   if (size < 2 || size > 3)                return(_NaT(catch("ParseDateTimeEx(1)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   sDate = sValues[0];
+   sTime = sValues[1];
+
+   // parse timezone offset: +03:00
+   if (size == 3) {
+      sValue = sValues[2];
+      if (StringLen(sValue) != 6)           return(_NaT(catch("ParseDateTimeEx(2)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      chr = StringGetChar(sValue, 0);
+      if (chr != '+' && chr != '-')         return(_NaT(catch("ParseDateTimeEx(3)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+      if (StringGetChar(sValue, 3) != ':')  return(_NaT(catch("ParseDateTimeEx(4)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+      sOffsetHH = StrSubstr(sValue, 1, 2);
+      if (!StrIsDigits(sOffsetHH))          return(_NaT(catch("ParseDateTimeEx(5)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      iOffsetHH = StrToInteger(sOffsetHH);
+      if (iOffsetHH > 14)                   return(_NaT(catch("ParseDateTimeEx(6)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+      sOffsetII = StrSubstr(sValue, 4, 2);
+      if (!StrIsDigits(sOffsetII))          return(_NaT(catch("ParseDateTimeEx(7)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      iOffsetII = StrToInteger(sOffsetII);
+      if (iOffsetII > 45)                   return(_NaT(catch("ParseDateTimeEx(8)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (iOffsetII % 15 != 0)              return(_NaT(catch("ParseDateTimeEx(9)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (iOffsetHH == 14 && iOffsetII > 0) return(_NaT(catch("ParseDateTimeEx(10)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+      iTzOffset = iOffsetHH * HOURS + iOffsetII * MINUTES;
+      if (chr == '+') iTzOffset = -iTzOffset;
+   }
+
+   // parse date: "08/31/2026"
+   size = Explode(sDate, "/", sValues, NULL);
+   if (size != 3)                           return(_NaT(catch("ParseDateTimeEx(11)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+   sYY = sValues[2];
+   if (StringLen(sYY) != 4)                 return(_NaT(catch("ParseDateTimeEx(11)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (!StrIsDigits(sYY))                   return(_NaT(catch("ParseDateTimeEx(11)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   iYY = StrToInteger(sYY);
+   if (iYY < 1970 || iYY > 2037)            return(_NaT(catch("ParseDateTimeEx(11)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+   sMM = sValues[0];
+   if (StringLen(sMM) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (!StrIsDigits(sMM))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   iMM = StrToInteger(sMM);
+   if (iMM < 1 || iMM > 12)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+   sDD = sValues[1];
+   if (StringLen(sDD) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (!StrIsDigits(sDD))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   iDD = StrToInteger(sDD);
+   if (iDD < 1 || iDD > 31)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (iDD > 28) {
+      if (iMM == FEB) {
+         if (iDD > 29)                      return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+         if (!IsLeapYear(iYY))              return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      }
+      else if (iDD == 31) {
+         switch (iMM) {
+            case APR:
+            case JUN:
+            case SEP:
+            case NOV:                       return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+         }
+      }
+   }
+
+   // parse time: "02:30:46"
+   size = Explode(sTime, ":", sValues, NULL);
+   if (size != 3)                           return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+   sHH = sValues[0];
+   if (StringLen(sHH) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (!StrIsDigits(sHH))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   iHH = StrToInteger(sHH);
+   if (iHH < 0 || iHH > 23)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+   sII = sValues[1];
+   if (StringLen(sII) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (!StrIsDigits(sII))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   iII = StrToInteger(sII);
+   if (iII < 0 || iII > 59)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+   sSS = sValues[2];
+   if (StringLen(sSS) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (!StrIsDigits(sSS))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   iSS = StrToInteger(sSS);
+   if (iSS < 0 || iSS > 59)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+
+   // create datetime
+   datetime result = DateTime1(iYY, iMM, iDD, iHH, iII, iSS);
+
+   // add timezone offset
+   return(result + iTzOffset);
 }
 
 
@@ -216,7 +392,9 @@ bool ValidateInputs() {
    CsvFileName = fileName;
 
    // MapSymbol
-   MapSymbol = StrToUpper(StrTrim(MapSymbol));
+   string symbol = StrTrim(MapSymbol);
+   if (symbol == "") symbol = Symbol();
+   MapSymbol = StrToUpper(symbol);
 
    return(!catch("ValidateInputs(3)"));
 }
