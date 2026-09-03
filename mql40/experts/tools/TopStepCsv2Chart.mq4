@@ -172,7 +172,7 @@ bool ParseLines(string lines[]) {
    #define I_CLOSETIME         3    // ExitedAt (with TZ offset)
    #define I_OPENPRICE         4    // EntryPrice
    #define I_CLOSEPRICE        5    // ExitPrice
-   #define I_FEE               6    // Fees (absolute value)
+   #define I_FEE               6    // Fees (exchange fee, absolute value)
    #define I_PROFIT            7    // PnL
    #define I_LOTS              8    // Size
    #define I_TYPE              9    // Type
@@ -180,81 +180,92 @@ bool ParseLines(string lines[]) {
    #define I_TRADE_DURATION   11    // TradeDuration (skipped)
    #define I_COMMISSION       12    // Commissions (absolute value)
 
+   string line, cols[], sTicket, symbol, sType, sLots, sOpenTime, sCloseTime, sOpenPrice, sClosePrice, sProfit, sCommission, sFee;
+   int foundCols, ticket, type, lots;
+   datetime openTime, closeTime;
+   double openPrice, closePrice, profit, commission, fee, totalCosts;
+
    // parse lines
    for (int i=0; i < sizeLines; i++) {
-      string line = StrTrim(lines[i]), cols[];
+      line = StrTrim(lines[i]);
 
       // validate file header
       if (i == 0) {
-         if (StrStartsWith(line, UTF8_BOM)) {            // remove an existing UTF-8 BOM
+         if (StrStartsWith(line, UTF8_BOM)) {           // remove an existing UTF-8 BOM
             line = StrSubstr(line, StringLen(UTF8_BOM));
          }
-         if (!StrCompareI(line, csvHeader)) return(!catch("ParseLines(2)  invalid file format: TopStep CSV header not found", ERR_INVALID_FILE_FORMAT));
+         if (!StrCompareI(line, csvHeader))             return(!catch("ParseLines(2)  unsupported file format: TopStep CSV header not found", ERR_INVALID_FILE_FORMAT));
          continue;
       }
-      if (line == "") continue;                          // skip empty lines
+      if (line == "") continue;                         // skip empty lines
 
       // split line into columns and parse cells
-      int foundCols = Explode(line, ",", cols, NULL);
-      if (foundCols != sizeCols) return(!catch("ParseLines(3)  invalid file format in line "+ (i+1) +": found "+ foundCols +" cols (expected "+ sizeCols +")", ERR_INVALID_FILE_FORMAT));
+      foundCols = Explode(line, ",", cols, NULL);
+      if (foundCols != sizeCols)                        return(!catch("ParseLines(3)  unsupported file format in line "+ (i+1) +": found "+ foundCols +" data cells (expected "+ sizeCols +")", ERR_INVALID_FILE_FORMAT));
 
       // ticket
-      string sTicket = StrTrim(cols[I_TICKET]);
-      if (!StrIsDigits(sTicket)) return(!catch("ParseLines(4)  invalid ticket in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
-      int ticket = StrToInteger(sTicket);
-      if (!ticket)               return(!catch("ParseLines(5)  invalid ticket in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
+      sTicket = StrTrim(cols[I_TICKET]);
+      if (!StrIsDigits(sTicket))                        return(!catch("ParseLines(4)  unexpected format of field \"Id\" in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
+      ticket = StrToInteger(sTicket);
+      if (!ticket)                                      return(!catch("ParseLines(5)  invalid field \"Id\" in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
 
       // symbol
-      string symbol = StrTrim(cols[I_SYMBOL]);
-      if (symbol == "")          return(!catch("ParseLines(6)  invalid symbol in line "+ (i+1) +": \"\" (empty)", ERR_INVALID_FILE_FORMAT));
+      symbol = StrTrim(cols[I_SYMBOL]);
+      if (symbol == "")                                 return(!catch("ParseLines(6)  invalid field \"ContractName\" in line "+ (i+1) +": \"\" (empty)", ERR_INVALID_FILE_FORMAT));
 
       // type
-      string sType = StrToLower(StrTrim(cols[I_TYPE]));
-      if      (sType == "long") int type = OP_BUY;
-      else if (sType == "short")    type = OP_SELL;
-      else                       return(!catch("ParseLines(7)  invalid trade type in line "+ (i+1) +": "+ DoubleQuoteStr(sType), ERR_INVALID_FILE_FORMAT));
+      sType = StrToLower(StrTrim(cols[I_TYPE]));
+      if      (sType == "long")  type = OP_BUY;
+      else if (sType == "short") type = OP_SELL;
+      else                                              return(!catch("ParseLines(7)  unexpected format of field \"Type\" in line "+ (i+1) +": "+ DoubleQuoteStr(sType), ERR_INVALID_FILE_FORMAT));
 
       // lots
-      string sLots = StrTrim(cols[I_LOTS]);
-      if (!StrIsDigits(sLots))   return(!catch("ParseLines(8)  invalid amount of traded contracts in line "+ (i+1) +": "+ DoubleQuoteStr(sLots), ERR_INVALID_FILE_FORMAT));
-      int lots = StrToInteger(sLots);
-      if (!lots)                 return(!catch("ParseLines(9)  invalid amount of traded contracts in line "+ (i+1) +": "+ DoubleQuoteStr(sLots), ERR_INVALID_FILE_FORMAT));
-
-      // --- validation done ------------------------------------------------------------------------------------------------
-
-
+      sLots = StrTrim(cols[I_LOTS]);
+      if (!StrIsDigits(sLots))                          return(!catch("ParseLines(8)  unexpected format of field \"Size\" in line "+ (i+1) +": "+ DoubleQuoteStr(sLots), ERR_INVALID_FILE_FORMAT));
+      lots = StrToInteger(sLots);
+      if (!lots)                                        return(!catch("ParseLines(9)  invalid field \"Size\" in line "+ (i+1) +": "+ DoubleQuoteStr(sLots), ERR_INVALID_FILE_FORMAT));
 
       // openTime: 08/31/2026 02:13:26 +03:00
-      string sOpenTime = StrTrim(cols[I_OPENTIME]);
-      datetime openTime;
+      sOpenTime = StrTrim(cols[I_OPENTIME]);
+      if (!ParseTopStepDateTime(sOpenTime, openTime))   return(!catch("ParseLines(10)  unexpected format of field \"EnteredAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
 
       // closeTime: 08/31/2026 02:13:26 +03:00
-      string sCloseTime = StrTrim(cols[I_CLOSETIME]);
-      datetime closeTime;
+      sCloseTime = StrTrim(cols[I_CLOSETIME]);
+      if (!ParseTopStepDateTime(sCloseTime, closeTime)) return(!catch("ParseLines(11)  unexpected format of field \"ExitedAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
 
       // openPrice
-      string sOpenPrice = StrTrim(cols[I_OPENPRICE]);
-      double openPrice;
+      sOpenPrice = StrTrim(cols[I_OPENPRICE]);
+      if (!StrIsNumeric(sOpenPrice))                    return(!catch("ParseLines(12)  unexpected format of field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
+      openPrice = StrToDouble(sOpenPrice);
+      if (openPrice <= 0)                               return(!catch("ParseLines(13)  invalid field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
 
       // closePrice
-      string sClosePrice = StrTrim(cols[I_CLOSEPRICE]);
-      double closePrice;
+      sClosePrice = StrTrim(cols[I_CLOSEPRICE]);
+      if (!StrIsNumeric(sClosePrice))                    return(!catch("ParseLines(14)  unexpected format of field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      closePrice = StrToDouble(sClosePrice);
+      if (closePrice <= 0)                               return(!catch("ParseLines(15)  invalid field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
 
       // profit
-      string sProfit = StrTrim(cols[I_PROFIT]);
-      double profit;
+      sProfit = StrTrim(cols[I_PROFIT]);
+      if (!StrIsNumeric(sProfit))                        return(!catch("ParseLines(16)  unexpected format of field \"PnL\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      profit = StrToDouble(sProfit);
 
       // commission (absolute value)
-      string sCommission = StrTrim(cols[I_COMMISSION]);
-      double commission;
+      sCommission = StrTrim(cols[I_COMMISSION]);
+      if (!StrIsNumeric(sCommission))                    return(!catch("ParseLines(17)  unexpected format of field \"Commissions\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      commission = StrToDouble(sCommission);
+      commission = -MathAbs(commission);
 
-      // fee (absolute value)
-      string sFee = StrTrim(cols[I_FEE]);
-      double fee;
+      // exchange fee (absolute value)
+      sFee = StrTrim(cols[I_FEE]);
+      if (!StrIsNumeric(sFee))                           return(!catch("ParseLines(18)  unexpected format of field \"Fees\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      fee = StrToDouble(sFee);
+      fee = -MathAbs(fee);
+      totalCosts = commission + fee;
 
       // add history record if the row belongs to the mapped symbol
       if (symbol == MapSymbol) {
-         if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, commission+fee, profit, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
+         if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCosts, profit, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
       }
    }
    return(true);
@@ -262,47 +273,46 @@ bool ParseLines(string lines[]) {
 
 
 /**
- * Parse and validate a datetime string in format "08/31/2026 02:30:46 +03:00".
+ * Parse and validate a TopStep datetime string. Format: "08/31/2026 02:30:46 +03:00"
  * Without a timezone offset GMT time (offset +00:00) is assumed.
  *
- * @param  string value - datetime string to parse
- * @param  int    line  - CSV line containing the string (for error messages)
+ * @param  _In_  string   sDateTime - datetime string to parse
+ * @param  _Out_ datetime timestamp - parsed datetime string
  *
- * @return datetime - GMT timestamp or NaT (Not-A-Time) in case of errors
+ * @return bool - success status
  */
-datetime ParseDateTimeEx(string value, int line) {
+datetime ParseTopStepDateTime(string sDateTime, datetime &timestamp) {
    string sValue, sValues[], sDate, sYY, sMM, sDD, sTime, sHH, sII, sSS, sOffsetHH, sOffsetII;
-   string sError = "unsupported datetime format in line "+ line +": "+ DoubleQuoteStr(value);
    int size, iYY, iMM, iDD, iHH, iII, iSS, iTzOffset, iOffsetHH, iOffsetII, chr;
 
-   value = StrTrim(value);
+   sDateTime = StrTrim(sDateTime);
 
    // explode words by " " (space)
-   size = Explode(value, " ", sValues, NULL);
-   if (size < 2 || size > 3)                return(_NaT(catch("ParseDateTimeEx(1)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   size = Explode(sDateTime, " ", sValues, NULL);
+   if (size < 2 || size > 3)                return(false);
    sDate = sValues[0];
    sTime = sValues[1];
 
    // parse timezone offset: +03:00
    if (size == 3) {
       sValue = sValues[2];
-      if (StringLen(sValue) != 6)           return(_NaT(catch("ParseDateTimeEx(2)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (StringLen(sValue) != 6)           return(false);
       chr = StringGetChar(sValue, 0);
-      if (chr != '+' && chr != '-')         return(_NaT(catch("ParseDateTimeEx(3)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (chr != '+' && chr != '-')         return(false);
 
-      if (StringGetChar(sValue, 3) != ':')  return(_NaT(catch("ParseDateTimeEx(4)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (StringGetChar(sValue, 3) != ':')  return(false);
 
       sOffsetHH = StrSubstr(sValue, 1, 2);
-      if (!StrIsDigits(sOffsetHH))          return(_NaT(catch("ParseDateTimeEx(5)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (!StrIsDigits(sOffsetHH))          return(false);
       iOffsetHH = StrToInteger(sOffsetHH);
-      if (iOffsetHH > 14)                   return(_NaT(catch("ParseDateTimeEx(6)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (iOffsetHH > 14)                   return(false);
 
       sOffsetII = StrSubstr(sValue, 4, 2);
-      if (!StrIsDigits(sOffsetII))          return(_NaT(catch("ParseDateTimeEx(7)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (!StrIsDigits(sOffsetII))          return(false);
       iOffsetII = StrToInteger(sOffsetII);
-      if (iOffsetII > 45)                   return(_NaT(catch("ParseDateTimeEx(8)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-      if (iOffsetII % 15 != 0)              return(_NaT(catch("ParseDateTimeEx(9)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-      if (iOffsetHH == 14 && iOffsetII > 0) return(_NaT(catch("ParseDateTimeEx(10)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+      if (iOffsetII > 45)                   return(false);
+      if (iOffsetII % 15 != 0)              return(false);
+      if (iOffsetHH == 14 && iOffsetII > 0) return(false);
 
       iTzOffset = iOffsetHH * HOURS + iOffsetII * MINUTES;
       if (chr == '+') iTzOffset = -iTzOffset;
@@ -310,67 +320,68 @@ datetime ParseDateTimeEx(string value, int line) {
 
    // parse date: "08/31/2026"
    size = Explode(sDate, "/", sValues, NULL);
-   if (size != 3)                           return(_NaT(catch("ParseDateTimeEx(11)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (size != 3)                           return(false);
 
    sYY = sValues[2];
-   if (StringLen(sYY) != 4)                 return(_NaT(catch("ParseDateTimeEx(11)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-   if (!StrIsDigits(sYY))                   return(_NaT(catch("ParseDateTimeEx(11)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (StringLen(sYY) != 4)                 return(false);
+   if (!StrIsDigits(sYY))                   return(false);
    iYY = StrToInteger(sYY);
-   if (iYY < 1970 || iYY > 2037)            return(_NaT(catch("ParseDateTimeEx(11)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (iYY < 1970 || iYY > 2037)            return(false);
 
    sMM = sValues[0];
-   if (StringLen(sMM) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-   if (!StrIsDigits(sMM))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (StringLen(sMM) != 2)                 return(false);
+   if (!StrIsDigits(sMM))                   return(false);
    iMM = StrToInteger(sMM);
-   if (iMM < 1 || iMM > 12)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (iMM < 1 || iMM > 12)                 return(false);
 
    sDD = sValues[1];
-   if (StringLen(sDD) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-   if (!StrIsDigits(sDD))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (StringLen(sDD) != 2)                 return(false);
+   if (!StrIsDigits(sDD))                   return(false);
    iDD = StrToInteger(sDD);
-   if (iDD < 1 || iDD > 31)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (iDD < 1 || iDD > 31)                 return(false);
    if (iDD > 28) {
       if (iMM == FEB) {
-         if (iDD > 29)                      return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-         if (!IsLeapYear(iYY))              return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+         if (iDD > 29)                      return(false);
+         if (!IsLeapYear(iYY))              return(false);
       }
       else if (iDD == 31) {
          switch (iMM) {
             case APR:
             case JUN:
             case SEP:
-            case NOV:                       return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+            case NOV:                       return(false);
          }
       }
    }
 
    // parse time: "02:30:46"
    size = Explode(sTime, ":", sValues, NULL);
-   if (size != 3)                           return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (size != 3)                           return(false);
 
    sHH = sValues[0];
-   if (StringLen(sHH) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-   if (!StrIsDigits(sHH))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (StringLen(sHH) != 2)                 return(false);
+   if (!StrIsDigits(sHH))                   return(false);
    iHH = StrToInteger(sHH);
-   if (iHH < 0 || iHH > 23)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (iHH < 0 || iHH > 23)                 return(false);
 
    sII = sValues[1];
-   if (StringLen(sII) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-   if (!StrIsDigits(sII))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (StringLen(sII) != 2)                 return(false);
+   if (!StrIsDigits(sII))                   return(false);
    iII = StrToInteger(sII);
-   if (iII < 0 || iII > 59)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (iII < 0 || iII > 59)                 return(false);
 
    sSS = sValues[2];
-   if (StringLen(sSS) != 2)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
-   if (!StrIsDigits(sSS))                   return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (StringLen(sSS) != 2)                 return(false);
+   if (!StrIsDigits(sSS))                   return(false);
    iSS = StrToInteger(sSS);
-   if (iSS < 0 || iSS > 59)                 return(_NaT(catch("ParseDateTimeEx(12)  "+ sError, ERR_INVALID_FILE_FORMAT)));
+   if (iSS < 0 || iSS > 59)                 return(false);
 
-   // create datetime
+   // create datetime and add timezone offset
    datetime result = DateTime1(iYY, iMM, iDD, iHH, iII, iSS);
+   if (IsNaT(result)) return(false);
 
-   // add timezone offset
-   return(result + iTzOffset);
+   timestamp = result + iTzOffset;
+   return(true);
 }
 
 
