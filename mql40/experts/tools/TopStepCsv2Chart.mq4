@@ -17,17 +17,12 @@
  *  3042479400,MGCZ6,08/31/2026 01:06:17 +03:00,08/31/2026 01:31:21 +03:00,4501.400000000,4506.700000000,4.26000,-159.000000000,3,Short,08/31/2026 00:00:00 -05:00,00:25:03.7342440,1.50000
  *  3044000436,MGCZ6,08/31/2026 08:42:30 +03:00,08/31/2026 08:57:49 +03:00,4486.100000000,4490.900000000,4.26000,144.000000000,3,Long,08/31/2026 00:00:00 -05:00,00:15:19.3129020,1.50000
  *
-    2147483647
-    4294967295
-
-
-
  *
  * TODO:
  *  - cache the parsed data over init cycles and convert to indicator
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[];
+int   __InitFlags[] = { INIT_TIMEZONE };
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -163,6 +158,8 @@ bool ReadFile(string fileName, string &lines[]) {
    int size = FileReadLines(fileName, lines, false);
    if (size < 0)  return(false);
    if (size == 0) return(!catch("ReadFile(1)  invalid file "+ DoubleQuoteStr(fileName) +" (empty)", ERR_RUNTIME_ERROR));
+
+   logInfo("ReadFile(2)  "+ size +" line"+ Pluralize(size) +" read");
    return(true);
 }
 
@@ -177,8 +174,6 @@ bool ReadFile(string fileName, string &lines[]) {
 bool ParseLines(string lines[]) {
    int sizeLines = ArraySize(lines);
    if (!sizeLines) return(!catch("ParseLines(1)  invalid parameter lines[]: empty", ERR_INVALID_FILE_FORMAT));
-
-   debug("ParseLines(0.1)  "+ sizeLines +" lines found");
 
    // define file format
    string csvHeader = "Id,ContractName,EnteredAt,ExitedAt,EntryPrice,ExitPrice,Fees,PnL,Size,Type,TradeDay,TradeDuration,Commissions";
@@ -245,37 +240,41 @@ bool ParseLines(string lines[]) {
       // openTime: 08/31/2026 02:13:26 +03:00
       sOpenTime = StrTrim(cols[I_OPENTIME]);
       if (!ParseTopStepDateTime(sOpenTime, openTime))   return(!catch("ParseLines(10)  unexpected format of field \"EnteredAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
+      openTime = GmtToServerTime(openTime);
+      if (IsNaT(openTime))                              return(!catch("ParseLines(11)  can't convert field \"EnteredAt\" in line "+ (i+1) +" to server time: "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
 
       // closeTime: 08/31/2026 02:13:26 +03:00
       sCloseTime = StrTrim(cols[I_CLOSETIME]);
-      if (!ParseTopStepDateTime(sCloseTime, closeTime)) return(!catch("ParseLines(11)  unexpected format of field \"ExitedAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
+      if (!ParseTopStepDateTime(sCloseTime, closeTime)) return(!catch("ParseLines(12)  unexpected format of field \"ExitedAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
+      closeTime = GmtToServerTime(closeTime);
+      if (IsNaT(closeTime))                             return(!catch("ParseLines(13)  can't convert field \"ExitedAt\" in line "+ (i+1) +" to server time: "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
 
       // openPrice
       sOpenPrice = StrTrim(cols[I_OPENPRICE]);
-      if (!StrIsNumeric(sOpenPrice))                    return(!catch("ParseLines(12)  unexpected format of field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
+      if (!StrIsNumeric(sOpenPrice))                    return(!catch("ParseLines(14)  unexpected format of field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
       openPrice = StrToDouble(sOpenPrice);
-      if (openPrice <= 0)                               return(!catch("ParseLines(13)  invalid field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
+      if (openPrice <= 0)                               return(!catch("ParseLines(15)  invalid field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
 
       // closePrice
       sClosePrice = StrTrim(cols[I_CLOSEPRICE]);
-      if (!StrIsNumeric(sClosePrice))                    return(!catch("ParseLines(14)  unexpected format of field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      if (!StrIsNumeric(sClosePrice))                    return(!catch("ParseLines(16)  unexpected format of field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       closePrice = StrToDouble(sClosePrice);
-      if (closePrice <= 0)                               return(!catch("ParseLines(15)  invalid field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      if (closePrice <= 0)                               return(!catch("ParseLines(17)  invalid field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
 
       // profit
       sProfit = StrTrim(cols[I_PROFIT]);
-      if (!StrIsNumeric(sProfit))                        return(!catch("ParseLines(16)  unexpected format of field \"PnL\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      if (!StrIsNumeric(sProfit))                        return(!catch("ParseLines(18)  unexpected format of field \"PnL\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       profit = StrToDouble(sProfit);
 
       // commission (absolute value)
       sCommission = StrTrim(cols[I_COMMISSION]);
-      if (!StrIsNumeric(sCommission))                    return(!catch("ParseLines(17)  unexpected format of field \"Commissions\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      if (!StrIsNumeric(sCommission))                    return(!catch("ParseLines(19)  unexpected format of field \"Commissions\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       commission = StrToDouble(sCommission);
       commission = -MathAbs(commission);
 
       // exchange fee (absolute value)
       sFee = StrTrim(cols[I_FEE]);
-      if (!StrIsNumeric(sFee))                           return(!catch("ParseLines(18)  unexpected format of field \"Fees\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      if (!StrIsNumeric(sFee))                           return(!catch("ParseLines(20)  unexpected format of field \"Fees\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       fee = StrToDouble(sFee);
       fee = -MathAbs(fee);
       totalCosts = commission + fee;
@@ -283,12 +282,13 @@ bool ParseLines(string lines[]) {
       // add history record if the row belongs to the mapped symbol
       if (symbol == CsvSymbol) {
          if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCosts, profit, 0, 0, 0, 0, 0, 0, 0) == EMPTY) {
-            return(!catch("ParseLines(19)  invalid file format in line "+ (i+1) +": "+ DoubleQuoteStr(line), ERR_INVALID_FILE_FORMAT));
+            return(!catch("ParseLines(21)  invalid file format in line "+ (i+1) +": "+ DoubleQuoteStr(line), ERR_INVALID_FILE_FORMAT));
          }
       }
    }
-   debug("ParseLines(0.2)  "+ ArrayRange(history, 0) +" records imported");
 
+   int size = ArrayRange(history, 0);
+   logInfo("ParseLines(22)  "+ size +" history record"+ Pluralize(size) +" parsed");
    return(true);
 }
 
