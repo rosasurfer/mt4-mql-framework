@@ -1,9 +1,27 @@
 /**
  * Helper EA to visualize the trade history of a TopStep account, exported in CSV format.
  *
- * The EA reads and parses the trade history and stores it in the framework's internal format, as if the EA traded it.
- * Then it uses the EA standard commands to show/hide the trade history.
+ * The EA parses the trade history and converts it to the framework's internal format. Then the history is processed
+ * as if the EA traded it. Use the EA standard commands to show/hide the history.
  *
+ *
+ * Input parameters
+ * ----------------
+ *  • CsvFileName: File path/name containing the CSV data export. Must be located in the MQL "files" directory.
+ *  • CsvSymbol:   Symbol from the CSV file to map to the current chart. If empty the chart symbol is used.
+ *
+ *
+ * Example data:
+ * -------------
+ *  Id,ContractName,EnteredAt,ExitedAt,EntryPrice,ExitPrice,Fees,PnL,Size,Type,TradeDay,TradeDuration,Commissions
+ *  3042479400,MGCZ6,08/31/2026 01:06:17 +03:00,08/31/2026 01:31:21 +03:00,4501.400000000,4506.700000000,4.26000,-159.000000000,3,Short,08/31/2026 00:00:00 -05:00,00:25:03.7342440,1.50000
+ *  3044000436,MGCZ6,08/31/2026 08:42:30 +03:00,08/31/2026 08:57:49 +03:00,4486.100000000,4490.900000000,4.26000,144.000000000,3,Long,08/31/2026 00:00:00 -05:00,00:15:19.3129020,1.50000
+ *
+    2147483647
+    4294967295
+
+
+
  *
  * TODO:
  *  - cache the parsed data over init cycles and convert to indicator
@@ -17,7 +35,7 @@ int __DeinitFlags[];
 extern   string CsvFileName = "topstep-practice-150k.csv";
 //extern string CsvFileName = "topstep-eval-50k.csv";
 
-extern   string MapSymbol   = "";            // symbol from the CSV file to map to the chart symbol (empty: first found)
+extern   string CsvSymbol   = "MGCZ6";             // CSV symbol to map to the current chart (empty: chart symbol)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,7 +44,7 @@ extern   string MapSymbol   = "";            // symbol from the CSV file to map 
 #include <rsf/stdlib.mqh>
 #include <rsf/functions/HandleCommands.mqh>
 
-string Instance.ID = "999";                  // dummy, needed by StoreVolatileStatus()
+string Instance.ID = "999";                        // dummy, needed by StoreVolatileStatus()
 
 // EA definitions
 #include <rsf/experts/instance/defines.mqh>
@@ -160,13 +178,13 @@ bool ParseLines(string lines[]) {
    int sizeLines = ArraySize(lines);
    if (!sizeLines) return(!catch("ParseLines(1)  invalid parameter lines[]: empty", ERR_INVALID_FILE_FORMAT));
 
-   debug("ParseLines(0.1)  found "+ sizeLines +" lines");
+   debug("ParseLines(0.1)  "+ sizeLines +" lines found");
 
    // define file format
    string csvHeader = "Id,ContractName,EnteredAt,ExitedAt,EntryPrice,ExitPrice,Fees,PnL,Size,Type,TradeDay,TradeDuration,Commissions";
    int sizeCols = 13;
 
-   #define I_TICKET            0    // Id
+   #define I_TICKET            0    // Id (unsigned int greater than INT_MAX)
    #define I_SYMBOL            1    // ContractName
    #define I_OPENTIME          2    // EnteredAt (with TZ offset)
    #define I_CLOSETIME         3    // ExitedAt (with TZ offset)
@@ -203,11 +221,10 @@ bool ParseLines(string lines[]) {
       foundCols = Explode(line, ",", cols, NULL);
       if (foundCols != sizeCols)                        return(!catch("ParseLines(3)  unsupported file format in line "+ (i+1) +": found "+ foundCols +" data cells (expected "+ sizeCols +")", ERR_INVALID_FILE_FORMAT));
 
-      // ticket
+      // ticket (32-bit unsigned int)
       sTicket = StrTrim(cols[I_TICKET]);
       if (!StrIsDigits(sTicket))                        return(!catch("ParseLines(4)  unexpected format of field \"Id\" in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
-      ticket = StrToInteger(sTicket);
-      if (!ticket)                                      return(!catch("ParseLines(5)  invalid field \"Id\" in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
+      if (!ParseUint32(sTicket, ticket))                return(!catch("ParseLines(5)  unexpected range of field \"Id\" in line "+ (i+1) +": "+ DoubleQuoteStr(sTicket), ERR_INVALID_FILE_FORMAT));
 
       // symbol
       symbol = StrTrim(cols[I_SYMBOL]);
@@ -264,10 +281,56 @@ bool ParseLines(string lines[]) {
       totalCosts = commission + fee;
 
       // add history record if the row belongs to the mapped symbol
-      if (symbol == MapSymbol) {
-         if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCosts, profit, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
+      if (symbol == CsvSymbol) {
+         if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCosts, profit, 0, 0, 0, 0, 0, 0, 0) == EMPTY) {
+            return(!catch("ParseLines(19)  invalid file format in line "+ (i+1) +": "+ DoubleQuoteStr(line), ERR_INVALID_FILE_FORMAT));
+         }
       }
    }
+   debug("ParseLines(0.2)  "+ ArrayRange(history, 0) +" records imported");
+
+   return(true);
+}
+
+
+/**
+ * Parse a string containing a 32-bit unsigned integer and convert it to a signed integer.
+ * Helper for MQL4.0 which has no `unsigned int` type.
+ *
+ * @param  _In_  string sUnsigned - uint32 string to parse
+ * @param  _Out_ int    signed    - parsed signed int
+ *
+ * @return bool - success status
+ */
+bool ParseUint32(string sUnsigned, int &signed) {
+   string s = StrTrim(sUnsigned);
+   int sLen = StringLen(s);
+   if (!sLen) return(false);
+
+   int hi = 0, lo = 0;
+
+   for (int i=0; i < sLen; i++) {
+      int d = StringGetChar(s, i) - '0';
+      if (d < 0 || d > 9) return(false);     // not numeric
+
+      lo = lo * 10 + d;                      // reconstruct low word
+      hi = hi * 10 + lo / 65536;             // reconstruct high word
+      if (hi > 65535) return(false);         // exceeds 32-bit range: > 0xFFFFFFFF
+
+      lo %= 65536;
+   }
+
+   int value = 0;
+
+   if (hi < 32768) {
+      value = hi * 65536 + lo;               // positive signed value
+   }
+   else {
+      value  = (hi - 32768) * 65536 + lo;    // negative signed value
+      value += (-2147483647 - 1);
+   }
+
+   signed = value;
    return(true);
 }
 
@@ -402,10 +465,10 @@ bool ValidateInputs() {
    if (!IsFile(fileName, MODE_MQL)) return(!catch("ValidateInputs(2)  invalid input parameter CsvFileName: \""+ fileName +"\" (file not found)", ERR_FILE_NOT_FOUND));
    CsvFileName = fileName;
 
-   // MapSymbol
-   string symbol = StrTrim(MapSymbol);
+   // CsvSymbol
+   string symbol = StrTrim(CsvSymbol);
    if (symbol == "") symbol = Symbol();
-   MapSymbol = StrToUpper(symbol);
+   CsvSymbol = StrToUpper(symbol);
 
    return(!catch("ValidateInputs(3)"));
 }
@@ -427,6 +490,6 @@ void EmergencyStop() {
 string InputsToStr() {
    return(StringConcatenate(
       "CsvFileName=", DoubleQuoteStr(CsvFileName), ";", NL,
-      "MapSymbol=",   DoubleQuoteStr(MapSymbol),   ";", NL
+      "CsvSymbol=",   DoubleQuoteStr(CsvSymbol),   ";", NL
    ));
 }
