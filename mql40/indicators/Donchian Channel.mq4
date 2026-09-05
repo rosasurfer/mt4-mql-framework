@@ -673,7 +673,7 @@ bool UpdateReversalBalance(int bar, bool isReversalBar, bool isDoubleCross, bool
 bool RecordReversalBalance() {
    if (!recorder.initialized) {
       // create symbol and group
-      recorder.symbol       = Symbol() +".db";
+      recorder.symbol       = Symbol() +".db";           // TODO: validate symbol
       recorder.symbolDescr  = "Donchian reversal balance";
       recorder.group        = "Donch. balance";          // max length: 15
       recorder.hstDirectory = Recorder_GetHstDirectory();
