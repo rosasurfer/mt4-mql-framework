@@ -7,18 +7,20 @@
  *
  * Input parameters
  * ----------------
- *  • CsvFileName: File path/name containing the CSV data export. Must be located in the MQL "files" directory.
- *  • CsvSymbol:   Symbol from the CSV file to map to the current chart. If empty the chart symbol is used.
+ *  • CsvFileName:       File path/name containing the CSV data export. Must be located in the MQL "files" directory.
+ *  • CsvSymbol:         Symbol from the CSV file to map to the current chart. If empty the chart symbol is used.
+ *  • AutoConfiguration: If enabled all input parameters can be pre-defined in the configuration.
  *
  *
- * Example data:
- * -------------
+ * Example data
+ * ------------
  *  Id,ContractName,EnteredAt,ExitedAt,EntryPrice,ExitPrice,Fees,PnL,Size,Type,TradeDay,TradeDuration,Commissions
  *  3042479400,MGCZ6,08/31/2026 01:06:17 +03:00,08/31/2026 01:31:21 +03:00,4501.400000000,4506.700000000,4.26000,-159.000000000,3,Short,08/31/2026 00:00:00 -05:00,00:25:03.7342440,1.50000
  *  3044000436,MGCZ6,08/31/2026 08:42:30 +03:00,08/31/2026 08:57:49 +03:00,4486.100000000,4490.900000000,4.26000,144.000000000,3,Long,08/31/2026 00:00:00 -05:00,00:15:19.3129020,1.50000
  *
  *
  * TODO:
+ *  - show PnL in close marker
  *  - cache the parsed data over init cycles and convert to indicator
  */
 #include <rsf/stddefines.mqh>
@@ -27,10 +29,9 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern   string CsvFileName = "topstep-practice-150k.csv";
-//extern string CsvFileName = "topstep-eval-50k.csv";
-
-extern   string CsvSymbol   = "MGCZ6";             // CSV symbol to map to the current chart (empty: chart symbol)
+extern string CsvFileName       = "";              // CSV filename in MQL "files" directory
+extern string CsvSymbol         = "";              // CSV symbol to map to the current chart (empty: chart symbol)
+extern bool   AutoConfiguration = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -80,10 +81,11 @@ int onInit() {
    string sNull[];
    GetChartCommand("", sNull);
 
-   // parse the specified file
+   // validate inputs
    int initReason = ProgramInitReason();
    if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE || initReason==IR_SYMBOLCHANGE) {
       if (ValidateInputs()) {
+         // parse the specified file
          string lines[];
          if (!ReadFile(CsvFileName, lines)) return(last_error);
          if (!ParseLines(lines))            return(last_error);
@@ -456,7 +458,10 @@ datetime ParseTopStepDateTime(string sDateTime, datetime &timestamp) {
 bool ValidateInputs() {
    if (IsLastError()) return(false);
 
+   string expert = WindowExpertName();
+
    // CsvFileName
+   if (AutoConfiguration) CsvFileName = GetConfigString(expert, "CsvFileName", CsvFileName);
    string fileName = StrTrim(CsvFileName);
    if (StrStartsWith(fileName, "\"") && StrEndsWith(fileName, "\"")) {
       fileName = StrTrim(StrSubstr(fileName, 1, StringLen(fileName)-2));
@@ -466,6 +471,7 @@ bool ValidateInputs() {
    CsvFileName = fileName;
 
    // CsvSymbol
+   if (AutoConfiguration) CsvSymbol = GetConfigString(expert, "CsvSymbol", CsvSymbol);
    string symbol = StrTrim(CsvSymbol);
    if (symbol == "") symbol = Symbol();
    CsvSymbol = StrToUpper(symbol);
@@ -489,7 +495,8 @@ void EmergencyStop() {
  */
 string InputsToStr() {
    return(StringConcatenate(
-      "CsvFileName=", DoubleQuoteStr(CsvFileName), ";", NL,
-      "CsvSymbol=",   DoubleQuoteStr(CsvSymbol),   ";", NL
+      "CsvFileName=",       DoubleQuoteStr(CsvFileName),  ";", NL,
+      "CsvSymbol=",         DoubleQuoteStr(CsvSymbol),    ";", NL,
+      "AutoConfiguration=", BoolToStr(AutoConfiguration), ";", NL
    ));
 }
