@@ -198,7 +198,7 @@ bool ParseLines(string lines[]) {
    string line, cols[], sTicket, symbol, sType, sLots, sOpenTime, sCloseTime, sOpenPrice, sClosePrice, sProfit, sCommission, sFee;
    int foundCols, ticket, type, lots;
    datetime openTime, closeTime;
-   double openPrice, closePrice, profit, commission, fee, totalCosts;
+   double openPrice, closePrice, profit, commission, fee, totalCost, netProfit;
 
    // parse lines
    for (int i=0; i < sizeLines; i++) {
@@ -267,23 +267,28 @@ bool ParseLines(string lines[]) {
       sProfit = StrTrim(cols[I_PROFIT]);
       if (!StrIsNumeric(sProfit))                        return(!catch("ParseLines(18)  unexpected format of field \"PnL\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       profit = StrToDouble(sProfit);
+      profit = NormalizeDouble(profit, 2);
 
       // commission (absolute value)
       sCommission = StrTrim(cols[I_COMMISSION]);
       if (!StrIsNumeric(sCommission))                    return(!catch("ParseLines(19)  unexpected format of field \"Commissions\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       commission = StrToDouble(sCommission);
       commission = -MathAbs(commission);
+      commission = NormalizeDouble(commission, 2);
 
       // exchange fee (absolute value)
       sFee = StrTrim(cols[I_FEE]);
       if (!StrIsNumeric(sFee))                           return(!catch("ParseLines(20)  unexpected format of field \"Fees\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       fee = StrToDouble(sFee);
       fee = -MathAbs(fee);
-      totalCosts = commission + fee;
+      fee = NormalizeDouble(fee, 2);
+
+      totalCost = NormalizeDouble(commission + fee, 2);
+      netProfit = NormalizeDouble(profit + totalCost, 2);
 
       // add history record if the row belongs to the mapped symbol
       if (symbol == CsvSymbol) {
-         if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCosts, profit, 0, 0, 0, 0, 0, 0, 0) == EMPTY) {
+         if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCost, profit, netProfit, 0, 0, 0, 0, 0, 0) == EMPTY) {
             return(!catch("ParseLines(21)  invalid file format in line "+ (i+1) +": "+ DoubleQuoteStr(line), ERR_INVALID_FILE_FORMAT));
          }
       }
