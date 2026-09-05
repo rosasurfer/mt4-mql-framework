@@ -21,7 +21,6 @@
  *       SortClosedTickets()           time=0.271 sec => move to Expander
  *       nested loop "correct hedges"  time=13.5 sec  => move to Expander
  *     weekend configuration/timespans don't work (H Today on Bitcoin)
- *     including/excluding a specific strategy is not supported
  *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - set order tracker sound on stopout to "margin-call"
  *  - order events during chart change (symbol/timeframe) are not detected
@@ -1815,10 +1814,10 @@ bool UpdateStopoutLevel() {
  * Resolve the total open position, group/store it according to the custom configuration and calculate PnL stats.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_LOG_TICKETS:           log all tickets of resulting custom positions
+ *                                F_LOG_TICKETS:           log all ticket ids of custom positions
  *                                F_LOG_SKIP_EMPTY:        skip empty array elements when logging tickets
- *                                F_SHOW_CUSTOM_POSITIONS: call ShowOpenOrders() for the configured open positions
- *                                F_SHOW_CUSTOM_HISTORY:   call ShowTradeHistory() for the configured history
+ *                                F_SHOW_CUSTOM_POSITIONS: call ShowOpenOrders() for the configured custom positions
+ *                                F_SHOW_CUSTOM_HISTORY:   call ShowTradeHistory() for the configured custom history
  * @return bool - success status
  */
  bool AnalyzePositions(int flags = NULL) {                                       // reparse configuration on chart command flags
@@ -1951,7 +1950,7 @@ bool UpdateStopoutLevel() {
    int    line, termType, termsSize = ArrayRange(config.terms, 0);
    double termValue1, termValue2, termValue3, termResult1, termResult2;
    int    filter, filterCondition, filterValue;
-   double allLongPositions = longPosition, allShortPositions = shortPosition, allTotalPositions = totalPosition;
+   double allLongPositions=longPosition, allShortPositions=shortPosition, allTotalPositions=totalPosition;
    double customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
    int    customTickets[], customTypes[];
    double profitMarkerPrice, profitMarkerDD=EMPTY_VALUE, lossMarkerPrice, lossMarkerDD=EMPTY_VALUE;
@@ -2072,7 +2071,15 @@ bool UpdateStopoutLevel() {
  * @return bool - success status
  */
 bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL) {
-   int copy[]; ArrayResize(copy, 0);
+   if (configLine > -1) {
+      if (config.dData[configLine][I_HIDE_POSITION] && 1) {
+         return(true);
+      }
+   }
+
+   int copy[];
+   ArrayResize(copy, 0);
+
    if (ArraySize(tickets) > 0) {
       ArrayCopy(copy, tickets);
       if (flags & F_LOG_SKIP_EMPTY != 0) ArrayDropInt(copy, 0);
