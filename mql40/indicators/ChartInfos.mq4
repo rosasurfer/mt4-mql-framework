@@ -21,7 +21,6 @@
  *       SortClosedTickets()           time=0.271 sec => move to Expander
  *       nested loop "correct hedges"  time=13.5 sec  => move to Expander
  *     weekend configuration/timespans don't work (H Today on Bitcoin)
- *     including/excluding a specific strategy is not supported
  *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - set order tracker sound on stopout to "margin-call"
  *  - order events during chart change (symbol/timeframe) are not detected
@@ -117,25 +116,25 @@ double  config.terms[][6];                         // @see CustomPositions.ReadC
 #define TERM_PROFIT_MARKER             15          //
 #define TERM_LOSS_MARKER               16          //
 
-// data of configured custom positions: size(config.dData) == size(config.sData) == number-of-configured-custom-positions
-double  config.dData[][7];                         // @see indexes of config.dData[]
+// data of configured custom positions: size(config.sData) == size(config.dData) == number-of-configured-custom-positions
 string  config.sData[][2];                         // @see indexes of config.sData[]
-
-// indexes of config.dData[]
-#define I_HIDE_POSITION                 0          // whether to hide position stats (display chart markers only)
-#define I_BEM_ENABLED                   1          // whether to display the breakeven marker of a custom position
-#define I_MFAE_ENABLED                  2          // whether to track MFE/MAE of a custom position
-#define I_MFAE_SIGNAL                   3          // whether to signal new MFE/MAE of a custom position
-#define I_MARK_MFE                      4          // whether to mark MFE levels
-#define I_PROFIT_MFE                    5          // current MFE maximum in money
-#define I_PROFIT_MAE                    6          // current MAE minimum in money
+double  config.dData[][7];                         // @see indexes of config.dData[]
 
 // indexes of config.sData[]
-#define I_CONFIG_KEY                    0          //
-#define I_CONFIG_COMMENT                1          //
+#define IS_CONFIG_KEY                   0          //
+#define IS_CONFIG_COMMENT               1          //
+
+// indexes of config.dData[]
+#define ID_HIDE_POSITION                0          // whether to hide custom position stats (display chart levels only)
+#define ID_BEM_ENABLED                  1          // whether to display the breakeven marker of a custom position
+#define ID_MFAE_ENABLED                 2          // whether to track MFE/MAE of a custom position
+#define ID_MFAE_SIGNAL                  3          // whether to signal new MFE/MAE of a custom position
+#define ID_MARK_MFE                     4          // whether to mark MFE levels
+#define ID_PROFIT_MFE                   5          // current MFE maximum in money
+#define ID_PROFIT_MAE                   6          // current MAE minimum in money
 
 // resulting custom position entries (stats rows)
-double  positions.data[][21];                      // @see indexes of positions.data[]
+double  positions.data[][23];                      // @see indexes of positions.data[]
 bool    positions.analyzed;                        //
 bool    positions.showAbsProfits;                  // whether to display PnL in % or money (for column adjustments, default: online=FALSE, tester=TRUE)
 bool    positions.showMfae;                        // whether MFAE tracking is active (for column adjustments)
@@ -164,17 +163,19 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_PROFIT                        7          // total profit in money
 #define I_PROFIT_PCT                    8          // total profit in percent
 #define I_PROFIT_MFE_PRICE              9          // MFE price
-#define I_PROFIT_MFE_PCT               10          // MFE in percent
-#define I_PROFIT_MAE_PRICE             11          // MAE price
-#define I_PROFIT_MAE_PCT               12          // MAE in percent
-#define I_PROFIT_MARKER_PRICE          13          //
-#define I_PROFIT_MARKER_MONEY          14          //
-#define I_PROFIT_MARKER_PCT            15          //
-#define I_PROFIT_MARKER_AS_PCT         16          // whether the PnL marker is configured using a % value
-#define I_LOSS_MARKER_PRICE            17          //
-#define I_LOSS_MARKER_MONEY            18          //
-#define I_LOSS_MARKER_PCT              19          //
-#define I_LOSS_MARKER_AS_PCT           20          // whether the PnL marker is configured using a % value
+#define I_PROFIT_MFE_MONEY             10          // MFE in money
+#define I_PROFIT_MFE_PCT               11          // MFE in percent
+#define I_PROFIT_MAE_PRICE             12          // MAE price
+#define I_PROFIT_MAE_MONEY             13          // MAE in money
+#define I_PROFIT_MAE_PCT               14          // MAE in percent
+#define I_PROFIT_MARKER_PRICE          15          //
+#define I_PROFIT_MARKER_MONEY          16          //
+#define I_PROFIT_MARKER_PCT            17          //
+#define I_PROFIT_MARKER_AS_PCT         18          // whether the PnL marker is configured using a % value
+#define I_LOSS_MARKER_PRICE            19          //
+#define I_LOSS_MARKER_MONEY            20          //
+#define I_LOSS_MARKER_PCT              21          //
+#define I_LOSS_MARKER_AS_PCT           22          // whether the PnL marker is configured using a % value
 
 // control flags for AnalyzePositions()
 #define F_LOG_TICKETS                   1          // log tickets of resulting custom positions
@@ -1334,31 +1335,29 @@ bool UpdatePositions() {
    ObjectSetText(label, "n", 6, "Webdings", Orange);                       // a Webdings "dot"
 
    // prepare rows for custom positions bottom-left
-   int xDist, xPrev, yStart=6, maxCols=9;
-   static int lines, cols, percentCol=-1, mfaeCol=-1, commentCol=-1, xOffset[];
+   int xDist, xPrev, yStart=6, maxCols=8;
+   static int lines, cols, commentCol=-1, xOffset[];
    static bool lastShowAbsProfits, lastShowMfae;
 
    if (!ArraySize(xOffset) || positions.showAbsProfits!=lastShowAbsProfits || positions.showMfae!=lastShowMfae) {
-      // offsets:     Type:  Lots  BE:  BePrice  Profit:  Percent  Comment
-      int offsets[] = {9,    46,   83,  28,      68,      39,      61};
+      // offsets:     Type:  Lots  BE:  BePrice  Profit:  Pct    Comment
+      int offsets[] = {9,    46,   83,  28,      68,      39,    61};
       ArrayResize(offsets, 7);
-      percentCol = 5;
       commentCol = 6;
 
       if (positions.showAbsProfits) {
-         //           Type:  Lots  BE:  BePrice  Profit:  Abs   Percent  Comment
-         // offsets = {9,    46,   83,  28,      68,      39,   87,      61};
-         ArrayInsertInt(offsets, 6, 87);                                   // add column for AbsProfit
-         percentCol++;
-         commentCol++;
+         //           Type:  Lots  BE:  BePrice  Profit:  Abs    Comment
+         // offsets = {9,    46,   83,  28,      68,      39,    71};
+         offsets[commentCol] += 10;                                                 // shift Comment column a little
       }
       if (positions.showMfae) {
-         //           Type:  Lots  BE:  BePrice  Profit:  Abs   Percent  MFE/MAE  Comment
-         // offsets = {9,    46,   83,  28,      68,      39,   87,      51,      90};
-         ArrayPushInt(offsets, 90);                                        // add column for MFE/MAE
-         mfaeCol = percentCol + 1;
-         offsets[mfaeCol] = 51;
+         //           Type:  Lots  BE:  BePrice  Profit:  Pct    MFE/MAE   Comment
+         // offsets = {9,    46,   83,  28,      68,      39,    ...,      90};
+         ArrayPushInt(offsets, 90);                                                 // add column for MFE/MAE
          commentCol++;
+         if (positions.showAbsProfits) {
+            offsets[commentCol] += 20;                                              // shift Comment column a little more
+         }
       }
       ArrayResize(xOffset, 0);
       cols = ArrayCopy(xOffset, offsets);
@@ -1435,8 +1434,8 @@ bool UpdatePositions() {
    error = GetLastError();
    if (error && error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("UpdatePositions(5)", error));
 
-   // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
-   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMin="", sProfitMax="", sProfitMinMax="", sMaxRisk="", sComment="", markerText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
+   // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: {Abs|Percent}[   {MAE/MFE}]   {Comment}"
+   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfit="", sProfitAbs="", sProfitPct="", sProfitMin="", sProfitMax="", sProfitMinMax="", sMaxRisk="", sComment="", markerText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
    color fontColor;
    int configLine, line, vLine;
    bool hiddenLine;
@@ -1453,7 +1452,7 @@ bool UpdatePositions() {
          configLine = positions.data[i][I_CONFIG_LINE];
          hiddenLine = false;
          if (configLine > -1) {
-            hiddenLine = (config.dData[configLine][I_HIDE_POSITION] != 0);
+            hiddenLine = (config.dData[configLine][ID_HIDE_POSITION] != 0);
          }
          if (!positions.data[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.data[i][I_DIRECTIONAL_LOTS], ".+");
          else                                   sLotSize = NumberToStr(positions.data[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.data[i][I_HEDGED_LOTS], ".+");
@@ -1475,35 +1474,34 @@ bool UpdatePositions() {
             sComment      = " ";
 
             if (configLine > -1) {
-               if (positions.showMfae && config.dData[configLine][I_MFAE_ENABLED]) {
-                  sProfitMin    = DoubleToStr(positions.data[i][I_PROFIT_MAE_PCT], 2);
-                  sProfitMax    = DoubleToStr(positions.data[i][I_PROFIT_MFE_PCT], 2);
+               if (positions.showMfae && config.dData[configLine][ID_MFAE_ENABLED]) {
+                  sProfitMin    = DoubleToStr(positions.data[i][ifInt(positions.showAbsProfits, I_PROFIT_MAE_MONEY, I_PROFIT_MAE_PCT)], 2);
+                  sProfitMax    = DoubleToStr(positions.data[i][ifInt(positions.showAbsProfits, I_PROFIT_MFE_MONEY, I_PROFIT_MFE_PCT)], 2);
                   sProfitMinMax = StringConcatenate("(", sProfitMin, "/", sProfitMax, ")");
                }
-               sComment = config.sData[configLine][I_CONFIG_COMMENT];
+               sComment = config.sData[configLine][IS_CONFIG_COMMENT];
             }
 
             vLine++;                                                       // visible line
 
             // history only
             if (positions.data[i][I_POSITION_TYPE] == POSITION_HISTORY) {
-               // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
+               // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: {Abs|Percent}[   {MAE/MFE}]   {Comment}"
                ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col0"           ), sPositionType,                                         positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col1"           ), " ",                                                   positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col2"           ), " ",                                                   positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col3"           ), " ",                                                   positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col4"           ), "Profit:",                                             positions.fontSize, positions.fontName, fontColor);
-               if (positions.showAbsProfits)
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col5"           ), sProfitAbs,                                            positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col", percentCol), sProfitPct,                                            positions.fontSize, positions.fontName, fontColor);
+                  sProfit = ifString(positions.showAbsProfits, sProfitAbs, sProfitPct);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col5"           ), sProfit,                                               positions.fontSize, positions.fontName, fontColor);
                if (positions.showMfae)
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col", mfaeCol   ), sProfitMinMax,                                         positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col6"           ), sProfitMinMax,                                         positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col", commentCol), sComment,                                              positions.fontSize, positions.fontName, fontColor);
             }
 
             // directional or hedged
             else {
-               // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
+               // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: {Abs|Percent}[   {MAE/MFE}]   {Comment}"
                // hedged
                if (positions.data[i][I_POSITION_TYPE] == POSITION_HEDGE) {
                   ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col0"), sPositionType,                                                 positions.fontSize, positions.fontName, fontColor);
@@ -1526,11 +1524,10 @@ bool UpdatePositions() {
 
                // hedged and not-hedged
                ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col4"           ), "Profit:",                                             positions.fontSize, positions.fontName, fontColor);
-               if (positions.showAbsProfits)
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col5"           ), sProfitAbs,                                            positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col", percentCol), sProfitPct,                                            positions.fontSize, positions.fontName, fontColor);
+                  sProfit = ifString(positions.showAbsProfits, sProfitAbs, sProfitPct);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col5"           ), sProfit,                                               positions.fontSize, positions.fontName, fontColor);
                if (positions.showMfae)
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col", mfaeCol   ), sProfitMinMax,                                         positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col6"           ), sProfitMinMax,                                         positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", vLine, "_col", commentCol), sComment,                                              positions.fontSize, positions.fontName, fontColor);
             }
          }
@@ -1538,7 +1535,7 @@ bool UpdatePositions() {
          // update BE marker
          bool showBeMarker = false;
          if (configLine >= 0) {
-            showBeMarker = (config.dData[configLine][I_BEM_ENABLED] && positions.data[i][I_POSITION_TYPE]!=POSITION_HEDGE && positions.data[i][I_POSITION_TYPE]!=POSITION_HISTORY);
+            showBeMarker = (config.dData[configLine][ID_BEM_ENABLED] && positions.data[i][I_POSITION_TYPE]!=POSITION_HEDGE && positions.data[i][I_POSITION_TYPE]!=POSITION_HISTORY);
          }
          label = StringConcatenate(label.customPosition, ".line", line, "_bem");
          if (!showBeMarker) {
@@ -1606,11 +1603,11 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "  MFE  ", NumberToStr(positions.data[i][I_PROFIT_MFE_PRICE], PriceFormat), "  ", sProfitMax, "%");
+            markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "  MFE  ", NumberToStr(positions.data[i][I_PROFIT_MFE_PRICE], PriceFormat), "  ", sProfitMax, ifString(positions.showAbsProfits, "", "%"));
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_DASH);
             ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_LONG);
-            ObjectSet    (label, OBJPROP_TIME1,     Time[0] + 5*Period()*MINUTES);
+            ObjectSet    (label, OBJPROP_TIME1,     Time[0] + 5 * Period() * MINUTES);
             ObjectSet    (label, OBJPROP_PRICE1,    positions.data[i][I_PROFIT_MFE_PRICE]);
             ObjectSetText(label, markerText);
          }
@@ -1632,19 +1629,19 @@ bool UpdatePositions() {
       for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
          if (lfxOrders.bCache[i][BC.isOpenPosition]) {
             line++;
-            double profitPct = lfxOrders.dCache[i][DC.profit] / los.OpenEquity(lfxOrders, i) * 100;
+            double profitAbs = lfxOrders.dCache[i][DC.profit];
+            double profitPct = profitAbs / los.OpenEquity(lfxOrders, i) * 100;
+            sProfit  = ifString(positions.showAbsProfits, DoubleToStr(profitAbs, 2), DoubleToStr(profitPct, 2) +"%");
             sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
             if (StringGetChar(sComment, 0) == '#') sComment = StringConcatenate(lfxCurrency, ".", StrSubstr(sComment, 1));
 
-            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}   {Comment}"
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: {Abs|Percent}   {Comment}"
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],               positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units", positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), "BE:",                                                    positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), PriceFormat),    positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                positions.fontSize, positions.fontName, fontColor);
-            if (positions.showAbsProfits)
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dCache[i][DC.profit], 2),           positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                           positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), sProfit,                                                  positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                 positions.fontSize, positions.fontName, fontColor);
          }
       }
@@ -1815,10 +1812,10 @@ bool UpdateStopoutLevel() {
  * Resolve the total open position, group/store it according to the custom configuration and calculate PnL stats.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_LOG_TICKETS:           log all tickets of resulting custom positions
+ *                                F_LOG_TICKETS:           log all ticket ids of custom positions
  *                                F_LOG_SKIP_EMPTY:        skip empty array elements when logging tickets
- *                                F_SHOW_CUSTOM_POSITIONS: call ShowOpenOrders() for the configured open positions
- *                                F_SHOW_CUSTOM_HISTORY:   call ShowTradeHistory() for the configured history
+ *                                F_SHOW_CUSTOM_POSITIONS: call ShowOpenOrders() for the configured custom positions
+ *                                F_SHOW_CUSTOM_HISTORY:   call ShowTradeHistory() for the configured custom history
  * @return bool - success status
  */
  bool AnalyzePositions(int flags = NULL) {                                       // reparse configuration on chart command flags
@@ -1951,12 +1948,12 @@ bool UpdateStopoutLevel() {
    int    line, termType, termsSize = ArrayRange(config.terms, 0);
    double termValue1, termValue2, termValue3, termResult1, termResult2;
    int    filter, filterCondition, filterValue;
-   double allLongPositions = longPosition, allShortPositions = shortPosition, allTotalPositions = totalPosition;
+   double allLongPositions=longPosition, allShortPositions=shortPosition, allTotalPositions=totalPosition;
    double customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
    int    customTickets[], customTypes[];
    double profitMarkerPrice, profitMarkerDD=EMPTY_VALUE, lossMarkerPrice, lossMarkerDD=EMPTY_VALUE;
    bool   profitMarkerDDisPct, lossMarkerDDisPct;
-   bool   lineSkipped, isVirtual;
+   bool   hidePosition, lineSkipped, isVirtual;
    string property = "";
 
    ArrayResize(positions.data, 0);
@@ -1972,8 +1969,12 @@ bool UpdateStopoutLevel() {
 
       if (!termType) {                                                           // termType NULL => EOL of a config line for costum positions
          if (i == 0) line = -1;                                                  // an empty configuration has no lines
-         if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, line, flags);
-         if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
+         hidePosition = false;
+         if (line > -1) hidePosition = (config.dData[line][ID_HIDE_POSITION] && 1);
+         if (!hidePosition) {
+            if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, line, flags);
+            if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
+         }
 
          // store custom position for display
          if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits,
@@ -1988,16 +1989,16 @@ bool UpdateStopoutLevel() {
             if (lineSkipped) {
                // if the line is skipped reset tracked MFAE signal levels
                if (!__isTesting) {
-                  RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE));
-                  RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE));
+                  RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[line][IS_CONFIG_KEY], ID_PROFIT_MFE));
+                  RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[line][IS_CONFIG_KEY], ID_PROFIT_MAE));
                }
 
                // reset existing stats
-               config.dData[line][I_PROFIT_MFE] = 0;
-               config.dData[line][I_PROFIT_MAE] = 0;
+               config.dData[line][ID_PROFIT_MFE] = 0;
+               config.dData[line][ID_PROFIT_MAE] = 0;
             }
             else {
-               positions.showMfae = positions.showMfae || config.dData[line][I_MFAE_ENABLED];
+               positions.showMfae = positions.showMfae || config.dData[line][ID_MFAE_ENABLED];
 
                // track the first (top-most) virtual position
                if (!isVirtualPosition && isVirtual && (customLongPosition || customShortPosition)) {
@@ -2009,10 +2010,10 @@ bool UpdateStopoutLevel() {
             }
          }
 
+         isVirtual           = false;
          filter              = 0;
          filterCondition     = 0;
          filterValue         = 0;
-         isVirtual           = false;
          customLongPosition  = 0;
          customShortPosition = 0;
          customTotalPosition = 0;
@@ -2072,7 +2073,9 @@ bool UpdateStopoutLevel() {
  * @return bool - success status
  */
 bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL) {
-   int copy[]; ArrayResize(copy, 0);
+   int copy[];
+   ArrayResize(copy, 0);
+
    if (ArraySize(tickets) > 0) {
       ArrayCopy(copy, tickets);
       if (flags & F_LOG_SKIP_EMPTY != 0) ArrayDropInt(copy, 0);
@@ -2083,8 +2086,8 @@ bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL)
 
       if (configLine > -1) {
          sLine = configLine;
-         if (StringLen(config.sData[configLine][I_CONFIG_COMMENT]) > 0) {
-            sComment = "\""+ config.sData[configLine][I_CONFIG_COMMENT] +"\" = ";
+         if (StringLen(config.sData[configLine][IS_CONFIG_COMMENT]) > 0) {
+            sComment = "\""+ config.sData[configLine][IS_CONFIG_COMMENT] +"\" = ";
          }
       }
 
@@ -2866,17 +2869,17 @@ bool CustomPositions.ReadConfig() {
 
             int lines = ArrayRange(confdData, 0);
             ArrayResize(confdData, lines + 1);
-            confdData[lines][I_HIDE_POSITION] = hidePosition;
-            confdData[lines][I_BEM_ENABLED  ] = isBemEnabled;
-            confdData[lines][I_MFAE_ENABLED ] = isMfaeEnabled;
-            confdData[lines][I_MFAE_SIGNAL  ] = isMfaeSignal && !hidePosition;
-            confdData[lines][I_MARK_MFE     ] = markMfe      && !hidePosition;
+            confdData[lines][ID_HIDE_POSITION] = hidePosition;
+            confdData[lines][ID_BEM_ENABLED  ] = isBemEnabled;
+            confdData[lines][ID_MFAE_ENABLED ] = isMfaeEnabled;
+            confdData[lines][ID_MFAE_SIGNAL  ] = isMfaeSignal && !hidePosition;
+            confdData[lines][ID_MARK_MFE     ] = markMfe      && !hidePosition;
 
             ArrayResize(confsData, lines + 1);
             if (!StringLen(confComment)) comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
             else                         comment = confComment;      // configured comments override generated ones
-            confsData[lines][I_CONFIG_KEY    ] = keys[i];
-            confsData[lines][I_CONFIG_COMMENT] = comment;
+            confsData[lines][IS_CONFIG_KEY    ] = keys[i];
+            confsData[lines][IS_CONFIG_COMMENT] = comment;
 
             nextPositionStartOffset = termsSize + 1;                 // Start-Offset der nächsten Custom-Position merken (falls eine weitere Position folgt)
          }
@@ -2894,17 +2897,17 @@ bool CustomPositions.ReadConfig() {
    // keep existing MFAE stats and reset unkept ones
    for (int o=0; o < oldLines; o++) {
       for (n=0; n < newLines; n++) {
-         if (config.sData[o][I_CONFIG_KEY] == confsData[n][I_CONFIG_KEY]) {
-            if (confdData[n][I_MFAE_ENABLED] && 1) {
-               confdData[n][I_PROFIT_MFE] = config.dData[o][I_PROFIT_MFE];
-               confdData[n][I_PROFIT_MAE] = config.dData[o][I_PROFIT_MAE];
+         if (config.sData[o][IS_CONFIG_KEY] == confsData[n][IS_CONFIG_KEY]) {
+            if (confdData[n][ID_MFAE_ENABLED] && 1) {
+               confdData[n][ID_PROFIT_MFE] = config.dData[o][ID_PROFIT_MFE];
+               confdData[n][ID_PROFIT_MAE] = config.dData[o][ID_PROFIT_MAE];
             }
             break;
          }
       }
       if (n >= newLines) {
-         RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[o][I_CONFIG_KEY], I_PROFIT_MFE));
-         RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[o][I_CONFIG_KEY], I_PROFIT_MAE));
+         RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[o][IS_CONFIG_KEY], ID_PROFIT_MFE));
+         RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[o][IS_CONFIG_KEY], ID_PROFIT_MAE));
       }
    }
 
@@ -4124,11 +4127,15 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          totalProfit = NormalizeDouble(totalProfit, 2);
 
          if (configLine >= 0) {
-            // theoretically there can be a single tick with new MFE/MAE which should be signaled if configured
-            config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
-            config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
-            positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-            positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+            // the last tick before hedging may represent a new MFE/MAE which should be signaled if configured
+            config.dData[configLine][ID_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][ID_PROFIT_MFE]);
+            config.dData[configLine][ID_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][ID_PROFIT_MAE]);
+
+            positions.data[n][I_PROFIT_MFE_MONEY] =         config.dData[configLine][ID_PROFIT_MFE];
+            positions.data[n][I_PROFIT_MFE_PCT  ] = MathDiv(config.dData[configLine][ID_PROFIT_MFE], equity100Pct) * 100;
+
+            positions.data[n][I_PROFIT_MAE_MONEY] =         config.dData[configLine][ID_PROFIT_MAE];
+            positions.data[n][I_PROFIT_MAE_PCT  ] = MathDiv(config.dData[configLine][ID_PROFIT_MAE], equity100Pct) * 100;
          }
 
          positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
@@ -4198,17 +4205,21 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       markMfe = false;
       if (configLine >= 0) {
-         markMfe  = (config.dData[configLine][I_MFAE_ENABLED] && config.dData[configLine][I_MARK_MFE]);
-         isNewMfe = (config.dData[configLine][I_MFAE_SIGNAL]  && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMae = (config.dData[configLine][I_MFAE_SIGNAL]  && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         markMfe  = (config.dData[configLine][ID_MFAE_ENABLED] && config.dData[configLine][ID_MARK_MFE]);
+         isNewMfe = (config.dData[configLine][ID_MFAE_SIGNAL]  && totalProfit > config.dData[configLine][ID_PROFIT_MFE]);
+         isNewMae = (config.dData[configLine][ID_MFAE_SIGNAL]  && totalProfit < config.dData[configLine][ID_PROFIT_MAE]);
 
-         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
-         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
-         positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-         positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+         config.dData[configLine][ID_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][ID_PROFIT_MFE]);
+         config.dData[configLine][ID_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][ID_PROFIT_MAE]);
 
-         if (isNewMfe) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
-         if (isNewMae) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         positions.data[n][I_PROFIT_MFE_MONEY] =         config.dData[configLine][ID_PROFIT_MFE];
+         positions.data[n][I_PROFIT_MFE_PCT  ] = MathDiv(config.dData[configLine][ID_PROFIT_MFE], equity100Pct) * 100;
+
+         positions.data[n][I_PROFIT_MAE_MONEY] =         config.dData[configLine][ID_PROFIT_MAE];
+         positions.data[n][I_PROFIT_MAE_PCT  ] = MathDiv(config.dData[configLine][ID_PROFIT_MAE], equity100Pct) * 100;
+
+         if (isNewMfe) onNewMFE(config.sData[configLine][IS_CONFIG_KEY], totalProfit);
+         if (isNewMae) onNewMAE(config.sData[configLine][IS_CONFIG_KEY], totalProfit);
       }
 
       positions.data[n][I_PROFIT_MFE_PRICE] = NULL;
@@ -4231,11 +4242,11 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
          // re-calculate MFE/MAE levels
          if (markMfe) {
-            if (config.dData[configLine][I_PROFIT_MFE] != 0) {
-               positions.data[n][I_PROFIT_MFE_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MFE])/pipValue*Pip, 8);
+            if (config.dData[configLine][ID_PROFIT_MFE] != 0) {
+               positions.data[n][I_PROFIT_MFE_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-config.dData[configLine][ID_PROFIT_MFE])/pipValue*Pip, 8);
             }
-            if (config.dData[configLine][I_PROFIT_MAE] != 0) {
-               positions.data[n][I_PROFIT_MAE_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MAE])/pipValue*Pip, 8);
+            if (config.dData[configLine][ID_PROFIT_MAE] != 0) {
+               positions.data[n][I_PROFIT_MAE_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-config.dData[configLine][ID_PROFIT_MAE])/pipValue*Pip, 8);
             }
          }
 
@@ -4340,17 +4351,21 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       markMfe = false;
       if (configLine >= 0) {
-         markMfe  = (config.dData[configLine][I_MFAE_ENABLED] && config.dData[configLine][I_MARK_MFE]);
-         isNewMfe = (config.dData[configLine][I_MFAE_SIGNAL]  && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMae = (config.dData[configLine][I_MFAE_SIGNAL]  && totalProfit < config.dData[configLine][I_PROFIT_MAE];);
+         markMfe  = (config.dData[configLine][ID_MFAE_ENABLED] && config.dData[configLine][ID_MARK_MFE]);
+         isNewMfe = (config.dData[configLine][ID_MFAE_SIGNAL]  && totalProfit > config.dData[configLine][ID_PROFIT_MFE]);
+         isNewMae = (config.dData[configLine][ID_MFAE_SIGNAL]  && totalProfit < config.dData[configLine][ID_PROFIT_MAE];);
 
-         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
-         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
-         positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-         positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+         config.dData[configLine][ID_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][ID_PROFIT_MFE]);
+         config.dData[configLine][ID_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][ID_PROFIT_MAE]);
 
-         if (isNewMfe) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
-         if (isNewMae) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         positions.data[n][I_PROFIT_MFE_MONEY] =         config.dData[configLine][ID_PROFIT_MFE];
+         positions.data[n][I_PROFIT_MFE_PCT  ] = MathDiv(config.dData[configLine][ID_PROFIT_MFE], equity100Pct) * 100;
+
+         positions.data[n][I_PROFIT_MAE_MONEY] =         config.dData[configLine][ID_PROFIT_MAE];
+         positions.data[n][I_PROFIT_MAE_PCT  ] = MathDiv(config.dData[configLine][ID_PROFIT_MAE], equity100Pct) * 100;
+
+         if (isNewMfe) onNewMFE(config.sData[configLine][IS_CONFIG_KEY], totalProfit);
+         if (isNewMae) onNewMAE(config.sData[configLine][IS_CONFIG_KEY], totalProfit);
       }
 
       positions.data[n][I_PROFIT_MFE_PRICE] = NULL;
@@ -4373,11 +4388,11 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
          // re-calculate MFE/MAE levels
          if (markMfe) {
-            if (config.dData[configLine][I_PROFIT_MFE] != 0) {
-               positions.data[n][I_PROFIT_MFE_PRICE] = NormalizeDouble((totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MFE])/pipValue*Pip - openPrice/totalPosition, 8);
+            if (config.dData[configLine][ID_PROFIT_MFE] != 0) {
+               positions.data[n][I_PROFIT_MFE_PRICE] = NormalizeDouble((totalProfit-floatingProfit-config.dData[configLine][ID_PROFIT_MFE])/pipValue*Pip - openPrice/totalPosition, 8);
             }
-            if (config.dData[configLine][I_PROFIT_MAE] != 0) {
-               positions.data[n][I_PROFIT_MAE_PRICE] = NormalizeDouble((totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MAE])/pipValue*Pip - openPrice/totalPosition, 8);
+            if (config.dData[configLine][ID_PROFIT_MAE] != 0) {
+               positions.data[n][I_PROFIT_MAE_PRICE] = NormalizeDouble((totalProfit-floatingProfit-config.dData[configLine][ID_PROFIT_MAE])/pipValue*Pip - openPrice/totalPosition, 8);
             }
          }
 
@@ -4440,10 +4455,14 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    totalProfit = NormalizeDouble(totalProfit, 2);
 
    if (configLine >= 0) {
-      config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
-      config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
-      positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-      positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+      config.dData[configLine][ID_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][ID_PROFIT_MFE]);
+      config.dData[configLine][ID_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][ID_PROFIT_MAE]);
+
+      positions.data[n][I_PROFIT_MFE_MONEY] =         config.dData[configLine][ID_PROFIT_MFE];
+      positions.data[n][I_PROFIT_MFE_PCT  ] = MathDiv(config.dData[configLine][ID_PROFIT_MFE], equity100Pct) * 100;
+
+      positions.data[n][I_PROFIT_MAE_MONEY] =         config.dData[configLine][ID_PROFIT_MAE];
+      positions.data[n][I_PROFIT_MAE_PCT  ] = MathDiv(config.dData[configLine][ID_PROFIT_MAE], equity100Pct) * 100;
    }
 
    positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
@@ -4838,13 +4857,13 @@ bool StoreStatus() {
    string keys = "";
    int size = ArrayRange(config.sData, 0);
    for (int i=0; i < size; i++) {
-      if (config.dData[i][I_MFAE_ENABLED] > 0) {
-         key = indicatorName +"."+ Symbol() +".config."+ config.sData[i][I_CONFIG_KEY] +".mfae";
-         sValue = NumberToStr(config.dData[i][I_PROFIT_MFE], ".1+") +"|"+ NumberToStr(config.dData[i][I_PROFIT_MAE], ".1+");
+      if (config.dData[i][ID_MFAE_ENABLED] > 0) {
+         key = indicatorName +"."+ Symbol() +".config."+ config.sData[i][IS_CONFIG_KEY] +".mfae";
+         sValue = NumberToStr(config.dData[i][ID_PROFIT_MFE], ".1+") +"|"+ NumberToStr(config.dData[i][ID_PROFIT_MAE], ".1+");
          SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);      // chart window
          Chart.StoreString(key, sValue);                                   // chart
       }
-      keys = keys +"="+ config.sData[i][I_CONFIG_KEY];                     // config keys can't contain equal signs "="
+      keys = keys +"="+ config.sData[i][IS_CONFIG_KEY];                    // config keys can't contain equal signs "="
    }
 
    // config keys of custom positions
@@ -4910,11 +4929,11 @@ bool RestoreStatus() {
    for (int i=0; i < size; i++) {
       ArrayResize(config.sData, i+1);
       ArrayResize(config.dData, i+1);
-      config.sData[i][I_CONFIG_KEY    ] = configKeys[i];
-      config.sData[i][I_CONFIG_COMMENT] = "";
+      config.sData[i][IS_CONFIG_KEY    ] = configKeys[i];
+      config.sData[i][IS_CONFIG_COMMENT] = "";
 
-      iValue1 = GetWindowPropertyA(hWndDesktop, GetMfaeSignalKey(configKeys[i], I_PROFIT_MFE));
-      iValue2 = GetWindowPropertyA(hWndDesktop, GetMfaeSignalKey(configKeys[i], I_PROFIT_MAE));
+      iValue1 = GetWindowPropertyA(hWndDesktop, GetMfaeSignalKey(configKeys[i], ID_PROFIT_MFE));
+      iValue2 = GetWindowPropertyA(hWndDesktop, GetMfaeSignalKey(configKeys[i], ID_PROFIT_MAE));
 
       key = indicatorName +"."+ Symbol() +".config."+ configKeys[i] +".mfae";
       sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
@@ -4927,9 +4946,9 @@ bool RestoreStatus() {
       else if (sValue1 == "") {
          sValue1 = sValue2;
       }
-      config.dData[i][I_MFAE_ENABLED] = (sValue1 != "");
-      config.dData[i][I_PROFIT_MFE  ] = StrToDouble(StrLeftTo(sValue1, "|"));
-      config.dData[i][I_PROFIT_MAE  ] = StrToDouble(StrRightFrom(sValue1, "|"));
+      config.dData[i][ID_MFAE_ENABLED] = (sValue1 != "");
+      config.dData[i][ID_PROFIT_MFE  ] = StrToDouble(StrLeftTo(sValue1, "|"));
+      config.dData[i][ID_PROFIT_MAE  ] = StrToDouble(StrRightFrom(sValue1, "|"));
    }
 
    // bool display.balance
@@ -5284,7 +5303,7 @@ bool onNewMFE(string configKey, double profit) {
    // skip the signal if it was already handled elsewhere
    // sound: once per system
    if (!__isTesting) {
-      string property = GetMfaeSignalKey(configKey, I_PROFIT_MFE);
+      string property = GetMfaeSignalKey(configKey, ID_PROFIT_MFE);
       int iStored = GetWindowPropertyA(hWndDesktop, property);
 
       if (iProfit > iStored) {
@@ -5319,7 +5338,7 @@ bool onNewMAE(string configKey, double profit) {
    // skip the signal if it was already handled elsewhere
    // sound: once per system
    if (!__isTesting) {
-      string property = GetMfaeSignalKey(configKey, I_PROFIT_MAE);
+      string property = GetMfaeSignalKey(configKey, ID_PROFIT_MAE);
       int iStored = GetWindowPropertyA(hWndDesktop, property);
 
       if (iProfit < iStored) {
@@ -5335,14 +5354,14 @@ bool onNewMAE(string configKey, double profit) {
  * Return the window property name for a new MFE/MAE event.
  *
  * @param  string configKey - configuration key of the custom position
- * @param  int    type      - event type: I_PROFIT_MFE | I_PROFIT_MAE
+ * @param  int    type      - event type: ID_PROFIT_MFE | ID_PROFIT_MAE
  *
  * @return string - properties key or an empty string in case of errors
  */
 string GetMfaeSignalKey(string configKey, int type) {
    switch (type) {
-      case I_PROFIT_MFE: return("rsf::"+ GetAccountNumber() +"."+ configKey +".MFE");
-      case I_PROFIT_MAE: return("rsf::"+ GetAccountNumber() +"."+ configKey +".MAE");
+      case ID_PROFIT_MFE: return("rsf::"+ GetAccountNumber() +"."+ configKey +".MFE");
+      case ID_PROFIT_MAE: return("rsf::"+ GetAccountNumber() +"."+ configKey +".MAE");
    }
    return(_EMPTY_STR(catch("GetMfaeSignalKey(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
