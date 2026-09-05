@@ -26,9 +26,10 @@ int onInit() {
    // configuration
    if (AutoConfiguration) {
       string indicator = WindowExpertName();
-      ShowPrice             = GetConfigBool(indicator, "ShowPrice", ShowPrice);
-      ShowUnitSize          = GetConfigBool(indicator, "ShowUnitSize", ShowUnitSize);
-      TrackOrders           = GetConfigBool(indicator, "TrackOrders", TrackOrders);
+      ShowPrice             = GetConfigBool(indicator, "ShowPrice",             ShowPrice);
+      ShowUnitSize          = GetConfigBool(indicator, "ShowUnitSize",          ShowUnitSize);
+      ShowStopoutLevel      = GetConfigBool(indicator, "ShowStopoutLevel",      ShowStopoutLevel);
+      TrackOrders           = GetConfigBool(indicator, "TrackOrders",           TrackOrders);
       CustomPositions.Sound = GetConfigBool(indicator, "CustomPositions.Sound", CustomPositions.Sound);
    }
 
