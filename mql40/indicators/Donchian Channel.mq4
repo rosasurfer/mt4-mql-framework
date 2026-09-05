@@ -900,10 +900,11 @@ bool ProcessUpperCross(int bar) {
       }
       string sLevel = NumberToStr(upperCross[bar], PriceFormat);
 
-      // log reversal
+      // log reversal (skip logging if the indicator is not visible)
       if (IsLogInfo()) {
-         bool logReversal = true;
-         if (!__isSuperContext && !__isTesting) {           // once per terminal
+         bool logReversal = (Signal.onReversal || ShowChannel || reversals.show);
+
+         if (logReversal && !__isSuperContext && !__isTesting) {  // once per terminal
             int hWndTerminal = GetTerminalMainWindow();
             string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessUpperCross("+ sLevel +")."+ TimeToStr(Time[bar]);
             logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
@@ -989,10 +990,11 @@ bool ProcessLowerCross(int bar) {
       }
       string sLevel = NumberToStr(lowerCross[bar], PriceFormat);
 
-      // log reversal
+      // log reversal (skip logging if the indicator is not visible)
       if (IsLogInfo()) {
-         bool logReversal = true;
-         if (!__isSuperContext && !__isTesting) {        // once per terminal
+         bool logReversal = (Signal.onReversal || ShowChannel || reversals.show);
+
+         if (logReversal && !__isSuperContext && !__isTesting) {  // once per terminal
             int hWndTerminal = GetTerminalMainWindow();
             string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessLowerCross("+ sLevel +")."+ TimeToStr(Time[bar]);
             logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
