@@ -57,7 +57,7 @@ int init() {
       return(last_error);
    }
 
-   // immediately resolve a missing account server/number so the Expander can find the account configuration
+   // immediately resolve a missing account server/number so the MT4Expander can find the account configuration
    if (!__ExecutionContext[EC.accountServer]) GetAccountServer();
    if (!__ExecutionContext[EC.accountNumber]) GetAccountNumber();
 
@@ -89,14 +89,14 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}              // not yet implemented
 
    // enable auto-trading if disabled
-   int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
-   if (!__isTesting) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
+   int reasons1[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE };
+   if (!__isTesting && !IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                              // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (HandleErrors("init(10)")) return(last_error);
    }
 
    // reset the order context after the expert was reloaded (to prevent the bug when the previously active context is not reset)
-   int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
+   int reasons2[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
       error = GetLastError();
@@ -138,7 +138,7 @@ int init() {
    }
 
    // Issue:    Built-in UninitializeReason() codes and their meanings vary across terminal versions and are not suitable
-   //           for clearly distinguishing between various initialization scenarios.
+   //           for clearly distinguishing initialization scenarios.
    // Solution: Function ProgramInitReason() and the INITREASON_* constants provided by this framework.
    //
    // Execute custom init() reason handlers. Reason-specific handlers are executed only if onInit() returns successful.
@@ -151,6 +151,7 @@ int init() {
    // | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
    // | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
    // | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   // | IR_ACCOUNTCHANGE     | account changed                               | no input dialog |   I, E      |
    // | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
    // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql-framework/issues/1#
    // +----------------------+-----------------------------------------------+-----------------+-------------+
@@ -164,6 +165,7 @@ int init() {
          case IR_PARAMETERS      : error = onInitParameters();      break; //
          case IR_TIMEFRAMECHANGE : error = onInitTimeframeChange(); break; //
          case IR_SYMBOLCHANGE    : error = onInitSymbolChange();    break; //
+         case IR_ACCOUNTCHANGE   : error = onInitAccountChange();   break; //
          case IR_RECOMPILE       : error = onInitRecompile();       break; //
          case IR_TERMINAL_FAILURE:                                         //
          default:                                                          //
@@ -714,6 +716,14 @@ int onInitSymbolChange();
 
 
 /**
+ * Called after the account was changed (implemented in most recent builds). There was no input dialog.
+ *
+ * @return int - error status
+ *
+int onInitAccountChange();
+
+
+/**
  * Called after the expert was recompiled. There was no input dialog.
  *
  * @return int - error status
@@ -757,7 +767,7 @@ int onDeinitChartChange();
 
 
 /**
- * Never encountered. Tracked in MT4Expander::onDeinitAccountChange().
+ * Called before the account is changed (implemented in most recent builds).
  *
  * @return int - error status
  *

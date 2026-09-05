@@ -71,7 +71,7 @@ int init() {
          if (HandleErrors("init(10)", error)) return(last_error);
 
          PlaySoundEx("Windows Notify.wav");                    // we must return as scripts don't update their internal auto-trading status
-         MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+         MessageBox("Auto-trading was not enabled!"+ NL + "Please call the script again.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
          return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
       }
    }
@@ -139,6 +139,10 @@ int start() {
       Alert("NOTICE:   ", Symbol(), ",", PeriodDescription(), "  ", WindowExpertName(), "::start(1)  switched off", sError);
       return(__STATUS_OFF.reason);
    }
+   int initFlags = __ExecutionContext[EC.programInitFlags];
+   if (initFlags & INIT_AUTO_TRADING && last_error==ERR_TERMINAL_AUTOTRADE_DISABLED) {
+      return(last_error);
+   }
    __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
    Ticks++;                                                                   // simple counter, the actual value is meaningless
@@ -158,8 +162,9 @@ int start() {
 
    if (!Tick.time) {
       int error = GetLastError();
-      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                           // ignore ERR_SYMBOL_NOT_AVAILABLE for now, since an offline chart
+      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                         // ignore ERR_SYMBOL_NOT_AVAILABLE for now, since an offline chart
          if (HandleErrors("start(3)", error)) return(last_error);             // can't yet be reliably detected on the first tick
+      }
    }
 
    // check a finished chart initialization                                   // Bars can be 0 (zero) if the script starts on an empty chart or

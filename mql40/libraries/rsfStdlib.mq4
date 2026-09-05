@@ -2,23 +2,23 @@
  * Data types and sizes in C, C++/Win32 and MQL4
  * =============================================
  *
- * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
- * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |     C++/Win32      |     MQL4.0     |      MQL4.5     |
- * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
- * |         |         |        |        |  1 bit |                 |               0x01 |                    0 ... 1 |                    0 ... 1 |                |                    |                |                 |
- * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
- * |         |         |        | 1 byte |  8 bit |       2 nibbles |               0xFF |               -128 ... 127 |                  0 ... 255 |     char       |     BYTE,bool      |                | char,uchar,bool |
- * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
- * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |             0xFFFF |         -32'768 ... 32'767 |               0 ... 65'535 |     short      |     WORD,WCHAR     |                |   short,ushort  |
- * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
- * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |         0xFFFFFFFF |             -2'147'483'648 |                          0 |   int,long     |     BOOL,DWORD     |  bool,char,int |    int,uint     |
- * |         |         |        |        |        |                 |                    |              2'147'483'647 |              4'294'967'295 |     float      |   WPARAM,LPARAM,   | color,datetime |      color      |
- * |         |         |        |        |        |                 |                    |                            |                            |                | handles, pointers  |                |                 |
- * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
- * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFFFFFFFFFF | -9'223'372'036'854'775'808 |                          0 |     double     |   int64,_time64_t  |   double (1)   |    long,ulong   |
- * |         |         |        |        |        |                 |                    |  9'223'372'036'854'775'807 | 18'446'744'073'709'551'616 |                | LONGLONG,DWORDLONG |                | datetime,double |
- * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
- * (1) A double with 53 bit mantisse which allows integers of up to 53 bit without loss of precision.
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+------------------+-------------------+
+ * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |     C++/Win32       |     MQL4.0       |      MQL4.5       |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+------------------+-------------------+
+ * |         |         |        |        |  1 bit |                 |               0x01 |                       0..1 |                       0..1 |                |                     |                  |                   |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+------------------+-------------------+
+ * |         |         |        | 1 byte |  8 bit |       2 nibbles |               0xFF |                  -128..127 |                     0..255 |     char       |     BYTE, bool      |                  | char, uchar, bool |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+------------------+-------------------+
+ * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |             0xFFFF |              -32768..32767 |                   0..65535 |     short      |     WORD, WCHAR     |                  |   short, ushort   |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+------------------+-------------------+
+ * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |         0xFFFFFFFF |    -2147483648..2147483647 |              0..4294967295 |   int,long     |     BOOL, DWORD     | bool, char, int  |     int, uint     |
+ * |         |         |        |        |        |                 |                    |                            |                            |     float      |   WPARAM, LPARAM,   | color, datetime  |       color       |
+ * |         |         |        |        |        |                 |                    |                            |                            |                | handles, pointers   |                  |                   |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+------------------+-------------------+
+ * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFFFFFFFFFF |       -9223372036854775808 |    0..18446744073709551616 |     double     |   int64, _time64_t  |    double (1)    |    long, ulong    |
+ * |         |         |        |        |        |                 |                    |      ..9223372036854775807 |                            |                | LONGLONG, DWORDLONG |                  | datetime, double  |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+------------------+-------------------+
+ *  (1) A double with 53 bit mantisse, allows integers of up to 53 bit without loss of precision.
  */
 #property library
 
@@ -2600,23 +2600,23 @@ int WinExecWait(string cmdLine, int cmdShow) {
 
 
 /**
- * Read a file into an array. Each element of the array will hold a line of the file, with the end-of-line separator removed.
+ * Read a file into an array. Each element of the array will hold a single line, with end-of-line separators removed.
  *
- * @param  string filename                  - name relative to "{data-directory}\mql4\files" with "\" or "/" separators
- * @param  string result[]                  - array receiving the read lines
- * @param  bool   skipEmptyLines [optional] - whether to skip empty lines (default: no)
+ * @param  _In_  string filename                  - name relative to "{data-directory}\mql4\files" with "\" or "/" separators
+ * @param  _Out_ string result[]                  - array receiving the read lines
+ * @param  _In_  bool   skipEmptyLines [optional] - whether to skip empty lines (default: no)
  *
  * @return int - number of lines stored in result[] or EMPTY (-1) in case of errors
  */
-int FileReadLines(string filename, string result[], bool skipEmptyLines = false) {
-   skipEmptyLines = skipEmptyLines!=0;
+int FileReadLines(string filename, string &result[], bool skipEmptyLines = false) {
+   skipEmptyLines = (skipEmptyLines != 0);
    ArrayResize(result, 0);
 
    int hFile, hFileBin, fieldSeparator='\t';
 
    // open the file
    hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);
-   if (hFile < 0) return(_EMPTY(catch("FileReadLines(1)->FileOpen(\""+ filename +"\")")));
+   if (hFile < 0) return(_EMPTY(catch("FileReadLines(1)->FileOpen(\""+ filename +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
 
    // quick return on an empty file
    if (!FileSize(hFile)) {
@@ -2626,28 +2626,29 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
    // read file line by line
    bool newLine=true, blankLine=false, lineEnd=true, wasSeparator;
-   string line="", value="", lines[]; ArrayResize(lines, 0);      // cache for read lines
-   int i, len, fPointer;                                          // line counter and length of the read string
+   string line="", value="", lines[];
+   ArrayResize(lines, 0);
+   int i, len, fPosition;                             // line counter and length of the read string
 
    while (!FileIsEnding(hFile)) {
       newLine = false;
-      if (lineEnd) {                                              // if the last loop reached EOF
-         newLine   = true;                                        // mark begin of a new line = BOL
+      if (lineEnd) {                                  // if the last loop reached EOF
+         newLine   = true;                            // mark begin of a new line = BOL
          blankLine = false;
          lineEnd   = false;
-         fPointer  = FileTell(hFile);                             // points to the start of the current line
+         fPosition = FileTell(hFile);                 // points to the start of the current line
       }
 
       // read line
-      value = FileReadString(hFile);                              // MQL4.0 bug: FileReadString() stops reading after 4095 chars
+      value = FileReadString(hFile);                  // MQL4.0 bug: FileReadString() stops reading after 4095 bytes
 
       // check for EOL and EOF
       if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
          lineEnd  = true;
          if (newLine) {
             if (!StringLen(value)) {
-               if (FileIsEnding(hFile)) break;                    // BOL + EOF => not a line => break
-               blankLine = true;                                  // BOL + EOL => empty line
+               if (FileIsEnding(hFile)) break;        // BOL + EOF => not a line => break
+               blankLine = true;                      // BOL + EOL => empty line
             }
          }
       }
@@ -2662,7 +2663,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
          lines[i-1] = value;
       }
       else {
-         // FileReadString() reads max. 4095 chars: check longer lines for a separator
+         // FileReadString() reads max. 4095 bytes: check longer lines for a separator
          len = StringLen(lines[i-1]);
          if (len < 4095) {
             wasSeparator = true;
@@ -2672,13 +2673,13 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
                hFileBin = FileOpen(filename, FILE_BIN|FILE_READ);
                if (hFileBin < 0) {
                   FileClose(hFile);
-                  return(_EMPTY(catch("FileReadLines(3)->FileOpen(\""+ filename +"\")")));
+                  return(_EMPTY(catch("FileReadLines(3)->FileOpen(\""+ filename +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
                }
             }
-            if (!FileSeek(hFileBin, fPointer+len, SEEK_SET)) {
+            if (!FileSeek(hFileBin, fPosition+len, SEEK_SET)) {
                FileClose(hFile);
                FileClose(hFileBin);
-               return(_EMPTY(catch("FileReadLines(4)->FileSeek(hFileBin, "+ (fPointer+len) +", SEEK_SET)", GetLastError())));
+               return(_EMPTY(catch("FileReadLines(4)->FileSeek(hFileBin, "+ (fPosition+len) +", SEEK_SET)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
             }
             wasSeparator = (fieldSeparator == FileReadInteger(hFileBin, CHAR_VALUE));
          }
@@ -2688,7 +2689,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
       }
    }
 
-   // check whether the end of file triggered ERR_END_OF_FILE
+   // check whether end of file triggered ERR_END_OF_FILE
    int error = GetLastError();
    if (error && error!=ERR_END_OF_FILE) {
       FileClose(hFile);
@@ -2703,7 +2704,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
    // copy read lines into result[] array
    ArrayResize(result, i);
    if (i > 0) ArrayCopy(result, lines);
-   if (ArraySize(lines) > 0) ArrayResize(lines, 0);               // free allocated memory
+   ArrayResize(lines, 0);                             // free allocated memory
 
    if (!catch("FileReadLines(6)"))
       return(i);
@@ -2725,324 +2726,6 @@ string WaitForSingleObjectValueToStr(int value) {
       case WAIT_OBJECT_0 : return("WAIT_OBJECT_0" );
       case WAIT_TIMEOUT  : return("WAIT_TIMEOUT"  );
    }
-   return("");
-}
-
-
-/**
- * Gibt den Kurznamen eines Symbols zurück.
- * (z.B. GetSymbolName("EURUSD") => "EUR/USD")
- *
- * @param  string symbol - broker-spezifisches Symbol
- *
- * @return string - Kurzname oder der übergebene Ausgangswert, wenn das Symbol unbekannt ist
- *
- *
- * NOTE: Alias für GetSymbolNameOrAlt(symbol, symbol)
- */
-string GetSymbolName(string symbol) {
-   if (!StringLen(symbol))
-      return(_EMPTY_STR(catch("GetSymbolName()  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-   return(GetSymbolNameOrAlt(symbol, symbol));
-}
-
-
-/**
- * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Alternativwert, wenn das Symbol unbekannt ist.
- * (z.B. GetSymbolNameOrAlt("EURUSD") => "EUR/USD")
- *
- * @param  string symbol   - Symbol
- * @param  string altValue - alternativer Rückgabewert
- *
- * @return string - Ergebnis
- *
- * @see  GetSymbolNameStrict()
- */
-string GetSymbolNameOrAlt(string symbol, string altValue="") {
-   if (!StringLen(symbol))
-      return(_EMPTY_STR(catch("GetSymbolNameOrAlt()  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-
-   string value = GetSymbolNameStrict(symbol);
-   if (!StringLen(value))
-      value = altValue;
-   return(value);
-}
-
-
-/**
- * Gibt den Kurznamen eines Symbols zurück.
- * (z.B. GetSymbolNameStrict("EURUSD") => "EUR/USD")
- *
- * @param  string symbol - Symbol
- *
- * @return string - Kurzname oder Leerstring, falls das Symbol unbekannt ist
- */
-string GetSymbolNameStrict(string symbol) {
-   if (!StringLen(symbol))
-      return(_EMPTY_STR(catch("GetSymbolNameStrict()  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-
-   symbol = FindStandardSymbol(symbol, /*strict=*/true);
-   if (!StringLen(symbol))
-      return("");
-
-   switch (StringGetChar(symbol, 0)) {
-      case 'A': if (symbol == "AUDCAD" ) return("AUD/CAD"  );
-                if (symbol == "AUDCHF" ) return("AUD/CHF"  );
-                if (symbol == "AUDDKK" ) return("AUD/DKK"  );
-                if (symbol == "AUDJPY" ) return("AUD/JPY"  );
-                if (symbol == "AUDLFX" ) return("AUD-LFX"  );
-                if (symbol == "AUDNZD" ) return("AUD/NZD"  );
-                if (symbol == "AUDPLN" ) return("AUD/PLN"  );
-                if (symbol == "AUDSGD" ) return("AUD/SGD"  );
-                if (symbol == "AUDUSD" ) return("AUD/USD"  );
-                break;
-
-      case 'B': break;
-
-      case 'C': if (symbol == "CADCHF" ) return("CAD/CHF"  );
-                if (symbol == "CADJPY" ) return("CAD/JPY"  );
-                if (symbol == "CADLFX" ) return("CAD-LFX"  );
-                if (symbol == "CADSGD" ) return("CAD/SGD"  );
-                if (symbol == "CHFJPY" ) return("CHF/JPY"  );
-                if (symbol == "CHFLFX" ) return("CHF-LFX"  );
-                if (symbol == "CHFPLN" ) return("CHF/PLN"  );
-                if (symbol == "CHFSGD" ) return("CHF/SGD"  );
-                if (symbol == "CHFZAR" ) return("CHF/ZAR"  );
-                break;
-
-      case 'D': if (symbol == "DAX"    ) return("DAX"      );
-                if (symbol == "DJIA"   ) return("DJIA"     );
-                if (symbol == "DJTA"   ) return("DJTA"     );
-                break;
-
-      case 'E': if (symbol == "EURAUD" ) return("EUR/AUD"  );
-                if (symbol == "EURCAD" ) return("EUR/CAD"  );
-                if (symbol == "EURCHF" ) return("EUR/CHF"  );
-                if (symbol == "EURCZK" ) return("EUR/CZK"  );
-                if (symbol == "EURDKK" ) return("EUR/DKK"  );
-                if (symbol == "EURGBP" ) return("EUR/GBP"  );
-                if (symbol == "EURHKD" ) return("EUR/HKD"  );
-                if (symbol == "EURHUF" ) return("EUR/HUF"  );
-                if (symbol == "EURJPY" ) return("EUR/JPY"  );
-                if (symbol == "EURLFX" ) return("EUR-LFX"  );
-                if (symbol == "EURLVL" ) return("EUR/LVL"  );
-                if (symbol == "EURMXN" ) return("EUR/MXN"  );
-                if (symbol == "EURNOK" ) return("EUR/NOK"  );
-                if (symbol == "EURNZD" ) return("EUR/NZD"  );
-                if (symbol == "EURPLN" ) return("EUR/PLN"  );
-                if (symbol == "EURRUB" ) return("EUR/RUB"  );
-                if (symbol == "EURSEK" ) return("EUR/SEK"  );
-                if (symbol == "EURSGD" ) return("EUR/SGD"  );
-                if (symbol == "EURTRY" ) return("EUR/TRY"  );
-                if (symbol == "EURUSD" ) return("EUR/USD"  );
-                if (symbol == "EURX"   ) return("EUR-Index");
-                if (symbol == "EURZAR" ) return("EUR/ZAR"  );
-                break;
-
-      case 'F': break;
-
-      case 'G': if (symbol == "GBPAUD" ) return("GBP/AUD"  );
-                if (symbol == "GBPCAD" ) return("GBP/CAD"  );
-                if (symbol == "GBPCHF" ) return("GBP/CHF"  );
-                if (symbol == "GBPDKK" ) return("GBP/DKK"  );
-                if (symbol == "GBPJPY" ) return("GBP/JPY"  );
-                if (symbol == "GBPLFX" ) return("GBP-LFX"  );
-                if (symbol == "GBPNOK" ) return("GBP/NOK"  );
-                if (symbol == "GBPNZD" ) return("GBP/NZD"  );
-                if (symbol == "GBPPLN" ) return("GBP/PLN"  );
-                if (symbol == "GBPRUB" ) return("GBP/RUB"  );
-                if (symbol == "GBPSEK" ) return("GBP/SEK"  );
-                if (symbol == "GBPUSD" ) return("GBP/USD"  );
-                if (symbol == "GBPZAR" ) return("GBP/ZAR"  );
-                break;
-
-      case 'H': if (symbol == "HKDJPY" ) return("HKD/JPY"  );
-                break;
-
-      case 'I': break;
-
-      case 'J': if (symbol == "JPYLFX" ) return("JPY-LFX"  );
-                break;
-
-      case 'K': break;
-
-      case 'L': if (symbol == "LFXJPY" ) return("1/JPY-LFX");
-                break;
-
-      case 'M': if (symbol == "MXNJPY" ) return("MXN/JPY"  );
-                break;
-
-      case 'N': if (symbol == "NAS100" ) return("Nasdaq 100");
-                if (symbol == "NASCOMP") return("Nasdaq Composite");
-                if (symbol == "NIK225" ) return("Nikkei 225");
-                if (symbol == "NOKJPY" ) return("NOK/JPY"  );
-                if (symbol == "NOKSEK" ) return("NOK/SEK"  );
-                if (symbol == "NZDCAD" ) return("NZD/CAD"  );
-                if (symbol == "NZDCHF" ) return("NZD/CHF"  );
-                if (symbol == "NZDJPY" ) return("NZD/JPY"  );
-                if (symbol == "NZDLFX" ) return("NZD-LFX"  );
-                if (symbol == "NZDSGD" ) return("NZD/SGD"  );
-                if (symbol == "NZDUSD" ) return("NZD/USD"  );
-                break;
-
-      case 'O': break;
-
-      case 'P': if (symbol == "PLNJPY" ) return("PLN/JPY"  );
-                break;
-
-      case 'Q': break;
-
-      case 'R': if (symbol == "RUSSELL") return("Russell 2000");
-                break;
-
-      case 'S': if (symbol == "SEKJPY" ) return("SEK/JPY"  );
-                if (symbol == "SGDJPY" ) return("SGD/JPY"  );
-                if (symbol == "SP500"  ) return("S&P 500"  );
-                break;
-
-      case 'T': if (symbol == "TRYJPY" ) return("TRY/JPY"  );
-                break;
-
-      case 'U': if (symbol == "USDCAD" ) return("USD/CAD"  );
-                if (symbol == "USDCHF" ) return("USD/CHF"  );
-                if (symbol == "USDCNY" ) return("USD/CNY"  );
-                if (symbol == "USDCZK" ) return("USD/CZK"  );
-                if (symbol == "USDDKK" ) return("USD/DKK"  );
-                if (symbol == "USDHKD" ) return("USD/HKD"  );
-                if (symbol == "USDHRK" ) return("USD/HRK"  );
-                if (symbol == "USDHUF" ) return("USD/HUF"  );
-                if (symbol == "USDINR" ) return("USD/INR"  );
-                if (symbol == "USDJPY" ) return("USD/JPY"  );
-                if (symbol == "USDLFX" ) return("USD-LFX"  );
-                if (symbol == "USDLTL" ) return("USD/LTL"  );
-                if (symbol == "USDLVL" ) return("USD/LVL"  );
-                if (symbol == "USDMXN" ) return("USD/MXN"  );
-                if (symbol == "USDNOK" ) return("USD/NOK"  );
-                if (symbol == "USDPLN" ) return("USD/PLN"  );
-                if (symbol == "USDRUB" ) return("USD/RUB"  );
-                if (symbol == "USDSAR" ) return("USD/SAR"  );
-                if (symbol == "USDSEK" ) return("USD/SEK"  );
-                if (symbol == "USDSGD" ) return("USD/SGD"  );
-                if (symbol == "USDTHB" ) return("USD/THB"  );
-                if (symbol == "USDTRY" ) return("USD/TRY"  );
-                if (symbol == "USDTWD" ) return("USD/TWD"  );
-                if (symbol == "USDX"   ) return("USD-Index");
-                if (symbol == "USDZAR" ) return("USD/ZAR"  );
-                break;
-
-      case 'V':
-      case 'W': break;
-
-      case 'X': if (symbol == "XAGEUR" ) return("XAG/EUR"  );
-                if (symbol == "XAGJPY" ) return("XAG/JPY"  );
-                if (symbol == "XAGUSD" ) return("XAG/USD"  );
-                if (symbol == "XAUEUR" ) return("XAU/EUR"  );
-                if (symbol == "XAUJPY" ) return("XAU/JPY"  );
-                if (symbol == "XAUUSD" ) return("XAU/USD"  );
-                break;
-
-      case 'Y': break;
-
-      case 'Z': if (symbol == "ZARJPY" ) return("ZAR/JPY"  );
-                break;
-   }
-
-   return("");
-}
-
-
-/**
- * Gibt den Langnamen eines Symbols zurück.
- * (z.B. GetLongSymbolName("EURUSD") => "EUR/USD")
- *
- * @param  string symbol - broker-spezifisches Symbol
- *
- * @return string - Langname oder der übergebene Ausgangswert, wenn kein Langname gefunden wurde
- *
- *
- * NOTE: Alias für GetLongSymbolNameOrAlt(symbol, symbol)
- */
-string GetLongSymbolName(string symbol) {
-   if (!StringLen(symbol))
-      return(_EMPTY_STR(catch("GetLongSymbolName()  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-   return(GetLongSymbolNameOrAlt(symbol, symbol));
-}
-
-
-/**
- * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
- * (z.B. GetLongSymbolNameOrAlt("USDLFX") => "USD (LFX)")
- *
- * @param  string symbol   - Symbol
- * @param  string altValue - alternativer Rückgabewert
- *
- * @return string - Ergebnis
- */
-string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
-   if (!StringLen(symbol))
-      return(_EMPTY_STR(catch("GetLongSymbolNameOrAlt()  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-
-   string value = GetLongSymbolNameStrict(symbol);
-
-   if (!StringLen(value))
-      value = altValue;
-
-   return(value);
-}
-
-
-/**
- * Gibt den Langnamen eines Symbols zurück.
- * (z.B. GetLongSymbolNameStrict("USDLFX") => "USD (LFX)")
- *
- * @param  string symbol - Symbol
- *
- * @return string - Langname oder Leerstring, falls das Symnol unbekannt ist oder keinen Langnamen hat
- */
-string GetLongSymbolNameStrict(string symbol) {
-   if (!StringLen(symbol))
-      return(_EMPTY_STR(catch("GetLongSymbolNameStrict()  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-
-   symbol = FindStandardSymbol(symbol, /*strict=*/true);
-   if (!StringLen(symbol))
-      return("");
-
-   if (symbol == "ASX200"  ) return("ASX 200"                 );
-   if (symbol == "AUDLFX"  ) return("AUD (LFX)"               );
-   if (symbol == "CADLFX"  ) return("CAD (LFX)"               );
-   if (symbol == "CHFLFX"  ) return("CHF (LFX)"               );
-   if (symbol == "DJIA"    ) return("Dow Jones Industrial"    );
-   if (symbol == "DJTA"    ) return("Dow Jones Transportation");
-   if (symbol == "EURLFX"  ) return("EUR (LFX)"               );
-   if (symbol == "EURX"    ) return("EUR Index (ICE)"         );
-   if (symbol == "GBPLFX"  ) return("GBP (LFX)"               );
-   if (symbol == "JPYLFX"  ) return("JPY (LFX)"               );
-   if (symbol == "LFXJPY"  ) return("1/JPY (LFX)"             );
-   if (symbol == "NAS100"  ) return("Nasdaq 100"              );
-   if (symbol == "NASCOMP" ) return("Nasdaq Composite"        );
-   if (symbol == "NIK225"  ) return("Nikkei 225"              );
-   if (symbol == "NZDLFX"  ) return("NZD (LFX)"               );
-   if (symbol == "RUSSELL" ) return("Russell 2000"            );
-   if (symbol == "SP500"   ) return("S&P 500"                 );
-   if (symbol == "USDLFX"  ) return("USD (LFX)"               );
-   if (symbol == "USDX"    ) return("USD Index (ICE)"         );
-   if (symbol == "XAGEUR"  ) return("Silver/EUR"              );
-   if (symbol == "XAGJPY"  ) return("Silver/JPY"              );
-   if (symbol == "XAGUSD"  ) return("Silver/USD"              );
-   if (symbol == "XAUEUR"  ) return("Gold/EUR"                );
-   if (symbol == "XAUJPY"  ) return("Gold/JPY"                );
-   if (symbol == "XAUUSD"  ) return("Gold/USD"                );
-
-   string prefix = StrLeft(symbol, -3);
-   string suffix = StrRight(symbol, 3);
-
-   if      (suffix == ".BA") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
-   else if (suffix == ".BX") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
-   else if (suffix == ".EA") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Equity"       )); }
-   else if (suffix == ".EX") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Equity + AuM" )); }
-   else if (suffix == ".LA") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Leverage"     )); }
-   else if (suffix == ".PL") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Profit/Loss"  )); }
-
    return("");
 }
 

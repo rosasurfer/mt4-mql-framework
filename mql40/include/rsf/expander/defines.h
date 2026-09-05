@@ -24,6 +24,8 @@
 #define NL                                   "\n"        // missing MQL4.0 feature: string constants cannot reference each other
 #define CRLF                               "\r\n"
 #define TAB                                  "\t"        // 0x09
+#define UTF8_BOM                   "\xEF\xBB\xBF"        // UTF-8 BOM
+#define UTF16LE_BOM                    "\xFF\xFE"        // UTF-16 BOM (Little Endian) as used by Windows
 
 
 // log levels

@@ -1,33 +1,34 @@
 /**
  * Account Guard
  *
- * This EA monitors all open orders and enforces defined limits/restrictions.
- * Orders/positions without trade permission are immediately closed.
+ * This EA monitors open orders and enforces user-defined limits/restrictions:
  *
- * Permitted positions are monitored until the specified drawdown limit is reached. If reached the EA closes all open positions
- * and pending orders. Further trading is prohibited until the end of the day. New orders/positions are immediately closed.
- *
+ * - Orders for symbols without trade permission are immediately closed.
+ * - Permitted positions are constantly monitored. If the specified drawdown limit is exceeded, the EA closes all open orders
+ *   and positions and suspends trading for the rest of the day. During this time, any new orders are closed immediately.
  *
  * Input parameters:
  * -----------------
- *  • PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
- *  • PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
- *  • DrawdownLimit:      An absolute money amount or a percent value describing the drawdown limit of open positions.
- *  • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
- *                        prevents the DDL to trigger by spread widening.
- *
+ *  • PermittedSymbols:     Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
+ *  • PermittedTimeRange:   Time range when trading is permitted: format "00:00-23:59" server time (empty: no restriction).
+ *  • ProhibitedTimeRange:  Time range when trading is not permitted: format "00:00-23:59" server time (empty: no restriction).
+ *  • DrawdownLimit:        Absolute money amount or percent value describing the max drawdown limit of open positions.
+ *  • IgnoreSpreadWidening: Whether to ignore the spread when calculating open PnL. Enabling this setting prevents the DDL to
+ *                          trigger by spread widening. If the impact of the spread is so large that it can't be ignored,
+ *                          either spread or position are way too large. In this case, the symbol shouldn't be traded at all.
  *
  * TODO:
- *  - bug when a hedged position is closed elsewhere (sees a different position and may trigger DDL => error)
- *     local
- *      18:39:38.120  order buy market 0.02 BTCUSD sl: 0.00 tp: 0.00                                 (manual)
- *      18:39:38.415  order was opened : #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
+ *  - support wildcard: PermittedTimeRange=*
+ *  - support empty DrawdownLimit
+ *
+ *  - bug when a hedged position is closed using CloseBy(): AG sees a different position and may trigger DDL
+ *     script CloseOrders
  *      ...
- *      18:39:49.825  Script CloseOrders BTCUSD,M5: loaded successfully
+ *      18:39:49.825  CloseOrders BTCUSD,M5: loaded successfully
  *      18:39:57.130  rsfStdlib: order #561127602 was closed by order #561128139
  *      18:39:57.130  remainder of order #561127602 was opened : #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00  => triggers AG error
  *
- *     -> AG
+ *     Account Guard
  *      18:39:57.252  WARN   Account Guard::onTick(8)  BTCUSD: drawdown limit of -23.8% reached, liquidating positions...
  *      18:39:57.268         Account Guard::rsfStdlib::OrdersCloseSameSymbol(16)  closing 2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
  *      18:39:57.268         Account Guard::rsfStdlib::OrdersHedge(13)  2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01} are already flat
@@ -35,13 +36,11 @@
  *      18:39:57.487  FATAL  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #561127605 by #561128149 after 0.219 s  [ERR_INVALID_TRADE_PARAMETERS]
  *
  *  - ERR_NOT_ENOUGH_MONEY when closing a basket
- *
  *  - display runtime status on screen
- *  - custom logfile per instance
- *  - log trade details to logfile (manual logging is too time consuming)
+ *  - maintain a custom logfile (manual logging is too time consuming)
  *  - ComputeClosedProfit() freezes the terminal if the full history is visible => move to Expander
  *  - visual chart feedback when active (red "AG" when inactive, green "AG" when active)
- *  - enable trading if trading is disabled
+ *  - excempt specific orders/positions from monitoring/auto-closing (e.g. managed orders)
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = { INIT_TIMEZONE, INIT_BUFFERED_LOG };
@@ -49,10 +48,11 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string PermittedSymbols   = "*";               // symbols allowed to trade ("*": all symbols)
-extern string PermittedTimeRange = "";                // time range when trading is allowed (empty: no restriction)
-extern string DrawdownLimit      = "200.00 | 5%*";    // drawdown limit as absolute amount in account currency or percent of account size
-extern bool   IgnoreSpread       = true;              // whether to ignore the spread of floating positions
+extern string PermittedSymbols    = "*";              // symbols allowed to trade ("*": all symbols)
+extern string PermittedTimeRange  = "";               // time range when trading is allowed (empty: no restriction)
+extern string ProhibitedTimeRange = "";               // time range when trading is not allowed (empty: no restriction)
+extern string DrawdownLimit       = "200.00 | 5%*";   // drawdown limit: absolute or percentage amount
+extern bool   IgnoreSpread        = true;             // whether to ignore the spread of floating positions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,12 +68,14 @@ double   prevEquity;                                  // equity value at the pre
 double   absLimit;                                    // configured absolute drawdown limit
 double   pctLimit;                                    // configured percentage drawdown limit
 bool     isPctLimit;                                  // whether a percent limit is configured
-datetime lastLiquidationTime;
+datetime lastDDLTriggerTime;                          // last time the DDL was triggered
 
 bool     allSymbolsPermitted;
 string   permittedSymbols[];
-datetime permittedFrom = -1;
-datetime permittedTo   = -1;
+datetime permittedTimeFrom  = -1;
+datetime permittedTimeTo    = -1;
+datetime prohibitedTimeFrom = -1;
+datetime prohibitedTimeTo   = -1;
 
 string   trackedSymbols[];                            // currently tracked open positions
 double   trackedData[][5];
@@ -86,7 +88,7 @@ double   trackedData[][5];
 
 
 /**
- * Initialization.
+ * Initialization
  *
  * @return int - error status
  */
@@ -99,23 +101,29 @@ int onInit() {
       int size = Explode(PermittedSymbols, ",", sValues, NULL);
       for (int i=0; i < size; i++) {
          sValue = StrTrim(sValues[i]);
-         if (StringLen(sValue) > MAX_SYMBOL_LENGTH)                   return(catch("onInit(1)  invalid symbol in parameter PermittedSymbols: "+ DoubleQuoteStr(sValue) +" (max symbol length: "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
+         if (StringLen(sValue) > MAX_SYMBOL_LENGTH) return(catch("onInit(1)  invalid symbol in parameter PermittedSymbols: "+ DoubleQuoteStr(sValue) +" (max symbol length: "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
          if (SearchStringArrayI(permittedSymbols, sValue) == -1) {
             ArrayPushString(permittedSymbols, sValue);
          }
       }
    }
-
-   // PermittedTimeRange: 09:00-10:00
-   permittedFrom = -1;
-   permittedTo   = -1;
+   // PermittedTimeRange: 09:00-14:00
+   permittedTimeFrom = -1;
+   permittedTimeTo   = -1;
    sValue = StrTrim(PermittedTimeRange);
-   if (StringLen(sValue) > 0) {
+   if (sValue != "") {
       int iNull;
-      if (!ParseTimeRange(sValue, permittedFrom, permittedTo, iNull)) return(catch("onInit(2)  invalid input parameter PermittedTimeRange: \""+ PermittedTimeRange +"\"", ERR_INVALID_INPUT_PARAMETER));
+      if (!ParseTimeRange(sValue, permittedTimeFrom, permittedTimeTo, iNull)) return(catch("onInit(2)  invalid input parameter PermittedTimeRange: \""+ PermittedTimeRange +"\"", ERR_INVALID_INPUT_PARAMETER));
       PermittedTimeRange = sValue;
    }
-
+   // ProhibitedTimeRange: 15:30-17:30
+   prohibitedTimeFrom = -1;
+   prohibitedTimeTo   = -1;
+   sValue = StrTrim(ProhibitedTimeRange);
+   if (sValue != "") {
+      if (!ParseTimeRange(sValue, prohibitedTimeFrom, prohibitedTimeTo, iNull)) return(catch("onInit(3)  invalid input parameter ProhibitedTimeRange: \""+ ProhibitedTimeRange +"\"", ERR_INVALID_INPUT_PARAMETER));
+      ProhibitedTimeRange = sValue;
+   }
    // DrawdownLimit
    if (Explode(DrawdownLimit, "*", sValues, 2) > 1) {
       size = Explode(sValues[0], "|", sValues, NULL);
@@ -126,25 +134,25 @@ int onInit() {
    }
    isPctLimit = StrEndsWith(sValue, "%");
    if (isPctLimit) sValue = StrTrimRight(StrLeft(sValue, -1));
-   if (!StrIsNumeric(sValue))                                         return(catch("onInit(3)  invalid parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit), ERR_INVALID_PARAMETER));
+   if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit), ERR_INVALID_PARAMETER));
    double dValue = NormalizeDouble(-MathAbs(StrToDouble(sValue)), 2);
    if (isPctLimit) {
       pctLimit = dValue;
       absLimit = NULL;
-      if (!pctLimit)                                                  return(catch("onInit(4)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
-      if (pctLimit <= -100)                                           return(catch("onInit(5)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be > -100)", ERR_INVALID_PARAMETER));
+      if (!pctLimit)          return(catch("onInit(5)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
+      if (pctLimit <= -100)   return(catch("onInit(6)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be > -100)", ERR_INVALID_PARAMETER));
       DrawdownLimit = NumberToStr(pctLimit, ".+") +"%";
    }
    else {
       pctLimit = NULL;
       absLimit = dValue;
-      if (!absLimit)                                                  return(catch("onInit(6)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
+      if (!absLimit)          return(catch("onInit(7)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
       DrawdownLimit = DoubleToStr(absLimit, 2);
    }
 
-   // configure virtual ticks in milliseconds (must be short as the EA monitors all symbols)
-   __virtualTicks = 800;
-   return(catch("onInit(7)"));
+   // configure virtual ticks in milliseconds (short enough to effectively monitor all symbols)
+   __virtualTicks = 1000;
+   return(catch("onInit(8)"));
 }
 
 
@@ -154,6 +162,21 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   // --- new ---------------------------------------------------------------------------------------------------------------
+   // - Monitor DD using the same logic as monitoring custom positions in ChartInfos indicator:
+   //    single symbol:         "H Today,L,S,LM={DDL},MFE"
+   //    account = all symbols: "HT Today,L,S,LM={DDL},MFE"          // not yet implemented: Open-Total
+   // - "H Today" automatically resets at start of day.
+   //
+
+   // --- old ---------------------------------------------------------------------------------------------------------------
+   // - The DD limit is not monitored for the whole account.
+   //
+   // - The DD limit is not monitored starting at 00:00 but per symbol + new custom position (too complex). It requires
+   //   knowing the opening time of a custom position which is not possible under some circumstances (e.g. remotely).
+   //   The job of the "Account Guard" is to monitor the account, not custom positions.
+   //
+
    // get open orders and floating profits
    string openSymbols[];
    double openProfits[];
@@ -227,16 +250,15 @@ int onTick() {
    }
    // on openSize > 0: all remaining open orders are new (unknown to the tracker)
 
-   // close/delete new orders after a previous liquidation at the same day
+   // close all new orders if the DDL was already triggered
    if (openSize > 0) {
-      datetime today = TimeFXT();
-      today -= (today % DAY);
-      datetime lastLiquidation = lastLiquidationTime - lastLiquidationTime % DAY;
-      if (lastLiquidation == today) {
-         logWarn("onTick(4)  closing/deleting all new orders until end of day");
+      datetime startOfDay = TimeFXT();
+      startOfDay -= (startOfDay % DAY);
+      if (lastDDLTriggerTime >= startOfDay) {
+         logWarn("onTick(4)  prohibiting all new orders until end of day");
          ArrayResize(trackedSymbols, 0);
          ArrayResize(trackedData,    0);
-         CloseOpenOrders();                                       // FIXME: closes all open tickets, not only new ones
+         CloseOpenOrders();
          return(catch("onTick(5)"));
       }
    }
@@ -244,9 +266,9 @@ int onTick() {
    // process new orders
    for (i=0; prevEquity && i < openSize; i++) {
       isPendingOrder = IsEmptyValue(openProfits[n]);
-      string msg = ifString(isPendingOrder, "deleting", "closing") +" non-permitted "+ openSymbols[i] + ifString(isPendingOrder, " order", " position");
+      string msg = ifString(isPendingOrder, "deleting", "closing") +" prohibited "+ openSymbols[i] + ifString(isPendingOrder, " order", " position");
 
-      // close/delete non-permitted orders
+      // close all non-permitted orders
       if (!allSymbolsPermitted) {
          if (SearchStringArrayI(permittedSymbols, openSymbols[i]) == -1) {
             logWarn("onTick(6)  "+ msg);
@@ -255,15 +277,15 @@ int onTick() {
          }
       }
       int now = Tick.time % DAY;
-      if (permittedFrom > -1) {
-         if (now < permittedFrom*MINUTES) {
+      if (permittedTimeFrom > -1) {
+         if (now < permittedTimeFrom * MINUTES || now > permittedTimeTo * MINUTES) {
             logWarn("onTick(7)  "+ msg);
             CloseOpenOrders(openSymbols[i]);
             continue;
          }
       }
-      if (permittedTo > -1) {
-         if (now > permittedTo*MINUTES) {
+      if (prohibitedTimeFrom > -1) {
+         if (now >= prohibitedTimeFrom * MINUTES && now <= prohibitedTimeTo * MINUTES) {
             logWarn("onTick(8)  "+ msg);
             CloseOpenOrders(openSymbols[i]);
             continue;
@@ -301,12 +323,12 @@ int onTick() {
       double closedProfit = trackedData[i][I_CLOSED_PROFIT ];
       double ddl          = trackedData[i][I_DRAWDOWN_LIMIT];
 
-      if (openProfit+closedProfit < ddl) {
-         lastLiquidationTime = TimeFXT();
-         logWarn("onTick(10)  "+ trackedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, closing positions...");
+      if (openProfit + closedProfit < ddl) {
+         lastDDLTriggerTime = TimeFXT();
+         logWarn("onTick(10)  "+ trackedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, closing all open positions...");
          ArrayResize(trackedSymbols, 0);
          ArrayResize(trackedData,    0);
-         CloseOpenOrders();                                       // FIXME: closes all open tickets, not only the one hitting the DDL
+         CloseOpenOrders();
          break;
       }
    }
@@ -328,7 +350,7 @@ datetime GetPositionOpenTime(string symbol) {
    datetime time = INT_MAX;
 
    for (int n, i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // FALSE: an open order was closed/deleted in another thread
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
       if (OrderType() > OP_SELL)                       continue;
       if (OrderSymbol() != symbol)                     continue;
       time = MathMin(time, OrderOpenTime());
@@ -354,16 +376,16 @@ double ComputeClosedProfit(string symbol, datetime from) {
    static int    lastOrders = -1;
    static double lastProfit = 0;                                     // FIXME: static profit is not separated by symbol
 
-   int orders = OrdersHistoryTotal(), _orders=orders;
+   int orders = OrdersHistoryTotal(), _orders = orders;
    if (orders == lastOrders) return(lastProfit);                     // PnL is only recalculated if history size changes
 
    // sort closed positions by {CloseTime, OpenTime, Ticket}
-   int sortKeys[][3], n=0;
+   int sortKeys[][3], n = 0;
    ArrayResize(sortKeys, orders);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the visible history range was modified in another thread
-      if (OrderType() > OP_SELL)                        continue;    // intentionally ignore dividends and rollover adjustments
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;
+      if (OrderType() > OP_SELL)                        continue;    // ignore dividends and rollover adjustments
       if (OrderSymbol() != symbol)                      continue;
 
       sortKeys[n][0] = OrderCloseTime();
@@ -503,8 +525,10 @@ void EmergencyStop() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("PermittedSymbols=",   DoubleQuoteStr(PermittedSymbols),   ";", NL,
-                            "PermittedTimeRange=", DoubleQuoteStr(PermittedTimeRange), ";", NL,
-                            "DrawdownLimit=",      DoubleQuoteStr(DrawdownLimit),      ";", NL,
-                            "IgnoreSpread=",       BoolToStr(IgnoreSpread),            ";"));
+   return(StringConcatenate("PermittedSymbols=",    DoubleQuoteStr(PermittedSymbols),    ";", NL,
+                            "PermittedTimeRange=",  DoubleQuoteStr(PermittedTimeRange),  ";", NL,
+                            "ProhibitedTimeRange=", DoubleQuoteStr(ProhibitedTimeRange), ";", NL,
+                            "DrawdownLimit=",       DoubleQuoteStr(DrawdownLimit),       ";", NL,
+                            "IgnoreSpread=",        BoolToStr(IgnoreSpread),             ";")
+   );
 }

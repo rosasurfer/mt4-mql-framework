@@ -673,7 +673,7 @@ bool UpdateReversalBalance(int bar, bool isReversalBar, bool isDoubleCross, bool
 bool RecordReversalBalance() {
    if (!recorder.initialized) {
       // create symbol and group
-      recorder.symbol       = Symbol() +".db";
+      recorder.symbol       = Symbol() +".db";           // TODO: validate symbol
       recorder.symbolDescr  = "Donchian reversal balance";
       recorder.group        = "Donch. balance";          // max length: 15
       recorder.hstDirectory = Recorder_GetHstDirectory();
@@ -900,10 +900,11 @@ bool ProcessUpperCross(int bar) {
       }
       string sLevel = NumberToStr(upperCross[bar], PriceFormat);
 
-      // log reversal
+      // log reversal (skip logging if the indicator is not visible)
       if (IsLogInfo()) {
-         bool logReversal = true;
-         if (!__isSuperContext && !__isTesting) {           // once per terminal
+         bool logReversal = (Signal.onReversal || ShowChannel || reversals.show);
+
+         if (logReversal && !__isSuperContext && !__isTesting) {  // once per terminal
             int hWndTerminal = GetTerminalMainWindow();
             string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessUpperCross("+ sLevel +")."+ TimeToStr(Time[bar]);
             logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
@@ -989,10 +990,11 @@ bool ProcessLowerCross(int bar) {
       }
       string sLevel = NumberToStr(lowerCross[bar], PriceFormat);
 
-      // log reversal
+      // log reversal (skip logging if the indicator is not visible)
       if (IsLogInfo()) {
-         bool logReversal = true;
-         if (!__isSuperContext && !__isTesting) {        // once per terminal
+         bool logReversal = (Signal.onReversal || ShowChannel || reversals.show);
+
+         if (logReversal && !__isSuperContext && !__isTesting) {  // once per terminal
             int hWndTerminal = GetTerminalMainWindow();
             string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessLowerCross("+ sLevel +")."+ TimeToStr(Time[bar]);
             logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
@@ -1123,9 +1125,13 @@ void UpdateChartLegend() {
       string text      = StringConcatenate(indicatorName, sFilter, sReversal, sSignal);
 
       color clr = Reversal.Color;
-      if (clr == CLR_NONE) {
+      if (!ShowChannel && !reversals.show) {
+         clr = Gray;
+      }
+      else if (clr == CLR_NONE) {
          clr = ifInt(trend[0] > 0, Channel.UpperColor, Channel.LowerColor);
       }
+
       if      (clr == Aqua        ) clr = DodgerBlue;
       else if (clr == Gold        ) clr = Orange;
       else if (clr == LightSkyBlue) clr = C'94,174,255';

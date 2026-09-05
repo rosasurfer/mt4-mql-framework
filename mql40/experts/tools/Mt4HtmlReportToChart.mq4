@@ -71,18 +71,18 @@ int onInit() {
    }
 
    // reset the command handler
-   string sValues[];
-   GetChartCommand("", sValues);
+   string sNull[];
+   GetChartCommand("", sNull);
 
    // parse the specified file
    int initReason = ProgramInitReason();
    if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE || initReason==IR_SYMBOLCHANGE) {
       if (ValidateInputs()) {
          string content = ReadFile(HtmlFilename);
-         if (content == "") return(last_error);
-         ParseFileContent(content);
+         if (content == "")              return(last_error);
+         if (!ParseFileContent(content)) return(last_error);
 
-         // delete existing trades and show current ones
+         // hide existing trade markers and show imported trades
          status.showTradeHistory = true;
          if (ToggleTradeHistory(false)) {
             ToggleTradeHistory(true);
@@ -152,11 +152,11 @@ string ReadFile(string filename) {
    int fileSize = FileSize(hFile);
    if (!fileSize) {
       FileClose(hFile);
-      return(_EMPTY_STR(catch("ReadFile(2)  invalid file "+ DoubleQuoteStr(filename) +" (size: 0)", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("ReadFile(2)  invalid file "+ DoubleQuoteStr(filename) +" (file size: 0)", ERR_RUNTIME_ERROR)));
    }
 
-   string content="", chunk="";
-   int chunkSize = 4000;                              // MQL4.0 bug: FileReadString() stops reading after 4095 chars
+   string content = "", chunk = "";
+   int chunkSize = 4000;                              // MQL4.0 bug: FileReadString() stops reading after 4095 byte
 
    while (!FileIsEnding(hFile)) {
       chunk = FileReadString(hFile, chunkSize);
@@ -386,8 +386,8 @@ bool ParseAccountStatement(string content) {
       sProfit = StrTrim(StrLeftTo(StrRightFrom(cells[AS_PROFIT], ">"), "<")); if (!StrIsNumeric(sProfit))             return(!catch("ParseAccountStatement(55)  trade history: unexpected \"Profit\" value in row "+ (i+1) +", col "+ (AS_PROFIT+1) +": \""+ sProfit +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
       dProfit = StrToDouble(sProfit);
 
-      // add new history record
-      if (FindStandardSymbol(symbol) == StdSymbol()) {
+      // add new history record if row belongs to current symbol
+      if (FindStdSymbol(symbol) == StdSymbol()) {
          if (convertTimezones) {
             dtOpenTime  = ReportToServerTime(dtOpenTime);  if (dtOpenTime  == NaT) return(false);
             dtCloseTime = ReportToServerTime(dtCloseTime); if (dtCloseTime == NaT) return(false);

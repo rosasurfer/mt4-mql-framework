@@ -230,7 +230,7 @@ int log(string message, int error, int level) {
          if (!configLevel) configLevel = _int(LOG_OFF, catch("log(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
       }
       __ExecutionContext[EC.loglevel] = configLevel;                       // on fatal errors prevent more DLL errors
-      if (!__STATUS_OFF || pid) ec_SetLoglevel(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevel(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
@@ -355,7 +355,7 @@ int log2Alert(string message, int error, int level) {
       configLevel = Min(configLevel, LOG_FATAL);                                    // the alert appender cannot be fully switched off
 
       __ExecutionContext[EC.loglevelAlert] = configLevel;                           // on fatal errors prevent more DLL errors
-      if (!__STATUS_OFF || pid) ec_SetLoglevelAlert(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelAlert(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
@@ -367,7 +367,7 @@ int log2Alert(string message, int error, int level) {
       }
       isRecursion = true;
       __ExecutionContext[EC.loglevelAlert] = LOG_OFF;                               // prevent recursive calls
-      if (!__STATUS_OFF || pid) ec_SetLoglevelAlert(__ExecutionContext, LOG_OFF);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelAlert(__ExecutionContext, LOG_OFF);
 
       if (IsTesting()) {                                                            // neither Alert() nor MessageBox() can be used
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription();
@@ -382,7 +382,7 @@ int log2Alert(string message, int error, int level) {
       }
 
       __ExecutionContext[EC.loglevelAlert] = configLevel;                           // restore the configuration
-      if (!__STATUS_OFF || pid) ec_SetLoglevelAlert(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelAlert(__ExecutionContext, configLevel);
       isRecursion = false;
    }
    return(error);
@@ -411,7 +411,7 @@ int log2Debug(string message, int error, int level) {
          if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debug(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
       }
       __ExecutionContext[EC.loglevelDebug] = configLevel;                           // on fatal errors prevent more DLL errors
-      if (!__STATUS_OFF || pid) ec_SetLoglevelDebug(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelDebug(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
@@ -423,12 +423,12 @@ int log2Debug(string message, int error, int level) {
       }
       isRecursion = true;
       __ExecutionContext[EC.loglevelDebug] = LOG_OFF;                               // prevent recursive calls
-      if (!__STATUS_OFF || pid) ec_SetLoglevelDebug(__ExecutionContext, LOG_OFF);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelDebug(__ExecutionContext, LOG_OFF);
 
       debug(message, error, level);
 
       __ExecutionContext[EC.loglevelDebug] = configLevel;                           // restore the configuration
-      if (!__STATUS_OFF || pid) ec_SetLoglevelDebug(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelDebug(__ExecutionContext, configLevel);
       isRecursion = false;
    }
    return(error);
@@ -458,7 +458,8 @@ int log2File(string message, int error, int level) {
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
          if (!configLevel) configLevel = _int(LOG_OFF, catch("log2File(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
       }
-      ec_SetLoglevelFile(__ExecutionContext, configLevel);
+      __ExecutionContext[EC.loglevelFile] = configLevel;                           // on fatal errors prevent more DLL errors
+      if (!__STATUS_OFF && pid) ec_SetLoglevelFile(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
@@ -469,14 +470,16 @@ int log2File(string message, int error, int level) {
          return(error);
       }
       isRecursion = true;
-      ec_SetLoglevelFile(__ExecutionContext, LOG_OFF);                              // prevent recursive calls
+      __ExecutionContext[EC.loglevelFile] = LOG_OFF;                                // prevent recursive calls
+      if (!__STATUS_OFF && pid) ec_SetLoglevelFile(__ExecutionContext, LOG_OFF);
 
       datetime time = TimeCurrent();                                                // may be NULL, intentionally no error handling as it would cause recursion
       if (!time && __isTesting && Bars) time = Time[0];
 
       AppendLogMessageA(__ExecutionContext, time, message, error, level);
 
-      ec_SetLoglevelFile(__ExecutionContext, configLevel);                          // restore the configuration
+      __ExecutionContext[EC.loglevelFile] = configLevel;                            // restore the configuration
+      if (!__STATUS_OFF && pid) ec_SetLoglevelFile(__ExecutionContext, configLevel);
       isRecursion = false;
    }
    return(error);
@@ -505,7 +508,7 @@ int log2Mail(string message, int error, int level) {
          if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Mail(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
       }
       __ExecutionContext[EC.loglevelMail] = configLevel;                            // on fatal errors prevent more DLL errors
-      if (!__STATUS_OFF || pid) ec_SetLoglevelMail(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelMail(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
@@ -517,7 +520,7 @@ int log2Mail(string message, int error, int level) {
       }
       isRecursion = true;
       __ExecutionContext[EC.loglevelMail] = LOG_OFF;                                // prevent recursive calls
-      if (!__STATUS_OFF || pid) ec_SetLoglevelMail(__ExecutionContext, LOG_OFF);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelMail(__ExecutionContext, LOG_OFF);
 
       message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ MqlModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string subject = StrReplace(StrReplace(message, EOL_WINDOWS, " "), EOL_UNIX, " ");
@@ -525,7 +528,7 @@ int log2Mail(string message, int error, int level) {
 
       if (SendEmail("", "", subject, body)) {
          __ExecutionContext[EC.loglevelMail] = configLevel;                         // restore the configuration or leave it disabled
-         if (!__STATUS_OFF || pid) ec_SetLoglevelMail(__ExecutionContext, configLevel);
+         if (!__STATUS_OFF && pid) ec_SetLoglevelMail(__ExecutionContext, configLevel);
       }
       isRecursion = false;
    }
@@ -555,7 +558,7 @@ int log2Telegram(string message, int error, int level) {
          if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Telegram(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
       }
       __ExecutionContext[EC.loglevelTelegram] = configLevel;                        // on fatal errors prevent more DLL errors
-      if (!__STATUS_OFF || pid) ec_SetLoglevelTelegram(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelTelegram(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
@@ -567,14 +570,14 @@ int log2Telegram(string message, int error, int level) {
       }
       isRecursion = true;
       __ExecutionContext[EC.loglevelTelegram] = LOG_OFF;                            // prevent recursive calls
-      if (!__STATUS_OFF || pid) ec_SetLoglevelTelegram(__ExecutionContext, LOG_OFF);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelTelegram(__ExecutionContext, LOG_OFF);
 
       string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ MqlModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
                   +"("+ TimeToStr(TimeLocalEx("log2Telegram(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendTelegramMessage("log", text)) {
          __ExecutionContext[EC.loglevelTelegram] = configLevel;                     // restore the configuration or leave it disabled
-         if (!__STATUS_OFF || pid) ec_SetLoglevelTelegram(__ExecutionContext, configLevel);
+         if (!__STATUS_OFF && pid) ec_SetLoglevelTelegram(__ExecutionContext, configLevel);
       }
       isRecursion = false;
    }
@@ -605,7 +608,7 @@ int log2Terminal(string message, int error, int level) {
       }
       configLevel = Min(configLevel, LOG_FATAL);                                    // the terminal appender cannot be fully switched off
       __ExecutionContext[EC.loglevelTerminal] = configLevel;                        // on fatal errors prevent more DLL errors
-      if (!__STATUS_OFF || pid) ec_SetLoglevelTerminal(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelTerminal(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
@@ -617,7 +620,7 @@ int log2Terminal(string message, int error, int level) {
       }
       isRecursion = true;
       __ExecutionContext[EC.loglevelTerminal] = LOG_OFF;                            // prevent recursive calls
-      if (!__STATUS_OFF || pid) ec_SetLoglevelTerminal(__ExecutionContext, LOG_OFF);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelTerminal(__ExecutionContext, LOG_OFF);
 
       string sLoglevel = ""; if (level != LOG_DEBUG) sLoglevel = LoglevelDescription(level) +"  ";
       string sError    = ""; if (error != NO_ERROR)  sError    = " ["+ ErrorToStr(error) +"]";
@@ -625,7 +628,7 @@ int log2Terminal(string message, int error, int level) {
       Print(sLoglevel, StrReplace(StrReplace(message, EOL_WINDOWS, " "), EOL_UNIX, " "), sError);
 
       __ExecutionContext[EC.loglevelTerminal] = configLevel;                        // restore the configuration
-      if (!__STATUS_OFF || pid) ec_SetLoglevelTerminal(__ExecutionContext, configLevel);
+      if (!__STATUS_OFF && pid) ec_SetLoglevelTerminal(__ExecutionContext, configLevel);
 
       isRecursion = false;
    }

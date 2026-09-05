@@ -725,7 +725,7 @@ bool HistoryFile1.Close(int hFile) {
    if (IsError(error)) return(!catch("HistoryFile1.Close(4)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 
    hf.hFile[hFile] = -1;                                             // reset handle before closing
-   FileClose(hFile);                                                 // MT4 bug: in library::deinit() file handles are released to early (triggers ERR_INVALID_PARAMETER)
+   FileClose(hFile);                                                 // MT4 bug: in library::deinit() file handles are released too early (triggers ERR_INVALID_PARAMETER)
                                                                      // on error it adds "rsfHistory: handle <hFile> does not exist in FileClose" to the "Experts" log
    error = GetLastError();
    if (!error)                         return(true);
