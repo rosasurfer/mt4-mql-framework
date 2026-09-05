@@ -26,7 +26,7 @@
  * @return int - the same error
  */
 int SetLastError(int error) {
-   if (__ExecutionContext[EC.pid] != NULL) {
+   if (!__STATUS_OFF && __ExecutionContext[EC.pid]) {
       ec_SetMqlError(__ExecutionContext, error);
    }
    last_error = error;
@@ -4593,7 +4593,7 @@ string GetAccountServer() {
       // update EXECUTION_CONTEXT and main window properties
       sAccountServer = serverName;
       int pid = __ExecutionContext[EC.pid];              // on fatal errors prevent more DLL errors
-      if (!__STATUS_OFF || pid) ec_SetAccountServer(__ExecutionContext, serverName);
+      if (!__STATUS_OFF && pid) ec_SetAccountServer(__ExecutionContext, serverName);
       else                      __ExecutionContext[EC.accountServer] = NULL;
 
       lpAccountServer = __ExecutionContext[EC.accountServer];
@@ -4666,7 +4666,7 @@ int GetAccountNumber() {
       // update EXECUTION_CONTEXT and window properties
       __ExecutionContext[EC.accountNumber] = accountNumber;
       int pid = __ExecutionContext[EC.pid];              // on fatal errors prevent more DLL errors
-      if (!__STATUS_OFF || pid) ec_SetAccountNumber(__ExecutionContext, accountNumber);
+      if (!__STATUS_OFF && pid) ec_SetAccountNumber(__ExecutionContext, accountNumber);
       SetWindowPropertyA(hMainWnd, PROP_INT_ACCOUNT_NUMBER, accountNumber);
 
       isRecursion = false;
