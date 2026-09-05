@@ -915,7 +915,7 @@ string FindStdSymbol(string symbol, bool strict = false) {
    else if (StrStartsWith(_symbol, "_" )) _symbol = StrRight(_symbol, -1);
 
    if      (StrEndsWith(_symbol, ".A"  )) _symbol = StrLeft(_symbol, -2);
-   else if (StrEndsWith(_symbol, ".I"  )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, ".I"  )) _symbol = StrLeft(_symbol, -2);
    else if (StrEndsWith(_symbol, ".M"  )) _symbol = StrLeft(_symbol, -2);
    else if (StrEndsWith(_symbol, ".PRO")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, ".R"  )) _symbol = StrLeft(_symbol, -2);
