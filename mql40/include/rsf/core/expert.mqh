@@ -757,7 +757,7 @@ int onDeinitChartChange();
 
 
 /**
- * Never encountered. Tracked in MT4Expander::onDeinitAccountChange().
+ * Called in more recent terminals when the account changes. Used to never be called anywhere. First noted in build 1440.
  *
  * @return int - error status
  *
