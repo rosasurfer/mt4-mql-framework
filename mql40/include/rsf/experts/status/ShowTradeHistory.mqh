@@ -83,7 +83,7 @@ int _ShowTradeHistory(double array[][]) {
 
       // open marker
       openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
-      if (part == 1) {                                // history[]
+      if (part == 1) {                                   // history[]
          if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (openLabel, OBJPROP_COLOR,  iOpenColors[type]);
