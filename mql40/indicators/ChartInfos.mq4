@@ -1955,7 +1955,7 @@ bool UpdateStopoutLevel() {
    int    customTickets[], customTypes[];
    double profitMarkerPrice, profitMarkerDD=EMPTY_VALUE, lossMarkerPrice, lossMarkerDD=EMPTY_VALUE;
    bool   profitMarkerDDisPct, lossMarkerDDisPct;
-   bool   lineSkipped, isVirtual;
+   bool   hidePosition, lineSkipped, isVirtual;
    string property = "";
 
    ArrayResize(positions.data, 0);
@@ -1971,8 +1971,12 @@ bool UpdateStopoutLevel() {
 
       if (!termType) {                                                           // termType NULL => EOL of a config line for costum positions
          if (i == 0) line = -1;                                                  // an empty configuration has no lines
-         if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, line, flags);
-         if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
+         hidePosition = false;
+         if (line > -1) hidePosition = (config.dData[line][I_HIDE_POSITION] && 1);
+         if (!hidePosition) {
+            if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, line, flags);
+            if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
+         }
 
          // store custom position for display
          if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits,
@@ -2008,10 +2012,10 @@ bool UpdateStopoutLevel() {
             }
          }
 
+         isVirtual           = false;
          filter              = 0;
          filterCondition     = 0;
          filterValue         = 0;
-         isVirtual           = false;
          customLongPosition  = 0;
          customShortPosition = 0;
          customTotalPosition = 0;
@@ -2071,12 +2075,6 @@ bool UpdateStopoutLevel() {
  * @return bool - success status
  */
 bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL) {
-   if (configLine > -1) {
-      if (config.dData[configLine][I_HIDE_POSITION] && 1) {
-         return(true);
-      }
-   }
-
    int copy[];
    ArrayResize(copy, 0);
 
