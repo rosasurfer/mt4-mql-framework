@@ -296,10 +296,10 @@ bool ParseLines(string lines[]) {
 
 
 /**
- * Parse a string containing a 32-bit unsigned integer and convert it to a signed integer.
+ * Parse a string holding a 32-bit unsigned integer and convert it to a signed integer.
  * Helper for MQL4.0 which has no `unsigned int` type.
  *
- * @param  _In_  string sUnsigned - uint32 string to parse
+ * @param  _In_  string sUnsigned - uint32 string representation to parse
  * @param  _Out_ int    signed    - parsed signed int
  *
  * @return bool - success status
