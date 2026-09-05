@@ -108,7 +108,7 @@ int init() {
    }
 
    // Issue:    Built-in UninitializeReason() codes and their meanings vary across terminal versions and are not suitable
-   //           for clearly distinguishing between various initialization scenarios.
+   //           for clearly distinguishing initialization scenarios.
    // Solution: Function ProgramInitReason() and the INITREASON_* constants provided by this framework.
    //
    // Execute custom init() reason handlers. Reason-specific handlers are executed only if onInit() returns successful.
@@ -121,7 +121,7 @@ int init() {
    // | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
    // | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
    // | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
-   // | IR_ACCOUNTCHANGE     | account changed                               | no input dialog |   I         |
+   // | IR_ACCOUNTCHANGE     | account changed                               | no input dialog |   I, E      |
    // | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
    // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql-framework/issues/1#
    // +----------------------+-----------------------------------------------+-----------------+-------------+
@@ -444,16 +444,17 @@ int deinit() {
    if (!error) error = onDeinit();                                      // preprocessing hook
    if (!error) {                                                        //
       switch (UninitializeReason()) {                                   //
-         case UR_PARAMETERS : error = onDeinitParameters();  break;     //
-         case UR_CHARTCHANGE: error = onDeinitChartChange(); break;     //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();  break;     //
-         case UR_UNDEFINED  : error = onDeinitUndefined();   break;     //
-         case UR_REMOVE     : error = onDeinitRemove();      break;     //
-         case UR_RECOMPILE  : error = onDeinitRecompile();   break;     //
+         case UR_PARAMETERS : error = onDeinitParameters();    break;   //
+         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;   //
+         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;   //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;   //
+         case UR_UNDEFINED  : error = onDeinitUndefined();     break;   //
+         case UR_REMOVE     : error = onDeinitRemove();        break;   //
+         case UR_RECOMPILE  : error = onDeinitRecompile();     break;   //
          // terminal builds > 509                                       //
-         case UR_TEMPLATE   : error = onDeinitTemplate();    break;     //
-         case UR_INITFAILED : error = onDeinitFailed();      break;     //
-         case UR_CLOSE      : error = onDeinitClose();       break;     //
+         case UR_TEMPLATE   : error = onDeinitTemplate();      break;   //
+         case UR_INITFAILED : error = onDeinitFailed();        break;   //
+         case UR_CLOSE      : error = onDeinitClose();         break;   //
                                                                         //
          default:                                                       //
             HandleErrors("deinit(3)  unexpected UninitializeReason: "+ UninitializeReason(), ERR_RUNTIME_ERROR);
