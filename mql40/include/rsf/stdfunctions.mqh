@@ -874,7 +874,7 @@ double GetCommission(double lots = 1.0, int mode = MODE_MONEY) {
 
 
 /**
- * Return the current standard symbol. Caching shortcut for FindStdSymbol(Symbol()).
+ * Return the current standard symbol. Caching shortcut for FindStdSymbol(Symbol(), false).
  *
  * e.g.: Symbol()    => "EURUSDm"
  *       StdSymbol() => "EURUSD"
@@ -911,6 +911,11 @@ string FindStdSymbol(string symbol, bool strict = false) {
    if (symbol == "") return(_EMPTY_STR(catch("FindStdSymbol(1)  invalid parameter symbol: \"\" (empty)", ERR_INVALID_PARAMETER)));
 
    string _symbol = StrToUpper(symbol);
+
+   if (strict) /*&&*/ if (StrEndsWith(_symbol, ".DB")) {
+      return("");
+   }
+
    if      (StrStartsWith(_symbol, "." )) _symbol = StrRight(_symbol, -1);
    else if (StrStartsWith(_symbol, "_" )) _symbol = StrRight(_symbol, -1);
 
@@ -1193,7 +1198,7 @@ string FindStdSymbol(string symbol, bool strict = false) {
 string GetSymbolDescription(string symbol, string altValue = "") {
    if (symbol == "") return(_EMPTY_STR(catch("GetSymbolDescription(1)  invalid parameter symbol: \"\" (empty)", ERR_INVALID_PARAMETER)));
 
-   string stdSymbol = FindStdSymbol(symbol, true);
+   string stdSymbol = FindStdSymbol(symbol, true), prefix, suffix;
 
    if (stdSymbol != "") {
       if      (stdSymbol == "ASX200" ) return("ASX 200");
@@ -1222,7 +1227,8 @@ string GetSymbolDescription(string symbol, string altValue = "") {
       else if (stdSymbol == "XAUJPY" ) return("Gold/JPY");
       else if (stdSymbol == "XAUUSD" ) return("Gold/USD");
       else {
-         string prefix = StrLeft(stdSymbol, -3), suffix = StrRight(stdSymbol, 3);
+         prefix = StrLeft(stdSymbol, -3);
+         suffix = StrRight(stdSymbol, 3);
          if (StrIsDigits(prefix)) {
             if      (suffix == ".BA") return(StringConcatenate("Account ", prefix, " Balance"));
             else if (suffix == ".BX") return(StringConcatenate("Account ", prefix, " Balance + AuM"));
@@ -1233,7 +1239,13 @@ string GetSymbolDescription(string symbol, string altValue = "") {
          }
       }
    }
+   else {
+      suffix = StrRight(symbol, 3);
 
+      if (suffix == ".db") {
+         return(StringConcatenate(StrLeft(symbol, -3), " Turtle Balance"));
+      }
+   }
    return(altValue);
 }
 

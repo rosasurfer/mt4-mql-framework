@@ -1088,7 +1088,7 @@ bool CreateLabels() {
       ObjectSet(label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13)); // On builds > 478 the label is inset to account for the arrow of the
       ObjectSet(label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3)); // "One-Click-Trading" feature.
-      string text = GetSymbolDescription(StdSymbol(), Symbol());
+      string text = GetSymbolDescription(Symbol(), Symbol());
       if      (StrEndsWithI(Symbol(), "_ask")) text = text +" (Ask)";
       else if (StrEndsWithI(Symbol(), "_avg")) text = text +" (Avg)";
       ObjectSetText(label.instrument, text, 9, "Tahoma Fett", Black);
