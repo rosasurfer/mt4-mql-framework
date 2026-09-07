@@ -46,6 +46,7 @@ extern bool CustomPositions.Sound = true;          // whether position monitorin
 #include <rsf/win32api.mqh>
 
 #include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
 #include <rsf/functions/InitializeByteBuffer.mqh>
 #include <rsf/functions/lfx.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
@@ -434,14 +435,14 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
    double   lots, units, openPrice, takeProfit, stopLoss;
    string   comment="", label1="", label2="", label3="", sTP="", sSL="", orderTypes[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
    int      customTicketsSize = ArraySize(customTickets);
-   static int returnValue = 0;
+   static int displayedOrders = 0;
 
    // on flag F_SHOW_CUSTOM_POSITIONS call AnalyzePositions() which recursively calls ShowOpenOrders() for each custom config line
    if (!customTicketsSize || flags & F_SHOW_CUSTOM_POSITIONS) {
-      returnValue = 0;
+      displayedOrders = 0;
       if (!customTicketsSize && flags & F_SHOW_CUSTOM_POSITIONS) {
          if (!AnalyzePositions(flags)) return(-1);
-         return(returnValue);
+         return(displayedOrders);
       }
    }
 
@@ -454,7 +455,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (customTickets[i] <= 3)                                continue;     // skip virtual positions
             if (!SelectTicket(customTickets[i], "ShowOpenOrders(1)")) break;
          }
-         else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;               // FALSE: an open order was closed/deleted in another thread
+         else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;               // FALSE: an open order was closed/deleted elsewhere
          if (OrderSymbol() != Symbol()) continue;
 
          // read order data
@@ -517,9 +518,38 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             ObjectSet    (label1, OBJPROP_PRICE1,    openPrice);
             ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
          }
-         returnValue++;
+         displayedOrders++;
       }
-      return(returnValue);
+
+      if (!displayedOrders) /*&&*/ if (StrEndsWith(Symbol(), ".db")) {
+         string fileName = GetTerminalConfigPathA();
+         string section = "Turtle Balance Reversals "+ Symbol(), keys[], key, value;
+         int size = GetIniKeys(fileName, section, keys), bar;
+
+         for (i=0; i < size; i++) {
+            // get reversal data
+            key = keys[i];
+            value = GetIniStringA(fileName, section, key, "");
+            openTime = StrToTime(key);
+            bar = iBarShiftNext(NULL, NULL, openTime);
+            openPrice = (High[bar] + Low[bar])/2;
+
+            // create open position marker
+            label1 = StringConcatenate("#", (i+1), ": "+ value +" negative TB reversals");
+            if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
+            ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet(label1, OBJPROP_COLOR,     colors[OP_SELL]);
+            ObjectSet(label1, OBJPROP_TIME1,     openTime);
+            ObjectSet(label1, OBJPROP_PRICE1,    openPrice);
+
+            logInfo("ShowOpenOrders(2)  negative TB reversals "+ key +": "+ value);
+            displayedOrders++;
+         }
+         if (displayedOrders > 0) {
+            PlaySoundEx("Beep up.mp3");
+         }
+      }
+      return(displayedOrders);
    }
 
    // mode.extern
@@ -588,9 +618,9 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          else                             comment = "";
          ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
       }
-      returnValue++;
+      displayedOrders++;
    }
-   return(returnValue);
+   return(displayedOrders);
 }
 
 
