@@ -57,8 +57,8 @@ double trend    [];                                      // trend direction: inv
 #define MA_METHOD    0                                   // indexes of ma[]
 #define MA_PERIODS   1
 
-string maDefinitions[];                                  // MA definitions
-int    ma[][2];                                          // integer representation
+string sMaDefinitions[];                                 // MA definitions (human-readable)
+int    iMaDefinitions[][2];                              // MA definitions (numeric)
 int    maxMaPeriods;
 
 string indicatorName = "";
@@ -84,9 +84,9 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // Channel.Definition
-   ArrayResize(ma, 0);
-   ArrayResize(maDefinitions, 0);
-   int mas = 0;
+   ArrayResize(iMaDefinitions, 0);
+   ArrayResize(sMaDefinitions, 0);
+   int sizeMas = 0;
    maxMaPeriods = 0;
 
    string sValues[], sValue = Channel.Definition;
@@ -109,16 +109,16 @@ int onInit() {
       int iPeriods = StrToInteger(sPeriods);
       if (iPeriods < 1)                return(catch("onInit(6)  invalid MA periods "+ iPeriods +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
 
-      ArrayResize(ma, mas+1);
-      ArrayResize(maDefinitions, mas+1);
-      ma[mas][MA_METHOD ] = iMethod;
-      ma[mas][MA_PERIODS] = iPeriods;
-      maDefinitions[mas]  = MaMethodDescription(iMethod) +"("+ iPeriods +")";
+      ArrayResize(iMaDefinitions, sizeMas+1);
+      ArrayResize(sMaDefinitions, sizeMas+1);
+      iMaDefinitions[sizeMas][MA_METHOD ] = iMethod;
+      iMaDefinitions[sizeMas][MA_PERIODS] = iPeriods;
+      sMaDefinitions[sizeMas] = MaMethodDescription(iMethod) +"("+ iPeriods +")";
       maxMaPeriods = MathMax(maxMaPeriods, iPeriods);
-      mas++;
+      sizeMas++;
    }
-   if (!mas)                           return(catch("onInit(7)  missing input parameter Channel.Definition", ERR_INVALID_INPUT_PARAMETER));
-   Channel.Definition = JoinStrings(maDefinitions, ",");
+   if (!sizeMas)                       return(catch("onInit(7)  missing input parameter Channel.Definition", ERR_INVALID_INPUT_PARAMETER));
+   Channel.Definition = JoinStrings(sMaDefinitions, ",");
 
    // Channel.Color: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Channel.Color = GetConfigColor(indicator, "Channel.Color", Channel.Color);
@@ -178,15 +178,15 @@ int onTick() {
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods), prevTrend;
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
-   int numberOfMas = ArrayRange(ma, 0);
+   int sizeMas = ArrayRange(iMaDefinitions, 0);
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
       double high = INT_MIN, low = INT_MAX;
 
-      for (int i=0; i < numberOfMas; i++) {
-         high = MathMax(high, iMA(NULL, NULL, ma[i][MA_PERIODS], 0, ma[i][MA_METHOD], PRICE_HIGH, bar));
-         low  = MathMin(low,  iMA(NULL, NULL, ma[i][MA_PERIODS], 0, ma[i][MA_METHOD], PRICE_LOW,  bar));
+      for (int i=0; i < sizeMas; i++) {
+         high = MathMax(high, iMA(NULL, NULL, iMaDefinitions[i][MA_PERIODS], 0, iMaDefinitions[i][MA_METHOD], PRICE_HIGH, bar));
+         low  = MathMin(low,  iMA(NULL, NULL, iMaDefinitions[i][MA_PERIODS], 0, iMaDefinitions[i][MA_METHOD], PRICE_LOW,  bar));
       }
       upperBand[bar] = high;
       lowerBand[bar] = low;
@@ -300,7 +300,7 @@ bool onCross(int direction) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
-   indicatorName = ifString(ArraySize(maDefinitions)==1, Channel.Definition +" Channel", WindowExpertName() +" "+ Channel.Definition);
+   indicatorName = GetChannelDescription();
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);
@@ -319,6 +319,44 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
+}
+
+
+/**
+ * Generate a channel description for the chart legend.
+ *
+ * @return string
+ */
+string GetChannelDescription() {
+   string sMethod = "", sameMethods = "", differentMethods = "";
+   bool allSameMethod = true;
+   int size = ArrayRange(iMaDefinitions, 0), method, periods;
+
+   if (size == 1) {
+      sameMethods = sMaDefinitions[0] +" Channel";
+   }
+   else {
+      for (int i=0; i < size; i++) {
+         method  = iMaDefinitions[i][MA_METHOD];
+         periods = iMaDefinitions[i][MA_PERIODS];
+         sMethod = MaMethodDescription(method);
+
+         if (i && allSameMethod) {
+            allSameMethod = (method == iMaDefinitions[i-1][MA_METHOD]);
+         }
+         if (allSameMethod) {
+            if (i == 0) sameMethods = sMethod +"("+ periods;
+            else        sameMethods = sameMethods +","+ periods;
+         }
+         differentMethods = StringConcatenate(differentMethods, ",", sMethod, "(", periods, ")");
+      }
+      sameMethods      = sameMethods +") Channel";
+      differentMethods = StrRight(differentMethods, -1) +" Channel";
+   }
+
+   if (allSameMethod)
+      return(sameMethods);
+   return(differentMethods);
 }
 
 
