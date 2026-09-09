@@ -2,8 +2,6 @@
 EMA(144)
 Donchian Channel(50) 
 LWMA(55) Channel + Trend Bars
-================================
-MA Channel Band(LWMA-55,ALMA-10)
 -->
 
 <chart>
@@ -176,30 +174,6 @@ ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=120
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=MA Channel Band
-flags=339
-window_num=1
-<inputs>
-Channel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Channel.MA.Periods=55
-MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
-MA.Periods=10
-Signal.onTrendChange=0
-Signal.onTrendChange.Types=sound* | alert* | mail
-</inputs>
-</expert>
-min=-1.0
-max=1.0
 show_data=1
 </indicator>
 </window>
