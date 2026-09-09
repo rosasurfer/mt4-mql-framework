@@ -263,7 +263,7 @@ bool CreatePriceSeparators(double fromPrice, double toPrice, double gridSize) {
    ArrayResize(priceSepLabels, separators);
 
    for (int i=0; i < separators; i++) {                     // no ObjectCreateRegister(): price separators change dynamically
-      string label = NumberToStr(gridLevel, ",'R.+");       // and are handled better by the indicator itself
+      string label = NumberToStr(gridLevel, PriceFormat);   // and are handled better by the indicator itself
       if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_HLINE, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_STYLE,  STYLE_DOT);
       ObjectSet(label, OBJPROP_COLOR,  Color.RegularGrid);
