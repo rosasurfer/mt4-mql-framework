@@ -113,50 +113,65 @@ int onInit() {
    // input validation
    string indicator = WindowExpertName();
 
-   // MA1.Method
-   if (AutoConfiguration) MA1.Method = GetConfigString(indicator, "MA1.Method", MA1.Method);
-   string sValues[], sValue = MA1.Method;
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   ma1.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (ma1.method == -1) return(catch("onInit(1)  invalid input parameter MA1.Method: "+ DoubleQuoteStr(MA1.Method), ERR_INVALID_INPUT_PARAMETER));
-   MA1.Method = MaMethodDescription(ma1.method);
-   // MA1.Periods
+   // MA1.Periods (must be checked before MA.Method)
    if (AutoConfiguration) MA1.Periods = GetConfigInt(indicator, "MA1.Periods", MA1.Periods);
-   if (MA1.Periods < 0)  return(catch("onInit(2)  invalid input parameter MA1.Periods: "+ MA1.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA1.Periods < 0)  return(catch("onInit(1)  invalid input parameter MA1.Periods: "+ MA1.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma1.periods = MA1.Periods;
-
-   // MA2.Method
-   if (AutoConfiguration) MA2.Method = GetConfigString(indicator, "MA2.Method", MA2.Method);
-   sValue = MA2.Method;
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
+   // MA1.Method
+   if (!ma1.periods) {
+      MA1.Method = "";
    }
-   ma2.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (ma2.method == -1) return(catch("onInit(3)  invalid input parameter MA2.Method: "+ DoubleQuoteStr(MA2.Method), ERR_INVALID_INPUT_PARAMETER));
-   MA2.Method = MaMethodDescription(ma2.method);
+   else {
+      if (AutoConfiguration) MA1.Method = GetConfigString(indicator, "MA1.Method", MA1.Method);
+      string sValues[], sValue = MA1.Method;
+      if (Explode(sValue, "*", sValues, 2) > 1) {
+         int size = Explode(sValues[0], "|", sValues, NULL);
+         sValue = sValues[size-1];
+      }
+      ma1.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+      if (ma1.method == -1) return(catch("onInit(2)  invalid input parameter MA1.Method: "+ DoubleQuoteStr(MA1.Method), ERR_INVALID_INPUT_PARAMETER));
+      MA1.Method = MaMethodDescription(ma1.method);
+   }
+
    // MA2.Periods
    if (AutoConfiguration) MA2.Periods = GetConfigInt(indicator, "MA2.Periods", MA2.Periods);
-   if (MA2.Periods < 0)  return(catch("onInit(4)  invalid input parameter MA2.Periods: "+ MA2.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA2.Periods < 0)  return(catch("onInit(3)  invalid input parameter MA2.Periods: "+ MA2.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma2.periods = MA2.Periods;
-
-   // MA3.Method
-   if (AutoConfiguration) MA3.Method = GetConfigString(indicator, "MA3.Method", MA3.Method);
-   sValue = MA3.Method;
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
+   // MA2.Method
+   if (!ma2.periods) {
+      MA2.Method = "";
    }
-   ma3.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (ma3.method == -1) return(catch("onInit(5)  invalid input parameter MA3.Method: "+ DoubleQuoteStr(MA3.Method), ERR_INVALID_INPUT_PARAMETER));
-   MA3.Method = MaMethodDescription(ma3.method);
+   else {
+      if (AutoConfiguration) MA2.Method = GetConfigString(indicator, "MA2.Method", MA2.Method);
+      sValue = MA2.Method;
+      if (Explode(sValue, "*", sValues, 2) > 1) {
+         size = Explode(sValues[0], "|", sValues, NULL);
+         sValue = sValues[size-1];
+      }
+      ma2.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+      if (ma2.method == -1) return(catch("onInit(4)  invalid input parameter MA2.Method: "+ DoubleQuoteStr(MA2.Method), ERR_INVALID_INPUT_PARAMETER));
+      MA2.Method = MaMethodDescription(ma2.method);
+   }
+
    // MA3.Periods
    if (AutoConfiguration) MA3.Periods = GetConfigInt(indicator, "MA3.Periods", MA3.Periods);
-   if (MA3.Periods < 0)  return(catch("onInit(6)  invalid input parameter MA3.Periods: "+ MA3.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA3.Periods < 0)  return(catch("onInit(5)  invalid input parameter MA3.Periods: "+ MA3.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma3.periods = MA3.Periods;
+   // MA3.Method
+   if (!ma3.periods) {
+      MA3.Method = "";
+   }
+   else {
+      if (AutoConfiguration) MA3.Method = GetConfigString(indicator, "MA3.Method", MA3.Method);
+      sValue = MA3.Method;
+      if (Explode(sValue, "*", sValues, 2) > 1) {
+         size = Explode(sValues[0], "|", sValues, NULL);
+         sValue = sValues[size-1];
+      }
+      ma3.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+      if (ma3.method == -1) return(catch("onInit(6)  invalid input parameter MA3.Method: "+ DoubleQuoteStr(MA3.Method), ERR_INVALID_INPUT_PARAMETER));
+      MA3.Method = MaMethodDescription(ma3.method);
+   }
    maxMaPeriods = Max(ma1.periods, ma2.periods, ma3.periods);
    if (!maxMaPeriods)    return(catch("onInit(7)  invalid MA definitions: at least one MA needs a period value", ERR_INVALID_INPUT_PARAMETER));
 
