@@ -21,7 +21,6 @@ double icMaChannel(int timeframe, string channelDefinition, int iBuffer, int iBa
    double value = iCustom(NULL, timeframe, "MA Channel",
                           channelDefinition,          // string Channel.Definition
                           Blue,                       // color  Channel.Color
-                          "",                         // string Supported.MovingAverages
 
                           "",                         // string _______________________
                           false,                      // bool   ShowChartLegend

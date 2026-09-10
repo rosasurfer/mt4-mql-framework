@@ -1,7 +1,8 @@
 /**
  * MA Channel
  *
- * An indicator forming a High/Low channel built from one or more Moving Averages.
+ * An indicator forming a High/Low channel around a Moving Average. A single instance can display up to 3 channels
+ * from multiple MAs. Supported MA types: SMA, LWMA, EMA, SMMA, ALMA.
  *
  *
  * TODO:
@@ -15,7 +16,6 @@ int __DeinitFlags[];
 
 extern string Channel.Definition             = "EMA(144)";              // one or more MAs, e.g "EMA(144), LWMA(55)"
 extern color  Channel.Color                  = Magenta;
-extern string Supported.MovingAverages       = "SMA, LWMA, EMA, SMMA";
 
 extern string ___a__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
