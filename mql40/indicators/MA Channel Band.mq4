@@ -333,10 +333,10 @@ bool onTrendChange(int direction) {
  */
 double GetMaChannel(int mode, int bar) {
    if (channel.method == MODE_ALMA) {
-      static int buffers[] = {0, MaChannel.MODE_UPPER_BAND, MaChannel.MODE_LOWER_BAND};
-      return(icMaChannel(NULL, channel.definition, buffers[mode], bar));
+      static int buffers[] = { 0, MaChannel.MODE_MA1_UPPER_BAND, MaChannel.MODE_MA1_LOWER_BAND };
+      return(icMaChannel(NULL, MODE_ALMA, channel.periods, 0, 0, 0, 0, buffers[mode], bar));
    }
-   static int prices[] = {0, PRICE_HIGH, PRICE_LOW};
+   static int prices[] = { 0, PRICE_HIGH, PRICE_LOW };
    return(iMA(NULL, NULL, channel.periods, 0, channel.method, prices[mode], bar));
 }
 
