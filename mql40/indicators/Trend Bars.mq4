@@ -246,10 +246,10 @@ bool onCommand(string cmd, string params, int keys) {
  */
 double GetMaChannel(int mode, int bar) {
    if (maChannel.method == MODE_ALMA) {
-      static int buffers[] = {0, MaChannel.MODE_UPPER_BAND, MaChannel.MODE_LOWER_BAND};
+      static int buffers[] = { 0, MaChannel.MODE_UPPER_BAND, MaChannel.MODE_LOWER_BAND };
       return(icMaChannel(NULL, maChannel.definition, buffers[mode], bar));
    }
-   static int priceTypes[] = {0, PRICE_HIGH, PRICE_LOW};
+   static int priceTypes[] = { 0, PRICE_HIGH, PRICE_LOW };
    return(iMA(NULL, NULL, maChannel.periods, 0, maChannel.method, priceTypes[mode], bar));
 }
 

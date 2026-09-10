@@ -2,7 +2,7 @@
  * A "Moving Average" indicator with support for more MA methods and additional features.
  *
  *
- * Available averaging methods:
+ * Available Moving Average methods:
  *  • SMA  = Simple Moving Average:          equal bar weighting
  *  • LWMA = Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  = Exponential Moving Average:     bar weighting using an exponential function
