@@ -250,8 +250,8 @@ int onTick() {
 
       // monitor signals
       if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
-         //if      (trend[1] ==  1) onCross(D_LONG);
-         //else if (trend[1] == -1) onCross(D_SHORT);
+         if      (false) onCross(D_LONG);
+         else if (false) onCross(D_SHORT);
       }
    }
    return(last_error);
@@ -469,5 +469,5 @@ string InputsToStr() {
    ));
 
    // suppress compiler warnings
-   icMaChannel(NULL, NULL, NULL, NULL);
+   icMaChannel(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
