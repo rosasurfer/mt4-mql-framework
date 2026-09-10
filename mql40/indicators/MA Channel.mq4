@@ -11,9 +11,30 @@
  *  • ...
  *
  *
+ * Supported Moving Average methods
+ * --------------------------------
+ *  • SMA  = Simple Moving Average:          equal bar weighting
+ *  • LWMA = Linear Weighted Moving Average: bar weighting using a linear function
+ *  • EMA  = Exponential Moving Average:     bar weighting using an exponential function
+ *  • SMMA = Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
+ *  • ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
+ *
+ *
  * Usage with iCustom()
  * --------------------
  * @see /mql40/include/rsf/functions/iCustom/MaChannel.mqh
+ *
+ *
+ * Notes
+ * -----
+ *  • EMA calculation:
+ *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+ *
+ *  • SMMA calculation: The SMMA is an EMA with a different period. It holds true: SMMA(n) = EMA(2*n-1)
+ *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
+ *
+ *  • ALMA calculation:
+ *    @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  *
  *
  * TODO:
@@ -58,14 +79,15 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/iCustom/MaChannel.mqh>
+#include <rsf/functions/ta/ALMA.mqh>
 #include <rsf/win32api.mqh>
 
-#define MODE_MA1_UPPER_BAND   MaChannel.MODE_MA1_UPPER_BAND    // 0 indicator buffer ids
-#define MODE_MA1_LOWER_BAND   MaChannel.MODE_MA1_LOWER_BAND    // 1
-#define MODE_MA2_UPPER_BAND   MaChannel.MODE_MA2_UPPER_BAND    // 2
-#define MODE_MA2_LOWER_BAND   MaChannel.MODE_MA2_LOWER_BAND    // 3
-#define MODE_MA3_UPPER_BAND   MaChannel.MODE_MA3_UPPER_BAND    // 4
-#define MODE_MA3_LOWER_BAND   MaChannel.MODE_MA3_LOWER_BAND    // 5
+#define MODE_MA1_UPPER  MaChannel.MODE_MA1_UPPER_BAND    // 0 indicator buffer ids
+#define MODE_MA1_LOWER  MaChannel.MODE_MA1_LOWER_BAND    // 1
+#define MODE_MA2_UPPER  MaChannel.MODE_MA2_UPPER_BAND    // 2
+#define MODE_MA2_LOWER  MaChannel.MODE_MA2_LOWER_BAND    // 3
+#define MODE_MA3_UPPER  MaChannel.MODE_MA3_UPPER_BAND    // 4
+#define MODE_MA3_LOWER  MaChannel.MODE_MA3_LOWER_BAND    // 5
 
 #property indicator_chart_window
 #property indicator_buffers   6                          // visible buffers
@@ -78,16 +100,19 @@ int    ma1.method;                                       // MA definition
 int    ma1.periods;                                      //
 double ma1.upperBand[];                                  // indicator buffers
 double ma1.lowerBand[];                                  //
+double ma1.almaWeights[];                                // ALMA bar weights (if applicable
 
 int    ma2.method;
 int    ma2.periods;
 double ma2.upperBand[];
 double ma2.lowerBand[];
+double ma2.almaWeights[];
 
 int    ma3.method;
 int    ma3.periods;
 double ma3.upperBand[];
 double ma3.lowerBand[];
+double ma3.almaWeights[];
 
 int    maxMaPeriods;
 
@@ -205,6 +230,12 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
 
+   // calculate ALMA bar weights
+   double almaOffset=0.85, almaSigma=6.0;
+   if (ma1.method == MODE_ALMA) ALMA.CalculateWeights(ma1.periods, almaOffset, almaSigma, ma1.almaWeights);
+   if (ma2.method == MODE_ALMA) ALMA.CalculateWeights(ma2.periods, almaOffset, almaSigma, ma2.almaWeights);
+   if (ma3.method == MODE_ALMA) ALMA.CalculateWeights(ma3.periods, almaOffset, almaSigma, ma3.almaWeights);
+
    // chart legend
    if (ShowChartLegend) legendLabel = CreateChartLegend();
 
@@ -245,18 +276,50 @@ int onTick() {
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
-   for (int bar=startbar; bar >= 0; bar--) {
+   for (int bar=startbar, i; bar >= 0; bar--) {
       if (ma1.periods > 0) {
-         ma1.upperBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_HIGH, bar);
-         ma1.lowerBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_LOW,  bar);
+         if (ma1.method == MODE_ALMA) {
+            ma1.upperBand[bar] = 0;
+            ma1.lowerBand[bar] = 0;
+            for (i=0; i < ma1.periods; i++) {
+               ma1.upperBand[bar] += ma1.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_HIGH, bar+i);
+               ma1.lowerBand[bar] += ma1.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_LOW, bar+i);
+            }
+         }
+         else {
+            ma1.upperBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_HIGH, bar);
+            ma1.lowerBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_LOW,  bar);
+         }
       }
+
       if (ma2.periods > 0) {
-         ma2.upperBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_HIGH, bar);
-         ma2.lowerBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_LOW,  bar);
+         if (ma2.method == MODE_ALMA) {
+            ma2.upperBand[bar] = 0;
+            ma2.lowerBand[bar] = 0;
+            for (i=0; i < ma2.periods; i++) {
+               ma2.upperBand[bar] += ma2.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_HIGH, bar+i);
+               ma2.lowerBand[bar] += ma2.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_LOW, bar+i);
+            }
+         }
+         else {
+            ma2.upperBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_HIGH, bar);
+            ma2.lowerBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_LOW,  bar);
+         }
       }
+
       if (ma3.periods > 0) {
-         ma3.upperBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_HIGH, bar);
-         ma3.lowerBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_LOW,  bar);
+         if (ma3.method == MODE_ALMA) {
+            ma3.upperBand[bar] = 0;
+            ma3.lowerBand[bar] = 0;
+            for (i=0; i < ma3.periods; i++) {
+               ma3.upperBand[bar] += ma3.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_HIGH, bar+i);
+               ma3.lowerBand[bar] += ma3.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_LOW, bar+i);
+            }
+         }
+         else {
+            ma3.upperBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_HIGH, bar);
+            ma3.lowerBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_LOW,  bar);
+         }
       }
    }
 
@@ -369,44 +432,44 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorBuffers(indicator_buffers);
    IndicatorDigits(Digits);
 
-   SetIndexBuffer(MODE_MA1_UPPER_BAND, ma1.upperBand);
-   SetIndexBuffer(MODE_MA1_LOWER_BAND, ma1.lowerBand);
-   SetIndexStyle (MODE_MA1_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, MA1.Color);
-   SetIndexStyle (MODE_MA1_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, MA1.Color);
-   SetIndexLabel (MODE_MA1_UPPER_BAND, MA1.Method +"("+ MA1.Periods +") upper band");
-   SetIndexLabel (MODE_MA1_LOWER_BAND, MA1.Method +"("+ MA1.Periods +") lower band");
+   SetIndexBuffer(MODE_MA1_UPPER, ma1.upperBand);
+   SetIndexBuffer(MODE_MA1_LOWER, ma1.lowerBand);
+   SetIndexStyle (MODE_MA1_UPPER, DRAW_LINE, EMPTY, EMPTY, MA1.Color);
+   SetIndexStyle (MODE_MA1_LOWER, DRAW_LINE, EMPTY, EMPTY, MA1.Color);
+   SetIndexLabel (MODE_MA1_UPPER, MA1.Method +"("+ MA1.Periods +") upper band");
+   SetIndexLabel (MODE_MA1_LOWER, MA1.Method +"("+ MA1.Periods +") lower band");
 
-   SetIndexBuffer(MODE_MA2_UPPER_BAND, ma2.upperBand);
-   SetIndexBuffer(MODE_MA2_LOWER_BAND, ma2.lowerBand);
-   SetIndexStyle (MODE_MA2_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, MA2.Color);
-   SetIndexStyle (MODE_MA2_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, MA2.Color);
-   SetIndexLabel (MODE_MA2_UPPER_BAND, MA2.Method +"("+ MA2.Periods +") upper band");
-   SetIndexLabel (MODE_MA2_LOWER_BAND, MA2.Method +"("+ MA2.Periods +") lower band");
+   SetIndexBuffer(MODE_MA2_UPPER, ma2.upperBand);
+   SetIndexBuffer(MODE_MA2_LOWER, ma2.lowerBand);
+   SetIndexStyle (MODE_MA2_UPPER, DRAW_LINE, EMPTY, EMPTY, MA2.Color);
+   SetIndexStyle (MODE_MA2_LOWER, DRAW_LINE, EMPTY, EMPTY, MA2.Color);
+   SetIndexLabel (MODE_MA2_UPPER, MA2.Method +"("+ MA2.Periods +") upper band");
+   SetIndexLabel (MODE_MA2_LOWER, MA2.Method +"("+ MA2.Periods +") lower band");
 
-   SetIndexBuffer(MODE_MA3_UPPER_BAND, ma3.upperBand);
-   SetIndexBuffer(MODE_MA3_LOWER_BAND, ma3.lowerBand);
-   SetIndexStyle (MODE_MA3_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, MA3.Color);
-   SetIndexStyle (MODE_MA3_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, MA3.Color);
-   SetIndexLabel (MODE_MA3_UPPER_BAND, MA3.Method +"("+ MA3.Periods +") upper band");
-   SetIndexLabel (MODE_MA3_LOWER_BAND, MA3.Method +"("+ MA3.Periods +") lower band");
+   SetIndexBuffer(MODE_MA3_UPPER, ma3.upperBand);
+   SetIndexBuffer(MODE_MA3_LOWER, ma3.lowerBand);
+   SetIndexStyle (MODE_MA3_UPPER, DRAW_LINE, EMPTY, EMPTY, MA3.Color);
+   SetIndexStyle (MODE_MA3_LOWER, DRAW_LINE, EMPTY, EMPTY, MA3.Color);
+   SetIndexLabel (MODE_MA3_UPPER, MA3.Method +"("+ MA3.Periods +") upper band");
+   SetIndexLabel (MODE_MA3_LOWER, MA3.Method +"("+ MA3.Periods +") lower band");
 
    if (!ma1.periods) {
-      SetIndexStyle(MODE_MA1_UPPER_BAND, DRAW_NONE);
-      SetIndexStyle(MODE_MA1_LOWER_BAND, DRAW_NONE);
-      SetIndexLabel(MODE_MA1_UPPER_BAND, NULL);
-      SetIndexLabel(MODE_MA1_LOWER_BAND, NULL);
+      SetIndexStyle(MODE_MA1_UPPER, DRAW_NONE);
+      SetIndexStyle(MODE_MA1_LOWER, DRAW_NONE);
+      SetIndexLabel(MODE_MA1_UPPER, NULL);
+      SetIndexLabel(MODE_MA1_LOWER, NULL);
    }
    if (!ma2.periods) {
-      SetIndexStyle(MODE_MA2_UPPER_BAND, DRAW_NONE);
-      SetIndexStyle(MODE_MA2_LOWER_BAND, DRAW_NONE);
-      SetIndexLabel(MODE_MA2_UPPER_BAND, NULL);
-      SetIndexLabel(MODE_MA2_LOWER_BAND, NULL);
+      SetIndexStyle(MODE_MA2_UPPER, DRAW_NONE);
+      SetIndexStyle(MODE_MA2_LOWER, DRAW_NONE);
+      SetIndexLabel(MODE_MA2_UPPER, NULL);
+      SetIndexLabel(MODE_MA2_LOWER, NULL);
    }
    if (!ma3.periods) {
-      SetIndexStyle(MODE_MA3_UPPER_BAND, DRAW_NONE);
-      SetIndexStyle(MODE_MA3_LOWER_BAND, DRAW_NONE);
-      SetIndexLabel(MODE_MA3_UPPER_BAND, NULL);
-      SetIndexLabel(MODE_MA3_LOWER_BAND, NULL);
+      SetIndexStyle(MODE_MA3_UPPER, DRAW_NONE);
+      SetIndexStyle(MODE_MA3_LOWER, DRAW_NONE);
+      SetIndexLabel(MODE_MA3_UPPER, NULL);
+      SetIndexLabel(MODE_MA3_LOWER, NULL);
    }
 
    if (redraw) WindowRedraw();
