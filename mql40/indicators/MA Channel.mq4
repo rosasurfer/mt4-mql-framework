@@ -1,8 +1,19 @@
 /**
  * MA Channel
  *
- * An indicator forming a High/Low channel around a Moving Average. A single instance can display up to 3 channels
- * from multiple MAs. Supported MA types: SMA, LWMA, EMA, SMMA, ALMA.
+ * An indicator forming a High/Low channel around a Moving Average. The indicator can display up to 3 separate channels.
+ * This indicator is the core element of the XARD Trend indicator.
+ *
+ *
+ * Input parameters
+ * ----------------
+ *  • ...
+ *  • ...
+ *
+ *
+ * Usage with iCustom()
+ * --------------------
+ * @see /mql40/include/rsf/functions/iCustom/MaChannel.mqh
  *
  *
  * TODO:
@@ -14,15 +25,25 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Channel.Definition             = "EMA(144)";              // one or more MAs, e.g "EMA(144), LWMA(55)"
-extern color  Channel.Color                  = Magenta;
+extern string ___a__________________________ = "=== MA definitions ===";
+extern string MA1.Method  = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA1.Periods = 100;
+extern color  MA1.Color   = Magenta;
 
-extern string ___a__________________________ = "=== Display options ===";
+extern string MA2.Method  = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA2.Periods = 0;
+extern color  MA2.Color   = Blue;
+
+extern string MA3.Method  = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA3.Periods = 0;
+extern color  MA3.Color   = Red;
+
+extern string ___b__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
-extern string ___b__________________________ = "=== Signaling ===";
-extern bool   Signal.onBarCross              = false;                   // on BarClose crossing the opposite side of the channel
+extern string ___c__________________________ = "=== Signaling ===";
+extern bool   Signal.onBarCross              = false;                   // on BarClose crossing the most outer channel
 extern string Signal.onBarCross.Types        = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
@@ -39,26 +60,35 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/iCustom/MaChannel.mqh>
 #include <rsf/win32api.mqh>
 
-#define MODE_UPPER_BAND       MaChannel.MODE_UPPER_BAND  // 0 indicator buffer ids
-#define MODE_LOWER_BAND       MaChannel.MODE_LOWER_BAND  // 1
-#define MODE_TREND            MaChannel.MODE_TREND       // 2 direction/length of the last channel crossing, up: +1...+n, down: -1...-n
+#define MODE_MA1_UPPER_BAND   MaChannel.MODE_MA1_UPPER_BAND    // 0 indicator buffer ids
+#define MODE_MA1_LOWER_BAND   MaChannel.MODE_MA1_LOWER_BAND    // 1
+#define MODE_MA2_UPPER_BAND   MaChannel.MODE_MA2_UPPER_BAND    // 2
+#define MODE_MA2_LOWER_BAND   MaChannel.MODE_MA2_LOWER_BAND    // 3
+#define MODE_MA3_UPPER_BAND   MaChannel.MODE_MA3_UPPER_BAND    // 4
+#define MODE_MA3_LOWER_BAND   MaChannel.MODE_MA3_LOWER_BAND    // 5
 
 #property indicator_chart_window
-#property indicator_buffers   3                          // visible buffers
+#property indicator_buffers   6                          // visible buffers
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
 
-double upperBand[];                                      // upper band:      visible
-double lowerBand[];                                      // lower band:      visible
-double trend    [];                                      // trend direction: invisible, displayed in "Data" window
+int    ma1.method;                                       // MA definition
+int    ma1.periods;                                      //
+double ma1.upperBand[];                                  // indicator buffers
+double ma1.lowerBand[];                                  //
 
-#define MA_METHOD    0                                   // indexes of ma[]
-#define MA_PERIODS   1
+int    ma2.method;
+int    ma2.periods;
+double ma2.upperBand[];
+double ma2.lowerBand[];
 
-string sMaDefinitions[];                                 // MA definitions (human-readable)
-int    iMaDefinitions[][2];                              // MA definitions (numeric)
+int    ma3.method;
+int    ma3.periods;
+double ma3.upperBand[];
+double ma3.lowerBand[];
+
 int    maxMaPeriods;
 
 string indicatorName = "";
@@ -83,46 +113,61 @@ int onInit() {
    // input validation
    string indicator = WindowExpertName();
 
-   // Channel.Definition
-   ArrayResize(iMaDefinitions, 0);
-   ArrayResize(sMaDefinitions, 0);
-   int sizeMas = 0;
-   maxMaPeriods = 0;
-
-   string sValues[], sValue = Channel.Definition;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "Channel.Definition", sValue);
-   int size = Explode(sValue, ",", sValues, NULL);
-   for (int i=0; i < size; i++) {
-      sValue = StrTrim(sValues[i]);
-      if (sValue == "") continue;
-
-      string sMethod = StrLeftTo(sValue, "(");
-      if (sMethod == sValue)           return(catch("onInit(1)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
-      int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
-      if (iMethod == -1)               return(catch("onInit(2)  invalid "+ DoubleQuoteStr(sMethod) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (unsupported MA method)", ERR_INVALID_INPUT_PARAMETER));
-      if (iMethod > MODE_LWMA)         return(catch("onInit(3)  invalid "+ DoubleQuoteStr(sMethod) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (unsupported MA method)", ERR_INVALID_INPUT_PARAMETER));
-
-      string sPeriods = StrRightFrom(sValue, "(");
-      if (!StrEndsWith(sPeriods, ")")) return(catch("onInit(4)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
-      sPeriods = StrTrim(StrLeft(sPeriods, -1));
-      if (!StrIsDigits(sPeriods))      return(catch("onInit(5)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
-      int iPeriods = StrToInteger(sPeriods);
-      if (iPeriods < 1)                return(catch("onInit(6)  invalid MA periods "+ iPeriods +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-
-      ArrayResize(iMaDefinitions, sizeMas+1);
-      ArrayResize(sMaDefinitions, sizeMas+1);
-      iMaDefinitions[sizeMas][MA_METHOD ] = iMethod;
-      iMaDefinitions[sizeMas][MA_PERIODS] = iPeriods;
-      sMaDefinitions[sizeMas] = MaMethodDescription(iMethod) +"("+ iPeriods +")";
-      maxMaPeriods = MathMax(maxMaPeriods, iPeriods);
-      sizeMas++;
+   // MA1.Method
+   if (AutoConfiguration) MA1.Method = GetConfigString(indicator, "MA1.Method", MA1.Method);
+   string sValues[], sValue = MA1.Method;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
-   if (!sizeMas)                       return(catch("onInit(7)  missing input parameter Channel.Definition", ERR_INVALID_INPUT_PARAMETER));
-   Channel.Definition = JoinStrings(sMaDefinitions, ",");
+   ma1.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (ma1.method == -1) return(catch("onInit(1)  invalid input parameter MA1.Method: "+ DoubleQuoteStr(MA1.Method), ERR_INVALID_INPUT_PARAMETER));
+   MA1.Method = MaMethodDescription(ma1.method);
+   // MA1.Periods
+   if (AutoConfiguration) MA1.Periods = GetConfigInt(indicator, "MA1.Periods", MA1.Periods);
+   if (MA1.Periods < 0)  return(catch("onInit(2)  invalid input parameter MA1.Periods: "+ MA1.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   ma1.periods = MA1.Periods;
 
-   // Channel.Color: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (AutoConfiguration) Channel.Color = GetConfigColor(indicator, "Channel.Color", Channel.Color);
-   if (Channel.Color == 0xFF000000) Channel.Color = CLR_NONE;
+   // MA2.Method
+   if (AutoConfiguration) MA2.Method = GetConfigString(indicator, "MA2.Method", MA2.Method);
+   sValue = MA2.Method;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   ma2.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (ma2.method == -1) return(catch("onInit(3)  invalid input parameter MA2.Method: "+ DoubleQuoteStr(MA2.Method), ERR_INVALID_INPUT_PARAMETER));
+   MA2.Method = MaMethodDescription(ma2.method);
+   // MA2.Periods
+   if (AutoConfiguration) MA2.Periods = GetConfigInt(indicator, "MA2.Periods", MA2.Periods);
+   if (MA2.Periods < 0)  return(catch("onInit(4)  invalid input parameter MA2.Periods: "+ MA2.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   ma2.periods = MA2.Periods;
+
+   // MA3.Method
+   if (AutoConfiguration) MA3.Method = GetConfigString(indicator, "MA3.Method", MA3.Method);
+   sValue = MA3.Method;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   ma3.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (ma3.method == -1) return(catch("onInit(5)  invalid input parameter MA3.Method: "+ DoubleQuoteStr(MA3.Method), ERR_INVALID_INPUT_PARAMETER));
+   MA3.Method = MaMethodDescription(ma3.method);
+   // MA3.Periods
+   if (AutoConfiguration) MA3.Periods = GetConfigInt(indicator, "MA3.Periods", MA3.Periods);
+   if (MA3.Periods < 0)  return(catch("onInit(6)  invalid input parameter MA3.Periods: "+ MA3.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   ma3.periods = MA3.Periods;
+   maxMaPeriods = Max(ma1.periods, ma2.periods, ma3.periods);
+   if (!maxMaPeriods)    return(catch("onInit(7)  invalid MA definitions: at least one MA needs a period value", ERR_INVALID_INPUT_PARAMETER));
+
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (AutoConfiguration) MA1.Color = GetConfigColor(indicator, "MA1.Color", MA1.Color);
+   if (AutoConfiguration) MA2.Color = GetConfigColor(indicator, "MA2.Color", MA2.Color);
+   if (AutoConfiguration) MA3.Color = GetConfigColor(indicator, "MA3.Color", MA3.Color);
+   if (MA1.Color == 0xFF000000) MA1.Color = CLR_NONE;
+   if (MA2.Color == 0xFF000000) MA2.Color = CLR_NONE;
+   if (MA3.Color == 0xFF000000) MA3.Color = CLR_NONE;
+
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
@@ -161,49 +206,52 @@ int onInit() {
 int onTick() {
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(upperBand, EMPTY_VALUE);
-      ArrayInitialize(lowerBand, EMPTY_VALUE);
-      ArrayInitialize(trend,               0);
+      ArrayInitialize(ma1.upperBand, EMPTY_VALUE);
+      ArrayInitialize(ma1.lowerBand, EMPTY_VALUE);
+      ArrayInitialize(ma2.upperBand, EMPTY_VALUE);
+      ArrayInitialize(ma2.lowerBand, EMPTY_VALUE);
+      ArrayInitialize(ma3.upperBand, EMPTY_VALUE);
+      ArrayInitialize(ma3.lowerBand, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(ma1.upperBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma1.lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma2.upperBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma2.lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma3.upperBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma3.lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods), prevTrend;
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
-
-   int sizeMas = ArrayRange(iMaDefinitions, 0);
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      double high = INT_MIN, low = INT_MAX;
-
-      for (int i=0; i < sizeMas; i++) {
-         high = MathMax(high, iMA(NULL, NULL, iMaDefinitions[i][MA_PERIODS], 0, iMaDefinitions[i][MA_METHOD], PRICE_HIGH, bar));
-         low  = MathMin(low,  iMA(NULL, NULL, iMaDefinitions[i][MA_PERIODS], 0, iMaDefinitions[i][MA_METHOD], PRICE_LOW,  bar));
+      if (ma1.periods > 0) {
+         ma1.upperBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_HIGH, bar);
+         ma1.lowerBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_LOW,  bar);
       }
-      upperBand[bar] = high;
-      lowerBand[bar] = low;
-
-      prevTrend = trend[bar+1];
-      if      (Close[bar] > upperBand[bar]) trend[bar] = Max(prevTrend, 0) + 1;
-      else if (Close[bar] < lowerBand[bar]) trend[bar] = Min(prevTrend, 0) - 1;
-      else                                  trend[bar] = prevTrend + Sign(prevTrend);
+      if (ma2.periods > 0) {
+         ma2.upperBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_HIGH, bar);
+         ma2.lowerBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_LOW,  bar);
+      }
+      if (ma3.periods > 0) {
+         ma3.upperBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_HIGH, bar);
+         ma3.lowerBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_LOW,  bar);
+      }
    }
 
-   if (!__isSuperContext) {
-      if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, legendInfo, Channel.Color, upperBand[0], lowerBand[0]);
+   if (__isChart && !__isSuperContext) {
+      //if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, legendInfo, Channel.Color, upperBand[0], lowerBand[0]);
 
       // monitor signals
       if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
-         if      (trend[1] ==  1) onCross(D_LONG);
-         else if (trend[1] == -1) onCross(D_SHORT);
+         //if      (trend[1] ==  1) onCross(D_LONG);
+         //else if (trend[1] == -1) onCross(D_SHORT);
       }
    }
    return(last_error);
@@ -299,23 +347,52 @@ bool onCross(int direction) {
  * @return bool - success status
  */
 bool SetIndicatorOptions(bool redraw = false) {
-   redraw = redraw!=0;
+   redraw = (redraw != 0);
    indicatorName = GetChannelDescription();
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_UPPER_BAND, upperBand);
-   SetIndexBuffer(MODE_LOWER_BAND, lowerBand);
-   SetIndexBuffer(MODE_TREND,      trend    ); SetIndexEmptyValue(MODE_TREND, 0);
    IndicatorDigits(Digits);
 
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.Color);
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.Color);
-   SetIndexStyle(MODE_TREND,      DRAW_NONE);
+   SetIndexBuffer(MODE_MA1_UPPER_BAND, ma1.upperBand);
+   SetIndexBuffer(MODE_MA1_LOWER_BAND, ma1.lowerBand);
+   SetIndexStyle (MODE_MA1_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, MA1.Color);
+   SetIndexStyle (MODE_MA1_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, MA1.Color);
+   SetIndexLabel (MODE_MA1_UPPER_BAND, MA1.Method +"("+ MA1.Periods +") upper band");
+   SetIndexLabel (MODE_MA1_LOWER_BAND, MA1.Method +"("+ MA1.Periods +") lower band");
 
-   SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper");
-   SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower");
-   SetIndexLabel(MODE_TREND,      NULL);
+   SetIndexBuffer(MODE_MA2_UPPER_BAND, ma2.upperBand);
+   SetIndexBuffer(MODE_MA2_LOWER_BAND, ma2.lowerBand);
+   SetIndexStyle (MODE_MA2_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, MA2.Color);
+   SetIndexStyle (MODE_MA2_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, MA2.Color);
+   SetIndexLabel (MODE_MA2_UPPER_BAND, MA2.Method +"("+ MA2.Periods +") upper band");
+   SetIndexLabel (MODE_MA2_LOWER_BAND, MA2.Method +"("+ MA2.Periods +") lower band");
+
+   SetIndexBuffer(MODE_MA3_UPPER_BAND, ma3.upperBand);
+   SetIndexBuffer(MODE_MA3_LOWER_BAND, ma3.lowerBand);
+   SetIndexStyle (MODE_MA3_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, MA3.Color);
+   SetIndexStyle (MODE_MA3_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, MA3.Color);
+   SetIndexLabel (MODE_MA3_UPPER_BAND, MA3.Method +"("+ MA3.Periods +") upper band");
+   SetIndexLabel (MODE_MA3_LOWER_BAND, MA3.Method +"("+ MA3.Periods +") lower band");
+
+   if (!ma1.periods) {
+      SetIndexStyle(MODE_MA1_UPPER_BAND, DRAW_NONE);
+      SetIndexStyle(MODE_MA1_LOWER_BAND, DRAW_NONE);
+      SetIndexLabel(MODE_MA1_UPPER_BAND, NULL);
+      SetIndexLabel(MODE_MA1_LOWER_BAND, NULL);
+   }
+   if (!ma2.periods) {
+      SetIndexStyle(MODE_MA2_UPPER_BAND, DRAW_NONE);
+      SetIndexStyle(MODE_MA2_LOWER_BAND, DRAW_NONE);
+      SetIndexLabel(MODE_MA2_UPPER_BAND, NULL);
+      SetIndexLabel(MODE_MA2_LOWER_BAND, NULL);
+   }
+   if (!ma3.periods) {
+      SetIndexStyle(MODE_MA3_UPPER_BAND, DRAW_NONE);
+      SetIndexStyle(MODE_MA3_LOWER_BAND, DRAW_NONE);
+      SetIndexLabel(MODE_MA3_UPPER_BAND, NULL);
+      SetIndexLabel(MODE_MA3_LOWER_BAND, NULL);
+   }
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -328,31 +405,34 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string GetChannelDescription() {
-   string sMethod = "", sameMethods = "", differentMethods = "";
+   string sameMethods = "", differentMethods = "";
    bool allSameMethod = true;
-   int size = ArrayRange(iMaDefinitions, 0), method, periods;
 
-   if (size == 1) {
-      sameMethods = sMaDefinitions[0] +" Channel";
+   if (ma1.periods > 0) {
+      sameMethods      = MA1.Method +"("+ MA1.Periods;
+      differentMethods = differentMethods +","+ MA1.Method +"("+ MA1.Periods +")";
    }
-   else {
-      for (int i=0; i < size; i++) {
-         method  = iMaDefinitions[i][MA_METHOD];
-         periods = iMaDefinitions[i][MA_PERIODS];
-         sMethod = MaMethodDescription(method);
+   if (ma2.periods > 0) {
+      sameMethods      = sameMethods +","+ MA2.Periods;
+      differentMethods = differentMethods +","+ MA2.Method +"("+ MA2.Periods +")";
 
-         if (i && allSameMethod) {
-            allSameMethod = (method == iMaDefinitions[i-1][MA_METHOD]);
-         }
-         if (allSameMethod) {
-            if (i == 0) sameMethods = sMethod +"("+ periods;
-            else        sameMethods = sameMethods +","+ periods;
-         }
-         differentMethods = StringConcatenate(differentMethods, ",", sMethod, "(", periods, ")");
+      if (ma1.periods > 0) {
+         allSameMethod = (ma1.method == ma2.method);
       }
-      sameMethods      = sameMethods +") Channel";
-      differentMethods = StrRight(differentMethods, -1) +" Channel";
    }
+   if (ma3.periods > 0) {
+      sameMethods      = sameMethods +","+ MA3.Periods;
+      differentMethods = differentMethods +","+ MA3.Method +"("+ MA3.Periods +")";
+
+      if (ma1.periods > 0) {
+         allSameMethod = (ma1.method == ma3.method);
+      }
+      if (ma2.periods > 0) {
+         allSameMethod = (ma2.method == ma3.method);
+      }
+   }
+   sameMethods      = sameMethods +") Channel";
+   differentMethods = StrRight(differentMethods, -1) +" Channel";
 
    if (allSameMethod)
       return(sameMethods);
@@ -366,16 +446,27 @@ string GetChannelDescription() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Channel.Definition=",      DoubleQuoteStr(Channel.Definition),      ";", NL,
-                            "Channel.Color=",           ColorToStr(Channel.Color),               ";", NL,
-                            "ShowChartLegend=",         BoolToStr(ShowChartLegend),              ";", NL,
-                            "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
+   return(StringConcatenate(
+      "MA1.Method=",              DoubleQuoteStr(MA1.Method),              ";", NL,
+      "MA1.Periods=",             MA1.Periods,                             ";", NL,
+      "MA1.Color=",               ColorToStr(MA1.Color),                   ";", NL,
 
-                            "Signal.onBarCross=",       BoolToStr(Signal.onBarCross),            ";", NL,
-                            "Signal.onBarCross.Types=", DoubleQuoteStr(Signal.onBarCross.Types), ";", NL,
-                            "Signal.Sound.Up=",         DoubleQuoteStr(Signal.Sound.Up),         ";", NL,
-                            "Signal.Sound.Down=",       DoubleQuoteStr(Signal.Sound.Down),       ";")
-   );
+      "MA2.Method=",              DoubleQuoteStr(MA2.Method),              ";", NL,
+      "MA2.Periods=",             MA2.Periods,                             ";", NL,
+      "MA2.Color=",               ColorToStr(MA2.Color),                   ";", NL,
+
+      "MA3.Method=",              DoubleQuoteStr(MA3.Method),              ";", NL,
+      "MA3.Periods=",             MA3.Periods,                             ";", NL,
+      "MA3.Color=",               ColorToStr(MA3.Color),                   ";", NL,
+
+      "ShowChartLegend=",         BoolToStr(ShowChartLegend),              ";", NL,
+      "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
+
+      "Signal.onBarCross=",       BoolToStr(Signal.onBarCross),            ";", NL,
+      "Signal.onBarCross.Types=", DoubleQuoteStr(Signal.onBarCross.Types), ";", NL,
+      "Signal.Sound.Up=",         DoubleQuoteStr(Signal.Sound.Up),         ";", NL,
+      "Signal.Sound.Down=",       DoubleQuoteStr(Signal.Sound.Down),       ";", NL
+   ));
 
    // suppress compiler warnings
    icMaChannel(NULL, NULL, NULL, NULL);

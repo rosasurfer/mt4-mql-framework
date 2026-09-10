@@ -1,6 +1,10 @@
-#define MaChannel.MODE_UPPER_BAND   0                 // indicator buffer ids
-#define MaChannel.MODE_LOWER_BAND   1                 //
-#define MaChannel.MODE_TREND        2                 //
+
+#define MaChannel.MODE_MA1_UPPER_BAND  0              // indicator buffer ids
+#define MaChannel.MODE_MA1_LOWER_BAND  1              //
+#define MaChannel.MODE_MA2_UPPER_BAND  2              //
+#define MaChannel.MODE_MA2_LOWER_BAND  3              //
+#define MaChannel.MODE_MA3_UPPER_BAND  4              //
+#define MaChannel.MODE_MA3_LOWER_BAND  5              //
 
 
 /**
@@ -19,8 +23,18 @@ double icMaChannel(int timeframe, string channelDefinition, int iBuffer, int iBa
    }
 
    double value = iCustom(NULL, timeframe, "MA Channel",
-                          channelDefinition,          // string Channel.Definition
-                          Blue,                       // color  Channel.Color
+                          "",                         // string _______________________
+                          "",                         // string MA1.Method
+                          0,                          // int    MA1.Periods
+                          CLR_NONE,                   // color  MA1.Color
+
+                          "",                         // string MA2.Method
+                          0,                          // int    MA2.Periods
+                          CLR_NONE,                   // color  MA2.Color
+
+                          "",                         // string MA3.Method
+                          0,                          // int    MA3.Periods
+                          CLR_NONE,                   // color  MA3.Color
 
                           "",                         // string _______________________
                           false,                      // bool   ShowChartLegend
