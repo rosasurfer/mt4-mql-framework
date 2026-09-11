@@ -577,7 +577,7 @@ bool onCross(int direction) {
 void UpdateChartLegend() {
    double upperValue = 0, lowerValue = INT_MAX;
 
-   if (channelPosition[0] > 0) {
+   if (channelPosition[1] > 0) {
       // resolve the nearest lower channel band
       if (ma1.enabled) upperValue = ma1.lowerBand[0];
       if (ma2.enabled) upperValue = MathMax(upperValue, ma2.lowerBand[0]);
@@ -588,7 +588,7 @@ void UpdateChartLegend() {
       if (ma2.enabled) lowerValue = MathMin(lowerValue, ma2.lowerBand[0]);
       if (ma3.enabled) lowerValue = MathMin(lowerValue, ma3.lowerBand[0]);
    }
-   else if (channelPosition[0] < 0) {
+   else if (channelPosition[1] < 0) {
       // resolve the farest upper channel band
       if (ma1.enabled) upperValue = ma1.upperBand[0];
       if (ma2.enabled) upperValue = MathMax(upperValue, ma2.upperBand[0]);
