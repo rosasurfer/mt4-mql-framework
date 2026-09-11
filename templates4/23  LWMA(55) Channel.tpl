@@ -172,7 +172,6 @@ window_num=0
 MA1.Method=LWMA
 MA1.Periods=55
 ShowChartLegend=1
-AutoConfiguration=0
 </inputs>
 </expert>
 show_data=1
