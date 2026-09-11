@@ -76,9 +76,9 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
+#include <rsf/functions/ManageIntIndicatorBuffer.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/iCustom/MaChannel.mqh>
-#include <rsf/functions/ManageIntIndicatorBuffer.mqh>
 #include <rsf/functions/ta/ALMA.mqh>
 
 #define MODE_MA1_UPPER  MaChannel.MODE_MA1_UPPER_BAND    // 0 indicator buffer ids
@@ -143,8 +143,9 @@ double channelTrend[];                                   // overall channel tren
 int    maxMaPeriods;
 
 string indicatorName = "";
-string legendLabel   = "";
-string legendInfo    = "";
+string legendLabel = "";
+string legendInfo = "";
+color  legendColor;
 
 bool   signal.sound;
 bool   signal.alert;
@@ -252,6 +253,9 @@ int onInit() {
    if (MA1.Color == 0xFF000000) MA1.Color = CLR_NONE;
    if (MA2.Color == 0xFF000000) MA2.Color = CLR_NONE;
    if (MA3.Color == 0xFF000000) MA3.Color = CLR_NONE;
+   if      (ma1.enabled) legendColor = MA1.Color;
+   else if (ma2.enabled) legendColor = MA2.Color;
+   else                  legendColor = MA3.Color;
 
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
@@ -281,10 +285,10 @@ int onInit() {
    if (ma2.method == MODE_ALMA) ALMA.CalculateWeights(ma2.periods, almaOffset, almaSigma, ma2.almaWeights);
    if (ma3.method == MODE_ALMA) ALMA.CalculateWeights(ma3.periods, almaOffset, almaSigma, ma3.almaWeights);
 
-   // chart legend
+   // buffer management and display options
+   SetIndicatorOptions();
    if (ShowChartLegend) legendLabel = CreateChartLegend();
 
-   SetIndicatorOptions();
    return(catch("onInit(13)"));
 }
 
@@ -474,7 +478,7 @@ int onTick() {
    }
 
    if (__isChart && !__isSuperContext) {
-      //if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, legendInfo, Channel.Color, upperBand[0], lowerBand[0]);
+      if (ShowChartLegend) UpdateChartLegend();
 
       // monitor signals
       if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
@@ -568,6 +572,63 @@ bool onCross(int direction) {
 
 
 /**
+ * Update the chart legend.
+ */
+void UpdateChartLegend() {
+   double upperValue = 0, lowerValue = INT_MAX;
+
+   if (channelPosition[0] > 0) {
+      // resolve the nearest lower channel band
+      if (ma1.enabled) upperValue = ma1.lowerBand[0];
+      if (ma2.enabled) upperValue = MathMax(upperValue, ma2.lowerBand[0]);
+      if (ma3.enabled) upperValue = MathMax(upperValue, ma3.lowerBand[0]);
+
+      // resolve the farest lower channel band
+      if (ma1.enabled) lowerValue = ma1.lowerBand[0];
+      if (ma2.enabled) lowerValue = MathMin(lowerValue, ma2.lowerBand[0]);
+      if (ma3.enabled) lowerValue = MathMin(lowerValue, ma3.lowerBand[0]);
+   }
+   else if (channelPosition[0] < 0) {
+      // resolve the farest upper channel band
+      if (ma1.enabled) upperValue = ma1.upperBand[0];
+      if (ma2.enabled) upperValue = MathMax(upperValue, ma2.upperBand[0]);
+      if (ma3.enabled) upperValue = MathMax(upperValue, ma3.upperBand[0]);
+
+      // resolve the nearest upper channel band
+      if (ma1.enabled) lowerValue = ma1.upperBand[0];
+      if (ma2.enabled) lowerValue = MathMin(lowerValue, ma2.upperBand[0]);
+      if (ma3.enabled) lowerValue = MathMin(lowerValue, ma3.upperBand[0]);
+   }
+   else {
+      // resolve the farest upper band
+      if (ma1.enabled) upperValue = ma1.upperBand[0];
+      if (ma2.enabled) upperValue = MathMax(upperValue, ma2.upperBand[0]);
+      if (ma3.enabled) upperValue = MathMax(upperValue, ma3.upperBand[0]);
+
+      // resolve the farest lower band
+      if (ma1.enabled) lowerValue = ma1.lowerBand[0];
+      if (ma2.enabled) lowerValue = MathMin(lowerValue, ma2.lowerBand[0]);
+      if (ma3.enabled) lowerValue = MathMin(lowerValue, ma3.lowerBand[0]);
+   }
+
+   string sUpperValue = NumberToStr(upperValue, PriceFormat);
+   string sLowerValue = NumberToStr(lowerValue, PriceFormat);
+   string text = StringConcatenate(indicatorName, "   ", sUpperValue, " / ", sLowerValue, "   ", legendInfo);
+
+   color  textColor = legendColor;
+   if      (textColor == Aqua        ) textColor = DodgerBlue;
+   else if (textColor == Gold        ) textColor = Orange;
+   else if (textColor == LightSkyBlue) textColor = C'94,174,255';
+   else if (textColor == Lime        ) textColor = LimeGreen;
+   else if (textColor == Yellow      ) textColor = Orange;
+   ObjectSetText(legendLabel, text, 9, "Arial Fett", textColor);
+
+   int error = GetLastError();                                    // on ObjectDrag or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateChartLegend(1)", error);
+}
+
+
+/**
  * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
  *
  * @param  bool redraw [optional] - whether to redraw the chart (default: no)
@@ -624,7 +685,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    SetIndexBuffer(MODE_POSITION, channelPosition);
    SetIndexStyle (MODE_POSITION, DRAW_NONE);
-   SetIndexLabel (MODE_POSITION, NULL);
+   SetIndexLabel (MODE_POSITION, "MA Channel position");
 
    SetIndexBuffer(MODE_TREND, channelTrend);
    SetIndexStyle (MODE_TREND, DRAW_NONE);
