@@ -7,8 +7,6 @@
  *
  * Input parameters
  * ----------------
- *  • ...
- *  • ...
  *
  *
  * Supported Moving Average methods
@@ -42,37 +40,37 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ___a__________________________  = "=== MA definitions ===";
-extern string MA1.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
-extern int    MA1.Periods                     = 100;
-extern int    MA1.ChannelWidth.Pct            = 100;                     // percent of High/Low range
-extern color  MA1.Color                       = Magenta;
+extern string ___a__________________________ = "=== MA definitions ===";
+extern string MA1.Method                     = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA1.Periods                    = 100;
+extern int    MA1.ChannelWidth.Pct           = 100;                     // percent of High/Low range
+extern color  MA1.Color                      = Magenta;
 
-extern string MA2.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
-extern int    MA2.Periods                     = 0;
-extern int    MA2.ChannelWidth.Pct            = 100;
-extern color  MA2.Color                       = Blue;
+extern string MA2.Method                     = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA2.Periods                    = 0;
+extern int    MA2.ChannelWidth.Pct           = 100;
+extern color  MA2.Color                      = Blue;
 
-extern string MA3.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
-extern int    MA3.Periods                     = 0;
-extern int    MA3.ChannelWidth.Pct            = 100;
-extern color  MA3.Color                       = Red;
+extern string MA3.Method                     = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA3.Periods                    = 0;
+extern int    MA3.ChannelWidth.Pct           = 100;
+extern color  MA3.Color                      = Red;
 
-extern string ___b__________________________  = "=== Display options ===";
-extern bool   ShowChartLegend                 = true;
-extern int    MaxBarsBack                     = 10000;                   // max. values to calculate (-1: all available)
+extern string ___b__________________________ = "=== Display options ===";
+extern bool   ShowChartLegend                = true;
+extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
-extern string ___c__________________________  = "=== Signaling ===";
-extern bool   Signal.onPositionChange         = false;                   // on BarClose crossing the position boundary
-extern string Signal.onPosition.Types         = "sound* | alert | mail | telegram";
-extern string Signal.onPosition.Sound.Above   = "Signal Up.wav";
-extern string Signal.onPosition.Sound.Below   = "Signal Down.wav";
-extern string Signal.onPosition.Sound.Between = "Signal Between.wav";
+extern string ___c__________________________ = "=== Signaling ===";
+extern bool   Signal.onPositionChange        = false;                   // on BarClose crossing the position boundary
+extern string Signal.onPosition.Types        = "sound* | alert | mail | telegram";
+extern string Signal.onPosition.Sound.Above  = "Signal Up.wav";
+extern string Signal.onPosition.Sound.Inside = "Signal Inside.wav";
+extern string Signal.onPosition.Sound.Below  = "Signal Down.wav";
 
-extern bool   Signal.onTrendChange            = false;                   // on BarClose causing a trend change
-extern string Signal.onTrend.Types            = "sound* | alert | mail | telegram";
-extern string Signal.onTrend.Sound.Up         = "Signal Up.wav";
-extern string Signal.onTrend.Sound.Down       = "Signal Down.wav";
+extern bool   Signal.onTrendChange           = false;                   // on BarClose causing a trend change
+extern string Signal.onTrend.Types           = "sound* | alert | mail | telegram";
+extern string Signal.onTrend.Sound.Up        = "Signal Up.wav";
+extern string Signal.onTrend.Sound.Down      = "Signal Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -299,9 +297,9 @@ int onInit() {
    }
 
    // sounds
-   if (AutoConfiguration) Signal.onPosition.Sound.Above   = GetConfigString(indicator, "Signal.onPosition.Sound.Above",   Signal.onPosition.Sound.Above);
-   if (AutoConfiguration) Signal.onPosition.Sound.Below   = GetConfigString(indicator, "Signal.onPosition.Sound.Below",   Signal.onPosition.Sound.Below);
-   if (AutoConfiguration) Signal.onPosition.Sound.Between = GetConfigString(indicator, "Signal.onPosition.Sound.Between", Signal.onPosition.Sound.Between);
+   if (AutoConfiguration) Signal.onPosition.Sound.Above  = GetConfigString(indicator, "Signal.onPosition.Sound.Above",  Signal.onPosition.Sound.Above);
+   if (AutoConfiguration) Signal.onPosition.Sound.Inside = GetConfigString(indicator, "Signal.onPosition.Sound.Inside", Signal.onPosition.Sound.Inside);
+   if (AutoConfiguration) Signal.onPosition.Sound.Below  = GetConfigString(indicator, "Signal.onPosition.Sound.Below",  Signal.onPosition.Sound.Below);
 
    if (AutoConfiguration) Signal.onTrend.Sound.Up   = GetConfigString(indicator, "Signal.onTrend.Sound.Up",   Signal.onTrend.Sound.Up);
    if (AutoConfiguration) Signal.onTrend.Sound.Down = GetConfigString(indicator, "Signal.onTrend.Sound.Down", Signal.onTrend.Sound.Down);
@@ -538,7 +536,7 @@ bool onPositionChange(int position) {
    if (!Signal.onPositionChange) return(false);
    if (ChangedBars > 2)          return(false);
 
-   static string sPositions[] = { "below", "in", "above" };
+   static string sPositions[] = { "below", "inside", "above" };
 
    // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
@@ -572,7 +570,7 @@ bool onPositionChange(int position) {
       if (eventAction) {
          if      (position > 0) PlaySoundEx(Signal.onPosition.Sound.Above);
          else if (position < 0) PlaySoundEx(Signal.onPosition.Sound.Below);
-         else                   PlaySoundEx(Signal.onPosition.Sound.Between);
+         else                   PlaySoundEx(Signal.onPosition.Sound.Inside);
       }
    }
 
@@ -867,34 +865,34 @@ string GetChannelDescription() {
  */
 string InputsToStr() {
    return(StringConcatenate(
-      "MA1.Method=",                      DoubleQuoteStr(MA1.Method)                      +";"+ NL,
-      "MA1.Periods=",                     MA1.Periods                                     +";"+ NL,
-      "MA1.ChannelWidth.Pct=",            MA1.ChannelWidth.Pct                            +";"+ NL,
-      "MA1.Color=",                       ColorToStr(MA1.Color)                           +";"+ NL,
+      "MA1.Method=",                     DoubleQuoteStr(MA1.Method)                     +";"+ NL,
+      "MA1.Periods=",                    MA1.Periods                                    +";"+ NL,
+      "MA1.ChannelWidth.Pct=",           MA1.ChannelWidth.Pct                           +";"+ NL,
+      "MA1.Color=",                      ColorToStr(MA1.Color)                          +";"+ NL,
 
-      "MA2.Method=",                      DoubleQuoteStr(MA2.Method)                      +";"+ NL,
-      "MA2.Periods=",                     MA2.Periods                                     +";"+ NL,
-      "MA2.ChannelWidth.Pct=",            MA2.ChannelWidth.Pct                            +";"+ NL,
-      "MA2.Color=",                       ColorToStr(MA2.Color)                           +";"+ NL,
+      "MA2.Method=",                     DoubleQuoteStr(MA2.Method)                     +";"+ NL,
+      "MA2.Periods=",                    MA2.Periods                                    +";"+ NL,
+      "MA2.ChannelWidth.Pct=",           MA2.ChannelWidth.Pct                           +";"+ NL,
+      "MA2.Color=",                      ColorToStr(MA2.Color)                          +";"+ NL,
 
-      "MA3.Method=",                      DoubleQuoteStr(MA3.Method)                      +";"+ NL,
-      "MA3.Periods=",                     MA3.Periods                                     +";"+ NL,
-      "MA3.ChannelWidth.Pct=",            MA3.ChannelWidth.Pct                            +";"+ NL,
-      "MA3.Color=",                       ColorToStr(MA3.Color)                           +";"+ NL,
+      "MA3.Method=",                     DoubleQuoteStr(MA3.Method)                     +";"+ NL,
+      "MA3.Periods=",                    MA3.Periods                                    +";"+ NL,
+      "MA3.ChannelWidth.Pct=",           MA3.ChannelWidth.Pct                           +";"+ NL,
+      "MA3.Color=",                      ColorToStr(MA3.Color)                          +";"+ NL,
 
-      "ShowChartLegend=",                 BoolToStr(ShowChartLegend)                      +";"+ NL,
-      "MaxBarsBack=",                     MaxBarsBack                                     +";"+ NL,
+      "ShowChartLegend=",                BoolToStr(ShowChartLegend)                     +";"+ NL,
+      "MaxBarsBack=",                    MaxBarsBack                                    +";"+ NL,
 
-      "Signal.onPositionChange=",         BoolToStr(Signal.onPositionChange)              +";"+ NL,
-      "Signal.onPosition.Types=",         DoubleQuoteStr(Signal.onPosition.Types)         +";"+ NL,
-      "Signal.onPosition.Sound.Above=",   DoubleQuoteStr(Signal.onPosition.Sound.Above)   +";"+ NL,
-      "Signal.onPosition.Sound.Below=",   DoubleQuoteStr(Signal.onPosition.Sound.Below)   +";"+ NL,
-      "Signal.onPosition.Sound.Between=", DoubleQuoteStr(Signal.onPosition.Sound.Between) +";"+ NL,
+      "Signal.onPositionChange=",        BoolToStr(Signal.onPositionChange)             +";"+ NL,
+      "Signal.onPosition.Types=",        DoubleQuoteStr(Signal.onPosition.Types)        +";"+ NL,
+      "Signal.onPosition.Sound.Above=",  DoubleQuoteStr(Signal.onPosition.Sound.Above)  +";"+ NL,
+      "Signal.onPosition.Sound.Inside=", DoubleQuoteStr(Signal.onPosition.Sound.Inside) +";"+ NL,
+      "Signal.onPosition.Sound.Below=",  DoubleQuoteStr(Signal.onPosition.Sound.Below)  +";"+ NL,
 
-      "Signal.onTrendChange=",            BoolToStr(Signal.onTrendChange)                 +";"+ NL,
-      "Signal.onTrend.Types=",            DoubleQuoteStr(Signal.onTrend.Types)            +";"+ NL,
-      "Signal.onTrend.Sound..Up=",        DoubleQuoteStr(Signal.onTrend.Sound.Up)         +";"+ NL,
-      "Signal.onTrend.Sound..Down=",      DoubleQuoteStr(Signal.onTrend.Sound.Down)       +";"+ NL
+      "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange)                +";"+ NL,
+      "Signal.onTrend.Types=",           DoubleQuoteStr(Signal.onTrend.Types)           +";"+ NL,
+      "Signal.onTrend.Sound..Up=",       DoubleQuoteStr(Signal.onTrend.Sound.Up)        +";"+ NL,
+      "Signal.onTrend.Sound..Down=",     DoubleQuoteStr(Signal.onTrend.Sound.Down)      +";"+ NL
    ));
 
    // suppress compiler warnings
