@@ -541,8 +541,6 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             ObjectSet(label1, OBJPROP_COLOR,     colors[OP_SELL]);
             ObjectSet(label1, OBJPROP_TIME1,     openTime);
             ObjectSet(label1, OBJPROP_PRICE1,    openPrice);
-
-            logInfo("ShowOpenOrders(2)  negative TB reversals "+ key +": "+ value);
             displayedOrders++;
          }
          if (displayedOrders > 0) {

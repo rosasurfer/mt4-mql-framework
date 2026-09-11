@@ -169,9 +169,9 @@ name=MA Channel
 flags=339
 window_num=0
 <inputs>
-Channel.Definition=LWMA(55)
+MA1.Method=LWMA
+MA1.Periods=55
 ShowChartLegend=1
-AutoConfiguration=0
 </inputs>
 </expert>
 show_data=1

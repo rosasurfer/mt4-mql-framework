@@ -2431,9 +2431,9 @@ int StrToLogLevel(string value, int flags = NULL) {
 
 
 /**
- * Return the integer constant of a "Moving Average" method representation.
+ * Return the integer constant of a "Moving Average" method.
  *
- * @param  string value            - string representation of a "Moving Average" method
+ * @param  string value            - string describing a "Moving Average" method
  * @param  int    flags [optional] - execution control flags (default: none)
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "AL" = "ALMA"
  *                                   F_ERR_INVALID_PARAMETER: don't trigger a fatal error on unrecognized values
