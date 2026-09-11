@@ -2,7 +2,7 @@
  * MA Channel
  *
  * An indicator forming a High/Low channel around a Moving Average. The indicator can display up to 3 separate channels.
- * This indicator is the core element of the XARD Trend indicator.
+ * This indicator provides the foundation for the XARD trend system.
  *
  *
  * Input parameters
