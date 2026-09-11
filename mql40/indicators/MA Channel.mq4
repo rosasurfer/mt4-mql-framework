@@ -35,10 +35,6 @@
  *
  *  • ALMA calculation:
  *    @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
- *
- *
- * TODO:
- *  - add input "Channel.Width" = 100% (percent of High/Low range)
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -47,17 +43,20 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a__________________________ = "=== MA definitions ===";
-extern string MA1.Method  = "SMA* | LWMA | EMA | SMMA | ALMA";
-extern int    MA1.Periods = 100;
-extern color  MA1.Color   = Magenta;
+extern string MA1.Method                     = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA1.Periods                    = 100;
+extern int    MA1.ChannelWidth.Pct           = 100;                     // percent of High/Low range
+extern color  MA1.Color                      = Magenta;
 
-extern string MA2.Method  = "SMA* | LWMA | EMA | SMMA | ALMA";
-extern int    MA2.Periods = 0;
-extern color  MA2.Color   = Blue;
+extern string MA2.Method                     = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA2.Periods                    = 0;
+extern int    MA2.ChannelWidth.Pct           = 100;
+extern color  MA2.Color                      = Blue;
 
-extern string MA3.Method  = "SMA* | LWMA | EMA | SMMA | ALMA";
-extern int    MA3.Periods = 0;
-extern color  MA3.Color   = Red;
+extern string MA3.Method                     = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA3.Periods                    = 0;
+extern int    MA3.ChannelWidth.Pct           = 100;
+extern color  MA3.Color                      = Red;
 
 extern string ___b__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
@@ -165,16 +164,17 @@ int onInit() {
    // input validation
    string indicator = WindowExpertName();
 
-   // MA1.Periods (must be checked before MA.Method)
+   // MA1.Periods (enables/disables MA1 and must be checked first)
    ma1.enabled = false;
    if (AutoConfiguration) MA1.Periods = GetConfigInt(indicator, "MA1.Periods", MA1.Periods);
-   if (MA1.Periods < 0)     return(catch("onInit(1)  invalid input parameter MA1.Periods: "+ MA1.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA1.Periods < 0)             return(catch("onInit(1)  invalid input parameter MA1.Periods: "+ MA1.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma1.periods = MA1.Periods;
-   // MA1.Method
    if (!ma1.periods) {
       MA1.Method = "";
+      MA1.ChannelWidth.Pct = 100;
    }
    else {
+      // MA1.Method
       if (AutoConfiguration) MA1.Method = GetConfigString(indicator, "MA1.Method", MA1.Method);
       string sValues[], sValue = MA1.Method;
       if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -182,21 +182,25 @@ int onInit() {
          sValue = sValues[size-1];
       }
       ma1.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-      if (ma1.method == -1) return(catch("onInit(2)  invalid input parameter MA1.Method: "+ DoubleQuoteStr(MA1.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (ma1.method == -1)         return(catch("onInit(2)  invalid input parameter MA1.Method: "+ DoubleQuoteStr(MA1.Method), ERR_INVALID_INPUT_PARAMETER));
       MA1.Method = MaMethodDescription(ma1.method);
       ma1.enabled = true;
+      // MA1.ChannelWidth.Pct
+      if (AutoConfiguration) MA1.ChannelWidth.Pct = GetConfigInt(indicator, "MA1.ChannelWidth.Pct", MA1.ChannelWidth.Pct);
+      if (MA1.ChannelWidth.Pct < 1) return(catch("onInit(3)  invalid input parameter MA1.ChannelWidth.Pct: "+ MA1.ChannelWidth.Pct +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
    }
 
-   // MA2.Periods
+   // MA2.Periods (enables/disables MA2 and must be checked first)
    ma2.enabled = false;
    if (AutoConfiguration) MA2.Periods = GetConfigInt(indicator, "MA2.Periods", MA2.Periods);
-   if (MA2.Periods < 0)     return(catch("onInit(3)  invalid input parameter MA2.Periods: "+ MA2.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA2.Periods < 0)             return(catch("onInit(4)  invalid input parameter MA2.Periods: "+ MA2.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma2.periods = MA2.Periods;
-   // MA2.Method
    if (!ma2.periods) {
       MA2.Method = "";
+      MA2.ChannelWidth.Pct = 100;
    }
    else {
+      // MA2.Method
       if (AutoConfiguration) MA2.Method = GetConfigString(indicator, "MA2.Method", MA2.Method);
       sValue = MA2.Method;
       if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -204,21 +208,25 @@ int onInit() {
          sValue = sValues[size-1];
       }
       ma2.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-      if (ma2.method == -1) return(catch("onInit(4)  invalid input parameter MA2.Method: "+ DoubleQuoteStr(MA2.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (ma2.method == -1)         return(catch("onInit(5)  invalid input parameter MA2.Method: "+ DoubleQuoteStr(MA2.Method), ERR_INVALID_INPUT_PARAMETER));
       MA2.Method = MaMethodDescription(ma2.method);
       ma2.enabled = true;
+      // MA2.ChannelWidth.Pct
+      if (AutoConfiguration) MA2.ChannelWidth.Pct = GetConfigInt(indicator, "MA2.ChannelWidth.Pct", MA2.ChannelWidth.Pct);
+      if (MA2.ChannelWidth.Pct < 1) return(catch("onInit(6)  invalid input parameter MA2.ChannelWidth.Pct: "+ MA2.ChannelWidth.Pct +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
    }
 
-   // MA3.Periods
+   // MA3.Periods (enables/disables MA3 and must be checked first)
    ma3.enabled = false;
    if (AutoConfiguration) MA3.Periods = GetConfigInt(indicator, "MA3.Periods", MA3.Periods);
-   if (MA3.Periods < 0)     return(catch("onInit(5)  invalid input parameter MA3.Periods: "+ MA3.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA3.Periods < 0)             return(catch("onInit(7)  invalid input parameter MA3.Periods: "+ MA3.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma3.periods = MA3.Periods;
-   // MA3.Method
    if (!ma3.periods) {
       MA3.Method = "";
+      MA3.ChannelWidth.Pct = 100;
    }
    else {
+      // MA3.Method
       if (AutoConfiguration) MA3.Method = GetConfigString(indicator, "MA3.Method", MA3.Method);
       sValue = MA3.Method;
       if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -226,12 +234,16 @@ int onInit() {
          sValue = sValues[size-1];
       }
       ma3.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-      if (ma3.method == -1) return(catch("onInit(6)  invalid input parameter MA3.Method: "+ DoubleQuoteStr(MA3.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (ma3.method == -1)         return(catch("onInit(8)  invalid input parameter MA3.Method: "+ DoubleQuoteStr(MA3.Method), ERR_INVALID_INPUT_PARAMETER));
       MA3.Method = MaMethodDescription(ma3.method);
       ma3.enabled = true;
+      // MA3.ChannelWidth.Pct
+      if (AutoConfiguration) MA3.ChannelWidth.Pct = GetConfigInt(indicator, "MA3.ChannelWidth.Pct", MA3.ChannelWidth.Pct);
+      if (MA3.ChannelWidth.Pct < 1) return(catch("onInit(9)  invalid input parameter MA3.ChannelWidth.Pct: "+ MA3.ChannelWidth.Pct +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
    }
+
    maxMaPeriods = Max(ma1.periods, ma2.periods, ma3.periods);
-   if (!maxMaPeriods)       return(catch("onInit(7)  invalid MA definitions: at least one MA needs a period value", ERR_INVALID_INPUT_PARAMETER));
+   if (!maxMaPeriods)               return(catch("onInit(10)  invalid MA definitions: at least one MA needs a period value", ERR_INVALID_INPUT_PARAMETER));
 
    // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) MA1.Color = GetConfigColor(indicator, "MA1.Color", MA1.Color);
@@ -245,7 +257,7 @@ int onInit() {
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)    return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)            return(catch("onInit(11)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // Signal.onBarCross
@@ -254,7 +266,7 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
    if (Signal.onBarCross) {
       if (!ConfigureSignalTypes(signalId, Signal.onBarCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
-         return(catch("onInit(9)  invalid input parameter Signal.onBarCross.Types: "+ DoubleQuoteStr(Signal.onBarCross.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(12)  invalid input parameter Signal.onBarCross.Types: "+ DoubleQuoteStr(Signal.onBarCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onBarCross = (signal.sound || signal.alert || signal.mail || signal.telegram);
       if (Signal.onBarCross) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.telegram, "tgm,", ""), -1) +")";
@@ -273,7 +285,7 @@ int onInit() {
    if (ShowChartLegend) legendLabel = CreateChartLegend();
 
    SetIndicatorOptions();
-   return(catch("onInit(10)"));
+   return(catch("onInit(13)"));
 }
 
 
@@ -328,6 +340,8 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(channelTrend,    Bars, ShiftedBars,           0);
    }
 
+   double range, extension;
+
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods), prevTrend;
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
@@ -347,6 +361,12 @@ int onTick() {
          else {
             ma1.upperBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_HIGH, bar);
             ma1.lowerBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_LOW,  bar);
+         }
+         if (MA1.ChannelWidth.Pct != 100) {
+            range     = ma1.upperBand[bar] - ma1.lowerBand[bar];
+            extension = (MA1.ChannelWidth.Pct - 100) / 100.0 / 2;
+            ma1.upperBand[bar] += extension * range;
+            ma1.lowerBand[bar] -= extension * range;
          }
 
          if      (Close[bar] > ma1.upperBand[bar]) ma1.position[bar] = +1;
@@ -373,6 +393,12 @@ int onTick() {
             ma2.upperBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_HIGH, bar);
             ma2.lowerBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_LOW,  bar);
          }
+         if (MA2.ChannelWidth.Pct != 100) {
+            range     = ma2.upperBand[bar] - ma2.lowerBand[bar];
+            extension = (MA2.ChannelWidth.Pct - 100) / 100.0 / 2;
+            ma2.upperBand[bar] += extension * range;
+            ma2.lowerBand[bar] -= extension * range;
+         }
 
          if      (Close[bar] > ma2.upperBand[bar]) ma2.position[bar] = +1;
          else if (Close[bar] < ma2.lowerBand[bar]) ma2.position[bar] = -1;
@@ -397,6 +423,12 @@ int onTick() {
          else {
             ma3.upperBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_HIGH, bar);
             ma3.lowerBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_LOW,  bar);
+         }
+         if (MA3.ChannelWidth.Pct != 100) {
+            range     = ma3.upperBand[bar] - ma3.lowerBand[bar];
+            extension = (MA3.ChannelWidth.Pct - 100) / 100.0 / 2;
+            ma3.upperBand[bar] += extension * range;
+            ma3.lowerBand[bar] -= extension * range;
          }
 
          if      (Close[bar] > ma3.upperBand[bar]) ma3.position[bar] = +1;
@@ -651,27 +683,30 @@ string GetChannelDescription() {
  */
 string InputsToStr() {
    return(StringConcatenate(
-      "MA1.Method=",              DoubleQuoteStr(MA1.Method),              ";", NL,
-      "MA1.Periods=",             MA1.Periods,                             ";", NL,
-      "MA1.Color=",               ColorToStr(MA1.Color),                   ";", NL,
+      "MA1.Method=",              DoubleQuoteStr(MA1.Method),              ";"+ NL,
+      "MA1.Periods=",             MA1.Periods,                             ";"+ NL,
+      "MA1.ChannelWidth.Pct=",    MA1.ChannelWidth.Pct,                    ";"+ NL,
+      "MA1.Color=",               ColorToStr(MA1.Color),                   ";"+ NL,
 
-      "MA2.Method=",              DoubleQuoteStr(MA2.Method),              ";", NL,
-      "MA2.Periods=",             MA2.Periods,                             ";", NL,
-      "MA2.Color=",               ColorToStr(MA2.Color),                   ";", NL,
+      "MA2.Method=",              DoubleQuoteStr(MA2.Method),              ";"+ NL,
+      "MA2.Periods=",             MA2.Periods,                             ";"+ NL,
+      "MA2.ChannelWidth.Pct=",    MA2.ChannelWidth.Pct,                    ";"+ NL,
+      "MA2.Color=",               ColorToStr(MA2.Color),                   ";"+ NL,
 
-      "MA3.Method=",              DoubleQuoteStr(MA3.Method),              ";", NL,
-      "MA3.Periods=",             MA3.Periods,                             ";", NL,
-      "MA3.Color=",               ColorToStr(MA3.Color),                   ";", NL,
+      "MA3.Method=",              DoubleQuoteStr(MA3.Method),              ";"+ NL,
+      "MA3.Periods=",             MA3.Periods,                             ";"+ NL,
+      "MA3.ChannelWidth.Pct=",    MA3.ChannelWidth.Pct,                    ";"+ NL,
+      "MA3.Color=",               ColorToStr(MA3.Color),                   ";"+ NL,
 
-      "ShowChartLegend=",         BoolToStr(ShowChartLegend),              ";", NL,
-      "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
+      "ShowChartLegend=",         BoolToStr(ShowChartLegend),              ";"+ NL,
+      "MaxBarsBack=",             MaxBarsBack,                             ";"+ NL,
 
-      "Signal.onBarCross=",       BoolToStr(Signal.onBarCross),            ";", NL,
-      "Signal.onBarCross.Types=", DoubleQuoteStr(Signal.onBarCross.Types), ";", NL,
-      "Signal.Sound.Up=",         DoubleQuoteStr(Signal.Sound.Up),         ";", NL,
-      "Signal.Sound.Down=",       DoubleQuoteStr(Signal.Sound.Down),       ";", NL
+      "Signal.onBarCross=",       BoolToStr(Signal.onBarCross),            ";"+ NL,
+      "Signal.onBarCross.Types=", DoubleQuoteStr(Signal.onBarCross.Types), ";"+ NL,
+      "Signal.Sound.Up=",         DoubleQuoteStr(Signal.Sound.Up),         ";"+ NL,
+      "Signal.Sound.Down=",       DoubleQuoteStr(Signal.Sound.Down),       ";"+ NL
    ));
 
    // suppress compiler warnings
-   icMaChannel(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icMaChannel(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }

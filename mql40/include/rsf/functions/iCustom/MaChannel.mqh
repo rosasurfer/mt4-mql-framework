@@ -11,21 +11,24 @@
 /**
  * Load the "MA Channel" indicator and return a value.
  *
- * @param  int timeframe  - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int timeframe       - timeframe to load the indicator (NULL: the current timeframe)
  *
- * @param  int ma1Method  - indicator parameter
- * @param  int ma1Periods - indicator parameter
- * @param  int ma2Method  - indicator parameter
- * @param  int ma2Periods - indicator parameter
- * @param  int ma3Method  - indicator parameter
- * @param  int ma3Periods - indicator parameter
+ * @param  int ma1Method       - indicator parameter
+ * @param  int ma1Periods      - indicator parameter
+ * @param  int ma1ChannelWidth - indicator parameter
+ * @param  int ma2Method       - indicator parameter
+ * @param  int ma2Periods      - indicator parameter
+ * @param  int ma2ChannelWidth - indicator parameter
+ * @param  int ma3Method       - indicator parameter
+ * @param  int ma3Periods      - indicator parameter
+ * @param  int ma3ChannelWidth - indicator parameter
  *
- * @param  int iBuffer    - indicator buffer index of the value to return
- * @param  int iBar       - bar index of the value to return
+ * @param  int iBuffer         - indicator buffer index of the value to return
+ * @param  int iBar            - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icMaChannel(int timeframe, int ma1Method, int ma1Periods, int ma2Method, int ma2Periods, int ma3Method, int ma3Periods, int iBuffer, int iBar) {
+double icMaChannel(int timeframe, int ma1Method, int ma1Periods, int ma1ChannelWidth, int ma2Method, int ma2Periods, int ma2ChannelWidth, int ma3Method, int ma3Periods, int ma3ChannelWidth, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
    }
@@ -37,14 +40,17 @@ double icMaChannel(int timeframe, int ma1Method, int ma1Periods, int ma2Method, 
                           "",                         // string _______________________
                           sMa1Method,                 // string MA1.Method
                           ma1Periods,                 // int    MA1.Periods
+                          ma1ChannelWidth,            // int    MA1.ChannelWidth.Pct
                           CLR_NONE,                   // color  MA1.Color
 
                           sMa1Method,                 // string MA2.Method
                           ma2Periods,                 // int    MA2.Periods
+                          ma2ChannelWidth,            // int    MA2.ChannelWidth.Pct
                           CLR_NONE,                   // color  MA2.Color
 
                           sMa1Method,                 // string MA3.Method
                           ma3Periods,                 // int    MA3.Periods
+                          ma3ChannelWidth,            // int    MA3.ChannelWidth.Pct
                           CLR_NONE,                   // color  MA3.Color
 
                           "",                         // string _______________________
