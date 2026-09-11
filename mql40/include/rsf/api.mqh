@@ -344,7 +344,7 @@ double   icDonchianChannel(int timeframe, int periods, int iBuffer, int iBar);;
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
 double   icMACD(int timeframe, string fastMaMethod, int fastMaPeriods, string fastMaAppliedPrice, string slowMaMethod, int slowMaPeriods, string slowMaAppliedPrice, string unit, int adrPeriods, int iBuffer, int iBar);;
-double   icMaChannel(int timeframe, int ma1Method, int ma1ChannelWidth, int ma1Periods, int ma2Method, int ma2ChannelWidth, int ma2Periods, int ma3Method, int ma3ChannelWidth, int ma3Periods, int iBuffer, int iBar);;
+double   icMaChannel(int timeframe, int ma1Method, int ma1Periods, int ma1ChannelWidth, int ma2Method, int ma2Periods, int ma2ChannelWidth, int ma3Method, int ma3Periods, int ma3ChannelWidth, int iBuffer, int iBar);;
 double   icMovingAverage(int timeframe, string maMethod, int maPeriods, string maAppliedPrice, int iBuffer, int iBar);;
 double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 
