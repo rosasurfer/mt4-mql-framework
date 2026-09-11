@@ -43,12 +43,12 @@ double icMaChannel(int timeframe, int ma1Method, int ma1Periods, int ma1ChannelW
                           ma1ChannelWidth,            // int    MA1.ChannelWidth.Pct
                           CLR_NONE,                   // color  MA1.Color
 
-                          sMa1Method,                 // string MA2.Method
+                          sMa2Method,                 // string MA2.Method
                           ma2Periods,                 // int    MA2.Periods
                           ma2ChannelWidth,            // int    MA2.ChannelWidth.Pct
                           CLR_NONE,                   // color  MA2.Color
 
-                          sMa1Method,                 // string MA3.Method
+                          sMa3Method,                 // string MA3.Method
                           ma3Periods,                 // int    MA3.Periods
                           ma3ChannelWidth,            // int    MA3.ChannelWidth.Pct
                           CLR_NONE,                   // color  MA3.Color
