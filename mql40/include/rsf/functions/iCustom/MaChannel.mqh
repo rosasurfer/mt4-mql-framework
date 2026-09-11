@@ -58,10 +58,16 @@ double icMaChannel(int timeframe, int ma1Method, int ma1Periods, int ma1ChannelW
                           -1,                         // int    MaxBarsBack
 
                           "",                         // string _______________________
-                          false,                      // bool   Signal.onBarCross
-                          "",                         // string Signal.onBarCross.Types
-                          "",                         // string Signal.Sound.Up
-                          "",                         // string Signal.Sound.Down
+                          false,                      // bool   Signal.onPositionChange
+                          "",                         // string Signal.onPosition.Types
+                          "",                         // string Signal.onPosition.Sound.Above
+                          "",                         // string Signal.onPosition.Sound.Below
+                          "",                         // string Signal.onPosition.Sound.Between
+
+                          false,                      // bool   Signal.onTrendChange
+                          "",                         // string Signal.onTrend.Types
+                          "",                         // string Signal.onTrend.Sound.Up
+                          "",                         // string Signal.onTrend.Sound.Down
 
                           "",                         // string _______________________
                           false,                      // bool   AutoConfiguration
