@@ -530,12 +530,13 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             // get reversal data
             key = keys[i];
             value = GetIniStringA(fileName, section, key, "");
+            if (StrIsInteger(value)) value = Abs(StrToInteger(value));
             openTime = StrToTime(key);
             bar = iBarShiftNext(NULL, NULL, openTime);
             openPrice = (High[bar] + Low[bar])/2;
 
             // create open position marker
-            label1 = StringConcatenate("#", (i+1), ": "+ value +" negative TB reversals");
+            label1 = StringConcatenate("#", (i+1), ": "+ value +" negative Donchian reversals");
             if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
             ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
             ObjectSet(label1, OBJPROP_COLOR,     colors[OP_SELL]);
