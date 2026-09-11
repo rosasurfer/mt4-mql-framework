@@ -340,8 +340,8 @@ int onTick() {
             ma1.upperBand[bar] = 0;
             ma1.lowerBand[bar] = 0;
             for (i=0; i < ma1.periods; i++) {
-               ma1.upperBand[bar] += ma1.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_HIGH, bar+i);
-               ma1.lowerBand[bar] += ma1.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_LOW, bar+i);
+               ma1.upperBand[bar] += ma1.almaWeights[i] * High[bar+i];
+               ma1.lowerBand[bar] += ma1.almaWeights[i] * Low [bar+i];
             }
          }
          else {
@@ -365,8 +365,8 @@ int onTick() {
             ma2.upperBand[bar] = 0;
             ma2.lowerBand[bar] = 0;
             for (i=0; i < ma2.periods; i++) {
-               ma2.upperBand[bar] += ma2.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_HIGH, bar+i);
-               ma2.lowerBand[bar] += ma2.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_LOW, bar+i);
+               ma2.upperBand[bar] += ma2.almaWeights[i] * High[bar+i];
+               ma2.lowerBand[bar] += ma2.almaWeights[i] * Low [bar+i];
             }
          }
          else {
@@ -390,8 +390,8 @@ int onTick() {
             ma3.upperBand[bar] = 0;
             ma3.lowerBand[bar] = 0;
             for (i=0; i < ma3.periods; i++) {
-               ma3.upperBand[bar] += ma3.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_HIGH, bar+i);
-               ma3.lowerBand[bar] += ma3.almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_LOW, bar+i);
+               ma3.upperBand[bar] += ma3.almaWeights[i] * High[bar+i];
+               ma3.lowerBand[bar] += ma3.almaWeights[i] * Low [bar+i];
             }
          }
          else {
