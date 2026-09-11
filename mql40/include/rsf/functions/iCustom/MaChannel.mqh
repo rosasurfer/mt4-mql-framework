@@ -4,6 +4,8 @@
 #define MaChannel.MODE_MA2_LOWER_BAND  3              //
 #define MaChannel.MODE_MA3_UPPER_BAND  4              //
 #define MaChannel.MODE_MA3_LOWER_BAND  5              //
+#define MaChannel.MODE_POSITION        6              // overall price position (all MA channels): -1..0..+1
+#define MaChannel.MODE_TREND           7              // overall channel trend (all MA channels):  -n..0..+n
 
 
 /**

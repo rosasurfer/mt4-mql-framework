@@ -16,8 +16,8 @@
  *  • SMA  = Simple Moving Average:          equal bar weighting
  *  • LWMA = Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  = Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA = Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
- *  • ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
+ *  • SMMA = Smoothed Moving Average:        bar weighting using an exponential function (an EMA of a different period)
+ *  • ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function (see notes)
  *
  *
  * Usage with iCustom()
@@ -79,8 +79,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/iCustom/MaChannel.mqh>
+#include <rsf/functions/ManageIntIndicatorBuffer.mqh>
 #include <rsf/functions/ta/ALMA.mqh>
-#include <rsf/win32api.mqh>
 
 #define MODE_MA1_UPPER  MaChannel.MODE_MA1_UPPER_BAND    // 0 indicator buffer ids
 #define MODE_MA1_LOWER  MaChannel.MODE_MA1_LOWER_BAND    // 1
@@ -88,31 +88,58 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #define MODE_MA2_LOWER  MaChannel.MODE_MA2_LOWER_BAND    // 3
 #define MODE_MA3_UPPER  MaChannel.MODE_MA3_UPPER_BAND    // 4
 #define MODE_MA3_LOWER  MaChannel.MODE_MA3_LOWER_BAND    // 5
+#define MODE_POSITION   MaChannel.MODE_POSITION          // 6 price position inside/outside of the channel:    -1..0..+1
+#define MODE_TREND      MaChannel.MODE_TREND             // 7 trend/length of the last outer channel crossing: -n..0..+n
+
+#define MODE_MA1_POSITION   8                            // price position in relation to single MA channel: -1..0..+1
+#define MODE_MA1_TREND      9                            // single MA channel trend:                         -n..0..+n
+#define MODE_MA2_POSITION  10                            //
+#define MODE_MA2_TREND     11                            //
+#define MODE_MA3_POSITION  12                            //
+#define MODE_MA3_TREND     13                            //
 
 #property indicator_chart_window
-#property indicator_buffers   6                          // visible buffers
+#property indicator_buffers   8                          // buffers managed by the terminal
+int       framework_buffers = 6;                         // buffers managed by the framework
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
+#property indicator_color4    CLR_NONE
+#property indicator_color5    CLR_NONE
+#property indicator_color6    CLR_NONE
+#property indicator_color7    CLR_NONE
+#property indicator_color8    CLR_NONE
 
-int    ma1.method;                                       // MA definition
+bool   ma1.enabled;                                      // MA settings
+int    ma1.method;                                       //
 int    ma1.periods;                                      //
-double ma1.upperBand[];                                  // indicator buffers
+double ma1.upperBand[];                                  //
 double ma1.lowerBand[];                                  //
+int    ma1.position[];                                   //
+int    ma1.trend[];                                      //
 double ma1.almaWeights[];                                // ALMA bar weights (if applicable
 
+bool   ma2.enabled;
 int    ma2.method;
 int    ma2.periods;
 double ma2.upperBand[];
 double ma2.lowerBand[];
+int    ma2.position[];
+int    ma2.trend[];
 double ma2.almaWeights[];
 
+bool   ma3.enabled;
 int    ma3.method;
 int    ma3.periods;
 double ma3.upperBand[];
 double ma3.lowerBand[];
+int    ma3.position[];
+int    ma3.trend[];
 double ma3.almaWeights[];
+
+double channelPosition[];                                // overall price position in relation to channel: -1..0..+1
+double channelTrend[];                                   // overall channel trend (all MAs): -n..0..+n
 
 int    maxMaPeriods;
 
@@ -139,8 +166,9 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // MA1.Periods (must be checked before MA.Method)
+   ma1.enabled = false;
    if (AutoConfiguration) MA1.Periods = GetConfigInt(indicator, "MA1.Periods", MA1.Periods);
-   if (MA1.Periods < 0)  return(catch("onInit(1)  invalid input parameter MA1.Periods: "+ MA1.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA1.Periods < 0)     return(catch("onInit(1)  invalid input parameter MA1.Periods: "+ MA1.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma1.periods = MA1.Periods;
    // MA1.Method
    if (!ma1.periods) {
@@ -156,11 +184,13 @@ int onInit() {
       ma1.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
       if (ma1.method == -1) return(catch("onInit(2)  invalid input parameter MA1.Method: "+ DoubleQuoteStr(MA1.Method), ERR_INVALID_INPUT_PARAMETER));
       MA1.Method = MaMethodDescription(ma1.method);
+      ma1.enabled = true;
    }
 
    // MA2.Periods
+   ma2.enabled = false;
    if (AutoConfiguration) MA2.Periods = GetConfigInt(indicator, "MA2.Periods", MA2.Periods);
-   if (MA2.Periods < 0)  return(catch("onInit(3)  invalid input parameter MA2.Periods: "+ MA2.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA2.Periods < 0)     return(catch("onInit(3)  invalid input parameter MA2.Periods: "+ MA2.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma2.periods = MA2.Periods;
    // MA2.Method
    if (!ma2.periods) {
@@ -176,11 +206,13 @@ int onInit() {
       ma2.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
       if (ma2.method == -1) return(catch("onInit(4)  invalid input parameter MA2.Method: "+ DoubleQuoteStr(MA2.Method), ERR_INVALID_INPUT_PARAMETER));
       MA2.Method = MaMethodDescription(ma2.method);
+      ma2.enabled = true;
    }
 
    // MA3.Periods
+   ma3.enabled = false;
    if (AutoConfiguration) MA3.Periods = GetConfigInt(indicator, "MA3.Periods", MA3.Periods);
-   if (MA3.Periods < 0)  return(catch("onInit(5)  invalid input parameter MA3.Periods: "+ MA3.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA3.Periods < 0)     return(catch("onInit(5)  invalid input parameter MA3.Periods: "+ MA3.Periods +" (must be >= zero)", ERR_INVALID_INPUT_PARAMETER));
    ma3.periods = MA3.Periods;
    // MA3.Method
    if (!ma3.periods) {
@@ -196,9 +228,10 @@ int onInit() {
       ma3.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
       if (ma3.method == -1) return(catch("onInit(6)  invalid input parameter MA3.Method: "+ DoubleQuoteStr(MA3.Method), ERR_INVALID_INPUT_PARAMETER));
       MA3.Method = MaMethodDescription(ma3.method);
+      ma3.enabled = true;
    }
    maxMaPeriods = Max(ma1.periods, ma2.periods, ma3.periods);
-   if (!maxMaPeriods)    return(catch("onInit(7)  invalid MA definitions: at least one MA needs a period value", ERR_INVALID_INPUT_PARAMETER));
+   if (!maxMaPeriods)       return(catch("onInit(7)  invalid MA definitions: at least one MA needs a period value", ERR_INVALID_INPUT_PARAMETER));
 
    // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) MA1.Color = GetConfigColor(indicator, "MA1.Color", MA1.Color);
@@ -212,7 +245,7 @@ int onInit() {
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)               return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)    return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // Signal.onBarCross
@@ -250,34 +283,59 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   // manage additional framework buffers
+   ManageIntIndicatorBuffer(MODE_MA1_POSITION, ma1.position, 0);
+   ManageIntIndicatorBuffer(MODE_MA1_TREND,    ma1.trend,    0);
+   ManageIntIndicatorBuffer(MODE_MA2_POSITION, ma2.position, 0);
+   ManageIntIndicatorBuffer(MODE_MA2_TREND,    ma2.trend,    0);
+   ManageIntIndicatorBuffer(MODE_MA3_POSITION, ma3.position, 0);
+   ManageIntIndicatorBuffer(MODE_MA3_TREND,    ma3.trend,    0);
+
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(ma1.upperBand, EMPTY_VALUE);
       ArrayInitialize(ma1.lowerBand, EMPTY_VALUE);
+      ArrayInitialize(ma1.position,            0);
+      ArrayInitialize(ma1.trend,               0);
       ArrayInitialize(ma2.upperBand, EMPTY_VALUE);
       ArrayInitialize(ma2.lowerBand, EMPTY_VALUE);
+      ArrayInitialize(ma2.position,            0);
+      ArrayInitialize(ma2.trend,               0);
       ArrayInitialize(ma3.upperBand, EMPTY_VALUE);
       ArrayInitialize(ma3.lowerBand, EMPTY_VALUE);
+      ArrayInitialize(ma3.position,            0);
+      ArrayInitialize(ma3.trend,               0);
+      ArrayInitialize(channelPosition,         0);
+      ArrayInitialize(channelTrend,            0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(ma1.upperBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(ma1.lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(ma2.upperBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(ma2.lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(ma3.upperBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(ma3.lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma1.upperBand,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma1.lowerBand,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIntIndicatorBuffer   (ma1.position,    Bars, ShiftedBars,           0);
+      ShiftIntIndicatorBuffer   (ma1.trend,       Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(ma2.upperBand,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma2.lowerBand,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIntIndicatorBuffer   (ma2.position,    Bars, ShiftedBars,           0);
+      ShiftIntIndicatorBuffer   (ma2.trend,       Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(ma3.upperBand,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma3.lowerBand,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIntIndicatorBuffer   (ma3.position,    Bars, ShiftedBars,           0);
+      ShiftIntIndicatorBuffer   (ma3.trend,       Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(channelPosition, Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(channelTrend,    Bars, ShiftedBars,           0);
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods);
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods), prevTrend;
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar, i; bar >= 0; bar--) {
-      if (ma1.periods > 0) {
+      // MA1 channel
+      if (ma1.enabled) {
          if (ma1.method == MODE_ALMA) {
             ma1.upperBand[bar] = 0;
             ma1.lowerBand[bar] = 0;
@@ -290,9 +348,19 @@ int onTick() {
             ma1.upperBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_HIGH, bar);
             ma1.lowerBand[bar] = iMA(NULL, NULL, ma1.periods, 0, ma1.method, PRICE_LOW,  bar);
          }
+
+         if      (Close[bar] > ma1.upperBand[bar]) ma1.position[bar] = +1;
+         else if (Close[bar] < ma1.lowerBand[bar]) ma1.position[bar] = -1;
+         else                                      ma1.position[bar] =  0;
+
+         prevTrend = ma1.trend[bar+1];
+         if      (Close[bar] > ma1.upperBand[bar]) ma1.trend[bar] = Max(prevTrend, 0) + 1;
+         else if (Close[bar] < ma1.lowerBand[bar]) ma1.trend[bar] = Min(prevTrend, 0) - 1;
+         else                                      ma1.trend[bar] = prevTrend + Sign(prevTrend);
       }
 
-      if (ma2.periods > 0) {
+      // MA2 channel
+      if (ma2.enabled) {
          if (ma2.method == MODE_ALMA) {
             ma2.upperBand[bar] = 0;
             ma2.lowerBand[bar] = 0;
@@ -305,9 +373,19 @@ int onTick() {
             ma2.upperBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_HIGH, bar);
             ma2.lowerBand[bar] = iMA(NULL, NULL, ma2.periods, 0, ma2.method, PRICE_LOW,  bar);
          }
+
+         if      (Close[bar] > ma2.upperBand[bar]) ma2.position[bar] = +1;
+         else if (Close[bar] < ma2.lowerBand[bar]) ma2.position[bar] = -1;
+         else                                      ma2.position[bar] =  0;
+
+         prevTrend = ma2.trend[bar+1];
+         if      (Close[bar] > ma2.upperBand[bar]) ma2.trend[bar] = Max(prevTrend, 0) + 1;
+         else if (Close[bar] < ma2.lowerBand[bar]) ma2.trend[bar] = Min(prevTrend, 0) - 1;
+         else                                      ma2.trend[bar] = prevTrend + Sign(prevTrend);
       }
 
-      if (ma3.periods > 0) {
+      // MA3 channel
+      if (ma3.enabled) {
          if (ma3.method == MODE_ALMA) {
             ma3.upperBand[bar] = 0;
             ma3.lowerBand[bar] = 0;
@@ -320,7 +398,47 @@ int onTick() {
             ma3.upperBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_HIGH, bar);
             ma3.lowerBand[bar] = iMA(NULL, NULL, ma3.periods, 0, ma3.method, PRICE_LOW,  bar);
          }
+
+         if      (Close[bar] > ma3.upperBand[bar]) ma3.position[bar] = +1;
+         else if (Close[bar] < ma3.lowerBand[bar]) ma3.position[bar] = -1;
+         else                                      ma3.position[bar] =  0;
+
+         prevTrend = ma3.trend[bar+1];
+         if      (Close[bar] > ma3.upperBand[bar]) ma3.trend[bar] = Max(prevTrend, 0) + 1;
+         else if (Close[bar] < ma3.lowerBand[bar]) ma3.trend[bar] = Min(prevTrend, 0) - 1;
+         else                                      ma3.trend[bar] = prevTrend + Sign(prevTrend);
       }
+
+      // overall channel position
+      bool allUp = true;
+      if (ma1.enabled) allUp = allUp && ma1.position[bar] > 0;
+      if (ma2.enabled) allUp = allUp && ma2.position[bar] > 0;
+      if (ma3.enabled) allUp = allUp && ma3.position[bar] > 0;
+
+      bool allDown = true;
+      if (ma1.enabled) allDown = allDown && ma1.position[bar] < 0;
+      if (ma2.enabled) allDown = allDown && ma2.position[bar] < 0;
+      if (ma3.enabled) allDown = allDown && ma3.position[bar] < 0;
+
+      if      (allUp)   channelPosition[bar] = +1;
+      else if (allDown) channelPosition[bar] = -1;
+      else              channelPosition[bar] =  0;
+
+      // overall channel trend
+      allUp = true;
+      if (ma1.enabled) allUp = allUp && ma1.trend[bar] > 0;
+      if (ma2.enabled) allUp = allUp && ma2.trend[bar] > 0;
+      if (ma3.enabled) allUp = allUp && ma3.trend[bar] > 0;
+
+      allDown = true;
+      if (ma1.enabled) allDown = allDown && ma1.trend[bar] < 0;
+      if (ma2.enabled) allDown = allDown && ma2.trend[bar] < 0;
+      if (ma3.enabled) allDown = allDown && ma3.trend[bar] < 0;
+
+      prevTrend = channelTrend[bar+1];
+      if      (allUp)   channelTrend[bar] = Max(prevTrend, 0) + 1;
+      else if (allDown) channelTrend[bar] = Min(prevTrend, 0) - 1;
+      else              channelTrend[bar] = prevTrend + Sign(prevTrend);
    }
 
    if (__isChart && !__isSuperContext) {
@@ -328,8 +446,8 @@ int onTick() {
 
       // monitor signals
       if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
-         if      (false) onCross(D_LONG);
-         else if (false) onCross(D_SHORT);
+         if      (channelTrend[1] ==  1) onCross(D_LONG);
+         else if (channelTrend[1] == -1) onCross(D_SHORT);
       }
    }
    return(last_error);
@@ -453,24 +571,32 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexLabel (MODE_MA3_UPPER, MA3.Method +"("+ MA3.Periods +") upper band");
    SetIndexLabel (MODE_MA3_LOWER, MA3.Method +"("+ MA3.Periods +") lower band");
 
-   if (!ma1.periods) {
+   if (!ma1.enabled) {
       SetIndexStyle(MODE_MA1_UPPER, DRAW_NONE);
       SetIndexStyle(MODE_MA1_LOWER, DRAW_NONE);
       SetIndexLabel(MODE_MA1_UPPER, NULL);
       SetIndexLabel(MODE_MA1_LOWER, NULL);
    }
-   if (!ma2.periods) {
+   if (!ma2.enabled) {
       SetIndexStyle(MODE_MA2_UPPER, DRAW_NONE);
       SetIndexStyle(MODE_MA2_LOWER, DRAW_NONE);
       SetIndexLabel(MODE_MA2_UPPER, NULL);
       SetIndexLabel(MODE_MA2_LOWER, NULL);
    }
-   if (!ma3.periods) {
+   if (!ma3.enabled) {
       SetIndexStyle(MODE_MA3_UPPER, DRAW_NONE);
       SetIndexStyle(MODE_MA3_LOWER, DRAW_NONE);
       SetIndexLabel(MODE_MA3_UPPER, NULL);
       SetIndexLabel(MODE_MA3_LOWER, NULL);
    }
+
+   SetIndexBuffer(MODE_POSITION, channelPosition);
+   SetIndexStyle (MODE_POSITION, DRAW_NONE);
+   SetIndexLabel (MODE_POSITION, NULL);
+
+   SetIndexBuffer(MODE_TREND, channelTrend);
+   SetIndexStyle (MODE_TREND, DRAW_NONE);
+   SetIndexLabel (MODE_TREND, "MA Channel trend");
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -486,26 +612,26 @@ string GetChannelDescription() {
    string sameMethods = "", differentMethods = "";
    bool allSameMethod = true;
 
-   if (ma1.periods > 0) {
+   if (ma1.enabled) {
       sameMethods      = MA1.Method +"("+ MA1.Periods;
       differentMethods = differentMethods +","+ MA1.Method +"("+ MA1.Periods +")";
    }
-   if (ma2.periods > 0) {
+   if (ma2.enabled) {
       sameMethods      = sameMethods +","+ MA2.Periods;
       differentMethods = differentMethods +","+ MA2.Method +"("+ MA2.Periods +")";
 
-      if (ma1.periods > 0) {
+      if (ma1.enabled) {
          allSameMethod = (ma1.method == ma2.method);
       }
    }
-   if (ma3.periods > 0) {
+   if (ma3.enabled) {
       sameMethods      = sameMethods +","+ MA3.Periods;
       differentMethods = differentMethods +","+ MA3.Method +"("+ MA3.Periods +")";
 
-      if (ma1.periods > 0) {
+      if (ma1.enabled) {
          allSameMethod = (ma1.method == ma3.method);
       }
-      if (ma2.periods > 0) {
+      if (ma2.enabled) {
          allSameMethod = (ma2.method == ma3.method);
       }
    }
