@@ -831,7 +831,8 @@ string GetChannelDescription() {
       differentMethods = differentMethods +","+ MA1.Method +"("+ MA1.Periods +")";
    }
    if (ma2.enabled) {
-      sameMethods      = sameMethods +","+ MA2.Periods;
+      if (sameMethods == "") sameMethods = MA2.Method +"("+ MA2.Periods;
+      else                   sameMethods = sameMethods +","+ MA2.Periods;
       differentMethods = differentMethods +","+ MA2.Method +"("+ MA2.Periods +")";
 
       if (ma1.enabled) {
@@ -839,7 +840,8 @@ string GetChannelDescription() {
       }
    }
    if (ma3.enabled) {
-      sameMethods      = sameMethods +","+ MA3.Periods;
+      if (sameMethods == "") sameMethods = MA3.Method +"("+ MA3.Periods;
+      else                   sameMethods = sameMethods +","+ MA3.Periods;
       differentMethods = differentMethods +","+ MA3.Method +"("+ MA3.Periods +")";
 
       if (ma1.enabled) {
