@@ -1,12 +1,43 @@
 /**
  * MA Channel
  *
- * An indicator forming a High/Low channel around a Moving Average. The indicator can display up to 3 separate channels.
- * This indicator provides the foundation for the XARD trend system.
+ * An indicator calculating a High/Low channel around a Moving Average. The channel can be defined using 1–3 separate MAs.
+ * This indicator should be used together with the "Trend Bars" indicator to visualize the calculated channel trend.
+ * Such a channel trend forms the basis of the XARD trend system.
  *
  *
  * Input parameters
  * ----------------
+ *  • MA1.Method:                     Averaging method of the 1st MA.
+ *  • MA1.Periods:                    Number of periods for the 1st MA. If 0 (zero) the MA is not used/disabled.
+ *  • MA1.ChannelWidth.Pct:           Scaling factor in percent for the 1st MA (default: 100%).
+ *  • MA1.Color:                      Color of the 1st MA.
+ *
+ *  • MA2.Method:                     Averaging method of the 2nd MA.
+ *  • MA2.Periods:                    Number of periods for the 2nd MA. If 0 (zero) the MA is not used/disabled.
+ *  • MA2.ChannelWidth.Pct:           Scaling factor in percent for the 2nd MA (default: 100%).
+ *  • MA2.Color:                      Color of the 2nd MA.
+ *
+ *  • MA3.Method:                     Averaging method of the 3rd MA.
+ *  • MA3.Periods:                    Number of periods for the 3rd MA. If 0 (zero) the MA is not used/disabled.
+ *  • MA3.ChannelWidth.Pct:           Scaling factor in percent for the 3rd MA (default: 100%).
+ *  • MA3.Color:                      Color of the 3rd MA.
+ *
+ *  • ShowChartLegend:                Whether do display the chart legend.
+ *  • MaxBarsBack:                    Maximum number of bars back to calculate the indicator for (affects performance).
+ *
+ *  • Signal.onPositionChange:        Whether to signal when a bar changes its position relative to the channel.
+ *  • Signal.onPosition.Types:        Signaling methods, a combination of "sound", "alert", "email" and/or "telegram".
+ *  • Signal.onPosition.Sound.Above:  Sound file for a bar crossing the channel boundary to the upside.
+ *  • Signal.onPosition.Sound.Inside: Sound file for a bar crossing any channel boundary to the inside.
+ *  • Signal.onPosition.Sound.Below:  Sound file for a bar crossing the channel boundary to the downside.
+ *
+ *  • Signal.onTrendChange:           Whether to signal when a bar changes the channel trend.
+ *  • Signal.onTrend.Types:           Signaling methods, a combination of "sound", "alert", "email" and/or "telegram".
+ *  • Signal.onTrend.Sound.Up:        Sound file for a trend change "up".
+ *  • Signal.onTrend.Sound.Down:      Sound file for a trend change "down".
+ *
+ *  • AutoConfiguration:              If enabled all input parameters can be pre-defined in the configuration.
  *
  *
  * Supported Moving Average methods
