@@ -767,7 +767,7 @@ int onDeinitChartChange();
 
 
 /**
- * Called before the account is changed (implemented in most recent builds).
+ * Called before the account is changed (implemented in most recent builds only).
  *
  * @return int - error status
  *
