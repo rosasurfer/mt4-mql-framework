@@ -815,7 +815,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    SetIndexBuffer(MODE_POSITION, channelPosition);
    SetIndexStyle (MODE_POSITION, DRAW_NONE);
-   SetIndexLabel (MODE_POSITION, "MA Channel position");
+   SetIndexLabel (MODE_POSITION, NULL);
 
    SetIndexBuffer(MODE_TREND, channelTrend);
    SetIndexStyle (MODE_TREND, DRAW_NONE);
