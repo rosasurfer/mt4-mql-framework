@@ -1,5 +1,5 @@
 /**
- * Trend Bars
+ * MA Channel Colored Bars
  *
  * Colors price bars according to the defined MA Channel:
  *  - UpTrend:   the close price is above the channel

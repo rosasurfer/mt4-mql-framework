@@ -1,7 +1,7 @@
 <!--
 EMA(144)
 Donchian Channel(50) 
-LWMA(55) Channel + Trend Bars
+LWMA(55) Channel + Colored Bars
 -->
 
 <chart>
@@ -121,7 +121,7 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Trend Bars
+name=MA Channel Colored Bars
 flags=339
 window_num=0
 <inputs>
