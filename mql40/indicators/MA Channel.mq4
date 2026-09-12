@@ -145,6 +145,7 @@ double channelPosition[];                                // overall price positi
 double channelTrend[];                                   // overall channel trend (all MAs): -n..0..+n
 
 int    maxMaPeriods;
+bool   isSingleMa;                                       // whether the channel uses only a single MA
 
 string indicatorName = "";
 string legendLabel = "";
@@ -173,6 +174,7 @@ bool   signal.onTrend.telegram;
 int onInit() {
    // input validation
    string indicator = WindowExpertName();
+   isSingleMa = true;
 
    // MA1.Periods (enables/disables MA1 and must be checked first)
    ma1.enabled = false;
@@ -194,10 +196,10 @@ int onInit() {
       ma1.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
       if (ma1.method == -1)         return(catch("onInit(2)  invalid input parameter MA1.Method: "+ DoubleQuoteStr(MA1.Method), ERR_INVALID_INPUT_PARAMETER));
       MA1.Method = MaMethodDescription(ma1.method);
-      ma1.enabled = true;
       // MA1.ChannelWidth.Pct
       if (AutoConfiguration) MA1.ChannelWidth.Pct = GetConfigInt(indicator, "MA1.ChannelWidth.Pct", MA1.ChannelWidth.Pct);
       if (MA1.ChannelWidth.Pct < 1) return(catch("onInit(3)  invalid input parameter MA1.ChannelWidth.Pct: "+ MA1.ChannelWidth.Pct +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
+      ma1.enabled = true;
    }
 
    // MA2.Periods (enables/disables MA2 and must be checked first)
@@ -220,10 +222,11 @@ int onInit() {
       ma2.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
       if (ma2.method == -1)         return(catch("onInit(5)  invalid input parameter MA2.Method: "+ DoubleQuoteStr(MA2.Method), ERR_INVALID_INPUT_PARAMETER));
       MA2.Method = MaMethodDescription(ma2.method);
-      ma2.enabled = true;
       // MA2.ChannelWidth.Pct
       if (AutoConfiguration) MA2.ChannelWidth.Pct = GetConfigInt(indicator, "MA2.ChannelWidth.Pct", MA2.ChannelWidth.Pct);
       if (MA2.ChannelWidth.Pct < 1) return(catch("onInit(6)  invalid input parameter MA2.ChannelWidth.Pct: "+ MA2.ChannelWidth.Pct +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
+      ma2.enabled = true;
+      isSingleMa  = !ma1.enabled;
    }
 
    // MA3.Periods (enables/disables MA3 and must be checked first)
@@ -246,10 +249,11 @@ int onInit() {
       ma3.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
       if (ma3.method == -1)         return(catch("onInit(8)  invalid input parameter MA3.Method: "+ DoubleQuoteStr(MA3.Method), ERR_INVALID_INPUT_PARAMETER));
       MA3.Method = MaMethodDescription(ma3.method);
-      ma3.enabled = true;
       // MA3.ChannelWidth.Pct
       if (AutoConfiguration) MA3.ChannelWidth.Pct = GetConfigInt(indicator, "MA3.ChannelWidth.Pct", MA3.ChannelWidth.Pct);
       if (MA3.ChannelWidth.Pct < 1) return(catch("onInit(9)  invalid input parameter MA3.ChannelWidth.Pct: "+ MA3.ChannelWidth.Pct +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
+      ma3.enabled = true;
+      isSingleMa  = (!ma1.enabled && !ma2.enabled);
    }
 
    maxMaPeriods = Max(ma1.periods, ma2.periods, ma3.periods);
@@ -398,7 +402,7 @@ int onTick() {
             ma1.lowerBand[bar] -= extension * range;
          }
 
-         if      (Close[bar] > ma1.upperBand[bar]) ma1.position[bar] = +1;
+         if      (Close[bar] > ma1.upperBand[bar]) ma1.position[bar] =  1;
          else if (Close[bar] < ma1.lowerBand[bar]) ma1.position[bar] = -1;
          else                                      ma1.position[bar] =  0;
 
@@ -429,7 +433,7 @@ int onTick() {
             ma2.lowerBand[bar] -= extension * range;
          }
 
-         if      (Close[bar] > ma2.upperBand[bar]) ma2.position[bar] = +1;
+         if      (Close[bar] > ma2.upperBand[bar]) ma2.position[bar] =  1;
          else if (Close[bar] < ma2.lowerBand[bar]) ma2.position[bar] = -1;
          else                                      ma2.position[bar] =  0;
 
@@ -460,7 +464,7 @@ int onTick() {
             ma3.lowerBand[bar] -= extension * range;
          }
 
-         if      (Close[bar] > ma3.upperBand[bar]) ma3.position[bar] = +1;
+         if      (Close[bar] > ma3.upperBand[bar]) ma3.position[bar] =  1;
          else if (Close[bar] < ma3.lowerBand[bar]) ma3.position[bar] = -1;
          else                                      ma3.position[bar] =  0;
 
@@ -471,27 +475,27 @@ int onTick() {
       }
 
       // overall channel position
-      bool allUp = true;
-      if (ma1.enabled) allUp = allUp && ma1.position[bar] > 0;
-      if (ma2.enabled) allUp = allUp && ma2.position[bar] > 0;
-      if (ma3.enabled) allUp = allUp && ma3.position[bar] > 0;
+      bool allAbove = true;
+      if (ma1.enabled) allAbove = allAbove && ma1.position[bar] > 0;
+      if (ma2.enabled) allAbove = allAbove && ma2.position[bar] > 0;
+      if (ma3.enabled) allAbove = allAbove && ma3.position[bar] > 0;
 
-      bool allDown = true;
-      if (ma1.enabled) allDown = allDown && ma1.position[bar] < 0;
-      if (ma2.enabled) allDown = allDown && ma2.position[bar] < 0;
-      if (ma3.enabled) allDown = allDown && ma3.position[bar] < 0;
+      bool allBelow = true;
+      if (ma1.enabled) allBelow = allBelow && ma1.position[bar] < 0;
+      if (ma2.enabled) allBelow = allBelow && ma2.position[bar] < 0;
+      if (ma3.enabled) allBelow = allBelow && ma3.position[bar] < 0;
 
-      if      (allUp)   channelPosition[bar] = +1;
-      else if (allDown) channelPosition[bar] = -1;
-      else              channelPosition[bar] =  0;
+      if      (allAbove) channelPosition[bar] =  1;
+      else if (allBelow) channelPosition[bar] = -1;
+      else               channelPosition[bar] =  0;
 
       // overall channel trend
-      allUp = true;
+      bool allUp = true;
       if (ma1.enabled) allUp = allUp && ma1.trend[bar] > 0;
       if (ma2.enabled) allUp = allUp && ma2.trend[bar] > 0;
       if (ma3.enabled) allUp = allUp && ma3.trend[bar] > 0;
 
-      allDown = true;
+      bool allDown = true;
       if (ma1.enabled) allDown = allDown && ma1.trend[bar] < 0;
       if (ma2.enabled) allDown = allDown && ma2.trend[bar] < 0;
       if (ma3.enabled) allDown = allDown && ma3.trend[bar] < 0;
@@ -698,7 +702,12 @@ bool onTrendChange(int direction) {
 void UpdateChartLegend() {
    double upperValue = 0, lowerValue = INT_MAX;
 
-   if (channelPosition[1] > 0) {
+   if (isSingleMa) {
+      if (ma1.enabled) { upperValue = ma1.upperBand[0]; lowerValue = ma1.lowerBand[0]; }
+      if (ma2.enabled) { upperValue = ma2.upperBand[0]; lowerValue = ma2.lowerBand[0]; }
+      if (ma3.enabled) { upperValue = ma3.upperBand[0]; lowerValue = ma3.lowerBand[0]; }
+   }
+   else if (channelPosition[1] > 0) {
       // resolve the nearest lower channel band
       if (ma1.enabled) upperValue = ma1.lowerBand[0];
       if (ma2.enabled) upperValue = MathMax(upperValue, ma2.lowerBand[0]);
@@ -721,12 +730,12 @@ void UpdateChartLegend() {
       if (ma3.enabled) lowerValue = MathMin(lowerValue, ma3.upperBand[0]);
    }
    else {
-      // resolve the farest upper band
+      // resolve the farest upper channel band
       if (ma1.enabled) upperValue = ma1.upperBand[0];
       if (ma2.enabled) upperValue = MathMax(upperValue, ma2.upperBand[0]);
       if (ma3.enabled) upperValue = MathMax(upperValue, ma3.upperBand[0]);
 
-      // resolve the farest lower band
+      // resolve the farest lower channel band
       if (ma1.enabled) lowerValue = ma1.lowerBand[0];
       if (ma2.enabled) lowerValue = MathMin(lowerValue, ma2.lowerBand[0]);
       if (ma3.enabled) lowerValue = MathMin(lowerValue, ma3.lowerBand[0]);
