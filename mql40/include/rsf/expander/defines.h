@@ -129,27 +129,27 @@
 
 // timeframe identifiers (can't be combined)
 #define PERIOD_M1                               1        // 1 minute
-#define PERIOD_M2                               2        // 2 minutes  (custom timeframe)
-#define PERIOD_M3                               3        // 3 minutes  (custom timeframe)
-#define PERIOD_M4                               4        // 4 minutes  (custom timeframe)
+#define PERIOD_M2                               2        // 2 minutes  (custom)
+#define PERIOD_M3                               3        // 3 minutes  (custom)
+#define PERIOD_M4                               4        // 4 minutes  (custom)
 #define PERIOD_M5                               5        // 5 minutes
-#define PERIOD_M6                               6        // 6 minutes  (custom timeframe)
-#define PERIOD_M10                             10        // 10 minutes (custom timeframe)
-#define PERIOD_M12                             12        // 12 minutes (custom timeframe)
+#define PERIOD_M6                               6        // 6 minutes  (custom)
+#define PERIOD_M10                             10        // 10 minutes (custom)
+#define PERIOD_M12                             12        // 12 minutes (custom)
 #define PERIOD_M15                             15        // 15 minutes
-#define PERIOD_M20                             20        // 20 minutes (custom timeframe)
+#define PERIOD_M20                             20        // 20 minutes (custom)
 #define PERIOD_M30                             30        // 30 minutes
 #define PERIOD_H1                              60        // 1 hour
-#define PERIOD_H2                             120        // 2 hours    (custom timeframe)
-#define PERIOD_H3                             180        // 3 hours    (custom timeframe)
+#define PERIOD_H2                             120        // 2 hours    (custom)
+#define PERIOD_H3                             180        // 3 hours    (custom)
 #define PERIOD_H4                             240        // 4 hours
-#define PERIOD_H6                             360        // 6 hours    (custom timeframe)
-#define PERIOD_H8                             480        // 8 hours    (custom timeframe)
-#define PERIOD_H12                            720        // 12 hours   (custom timeframe)
+#define PERIOD_H6                             360        // 6 hours    (custom)
+#define PERIOD_H8                             480        // 8 hours    (custom)
+#define PERIOD_H12                            720        // 12 hours   (custom)
 #define PERIOD_D1                            1440        // 1 day
-#define PERIOD_W1                           10080        // 1 week (7 days)
-#define PERIOD_MN1                          43200        // 1 month (30 days)
-#define PERIOD_Q1                          129600        // 1 quarter (3 months, custom timeframe)
+#define PERIOD_W1                           10080        // 1 week    = 7 days
+#define PERIOD_MN1                          43200        // 1 month   = 30 days
+#define PERIOD_Q1                          129600        // 1 quarter = 3 months (custom)
 
 
 // timeframe flags (can be combined)
