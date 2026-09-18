@@ -2,13 +2,13 @@
  * Helper EA to visualize the trade history of a TopStep account, exported in CSV format.
  *
  * The EA parses the trade history and converts it to the framework's internal format. Then the history is processed
- * as if the EA traded it. Use the EA standard commands to show/hide the history.
+ * as if the EA traded it. Use the standard EA commands to show/hide historic trades.
  *
  *
  * Input parameters
  * ----------------
- *  • CsvFileName:       File path/name containing the CSV data export. Must be located in the MQL "files" directory.
- *  • CsvSymbol:         Symbol from the CSV file to map to the current chart. If empty the chart symbol is used.
+ *  • CsvFileName:       File path/name containing the CSV data export. Must be located in the "MQL4/Files" directory.
+ *  • CsvSymbol:         Symbol in the CSV file to map to the current chart. If empty the chart symbol is used.
  *  • AutoConfiguration: If enabled all input parameters can be pre-defined in the configuration.
  *
  *
@@ -20,6 +20,9 @@
  *
  *
  * TODO:
+ *  - rename to "TopstepCsvHistoryToChart"
+ *  - log the symbol used for mapping
+ *  - if missing prepend ".csv" to filename
  *  - show PnL in close marker
  *  - cache the parsed data over init cycles and convert to indicator
  */
@@ -29,8 +32,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string CsvFileName       = "";              // CSV filename in MQL "files" directory
-extern string CsvSymbol         = "";              // CSV symbol to map to the current chart (empty: chart symbol)
+extern string CsvFileName       = "";              // name of the CSV file located in the "MQL4/Files" directory
+extern string CsvSymbol         = "";              // symbol in the CSV file to map to the current chart (empty: chart symbol)
 extern bool   AutoConfiguration = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,7 +199,7 @@ bool ParseLines(string lines[]) {
    #define I_COMMISSION       12    // Commissions (absolute value)
 
    string line, cols[], sTicket, symbol, sType, sLots, sOpenTime, sCloseTime, sOpenPrice, sClosePrice, sProfit, sCommission, sFee;
-   int foundCols, ticket, type, lots;
+   int records, foundCols, ticket, type, lots;
    datetime openTime, closeTime;
    double openPrice, closePrice, profit, commission, fee, totalCost, netProfit;
 
@@ -285,6 +288,7 @@ bool ParseLines(string lines[]) {
 
       totalCost = NormalizeDouble(commission + fee, 2);
       netProfit = NormalizeDouble(profit + totalCost, 2);
+      records++;
 
       // add history record if the row belongs to the mapped symbol
       if (symbol == CsvSymbol) {
@@ -295,7 +299,7 @@ bool ParseLines(string lines[]) {
    }
 
    int size = ArrayRange(history, 0);
-   logInfo("ParseLines(22)  "+ size +" history record"+ Pluralize(size) +" parsed");
+   logInfo("ParseLines(22)  "+ records +" history record"+ Pluralize(records) +" parsed, "+ size +" record"+ Pluralize(size) +" mapped to chart symbol");
    return(true);
 }
 
