@@ -6269,7 +6269,7 @@ bool SendTelegramMessage(string channel, string message) {
 
    // check whether Telegram is enabled
    bool enabled = GetConfigBool("Telegram", "Enabled");
-   if (!enabled) return(!logInfo("SendTelegramMessage(3) is disabled"));
+   if (!enabled) return(!logNotice("SendTelegramMessage(3) is disabled"));
 
    // resolve an existing alias
    string alias = GetConfigString("Telegram", "Alias."+ channel);
