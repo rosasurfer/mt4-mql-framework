@@ -1,5 +1,5 @@
 /**
- * Helper EA to visualize the trade history of a TopStep account, exported in CSV format.
+ * Helper EA to visualize the trade history of a Topstep account, exported in CSV format.
  *
  * The EA parses the trade history and converts it to the framework's internal format. Then the history is processed
  * as if the EA traded it. Use the standard EA commands to show/hide historic trades.
@@ -197,12 +197,12 @@ bool ParseLines(string lines[]) {
 
    string mappedSymbol = ifString(StringLen(CsvSymbol), CsvSymbol, Symbol());
    string line, cols[], sTicket, symbol, sType, sLots, sOpenTime, sCloseTime, sOpenPrice, sClosePrice, sProfit, sCommission, sFee;
-   int allRecords, foundCols, ticket, type, lots;
+   int dataLines, allRecords, foundCols, ticket, type, lots;
    datetime openTime, closeTime;
    double openPrice, closePrice, profit, commission, fee, totalCost, netProfit;
 
    // parse lines
-   for (int i=0, n; i < sizeLines; i++) {               // i: all-line counter, n: data-line counter
+   for (int i=0; i < sizeLines; i++) {
       line = lines[i];
 
       if (!i) /*&&*/ if (StrStartsWith(line, UTF8_BOM)) {
@@ -211,11 +211,11 @@ bool ParseLines(string lines[]) {
       line = StrTrim(line);
       if (line == "")                    continue;      // skip empty lines
       if (StringGetChar(line, 0) == ';') continue;      // skip comment lines
-      n++;                                              // count data lines
+      dataLines++;                                      // count data lines
 
       // validate file header in first data line
-      if (n == 1) {
-         if (!StrCompareI(line, csvHeader))             return(!catch("ParseLines(2)  unsupported file format: TopStep CSV header not found", ERR_INVALID_FILE_FORMAT));
+      if (dataLines == 1) {
+         if (!StrCompareI(line, csvHeader))             return(!catch("ParseLines(2)  unsupported file format: Topstep CSV header not found", ERR_INVALID_FILE_FORMAT));
          continue;
       }
 
@@ -246,13 +246,13 @@ bool ParseLines(string lines[]) {
 
       // openTime: 08/31/2026 02:13:26 +03:00
       sOpenTime = StrTrim(cols[I_OPENTIME]);
-      if (!ParseTopStepDateTime(sOpenTime, openTime))   return(!catch("ParseLines(10)  unexpected format of field \"EnteredAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
+      if (!ParseTopstepDateTime(sOpenTime, openTime))   return(!catch("ParseLines(10)  unexpected format of field \"EnteredAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
       openTime = GmtToServerTime(openTime);
       if (IsNaT(openTime))                              return(!catch("ParseLines(11)  can't convert field \"EnteredAt\" in line "+ (i+1) +" to server time: "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
 
       // closeTime: 08/31/2026 02:13:26 +03:00
       sCloseTime = StrTrim(cols[I_CLOSETIME]);
-      if (!ParseTopStepDateTime(sCloseTime, closeTime)) return(!catch("ParseLines(12)  unexpected format of field \"ExitedAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
+      if (!ParseTopstepDateTime(sCloseTime, closeTime)) return(!catch("ParseLines(12)  unexpected format of field \"ExitedAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
       closeTime = GmtToServerTime(closeTime);
       if (IsNaT(closeTime))                             return(!catch("ParseLines(13)  can't convert field \"ExitedAt\" in line "+ (i+1) +" to server time: "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
 
@@ -299,9 +299,10 @@ bool ParseLines(string lines[]) {
          }
       }
    }
+   if (!dataLines) return(!catch("ParseLines(22)  invalid file format: Topstep CSV header not found", ERR_INVALID_FILE_FORMAT));
 
    int size = ArrayRange(history, 0);
-   logInfo("ParseLines(22)  found "+ size +" record"+ Pluralize(size) +" (out of "+ allRecords +") for "+ ifString(StringLen(CsvSymbol), "the specified", "chart") +" symbol \""+ mappedSymbol +"\"");
+   logInfo("ParseLines(23)  found "+ size +" record"+ Pluralize(size) +" (out of "+ allRecords +") for "+ ifString(StringLen(CsvSymbol), "the specified", "chart") +" symbol \""+ mappedSymbol +"\"");
    return(true);
 }
 
@@ -349,7 +350,7 @@ bool ParseUint32(string sUnsigned, int &signed) {
 
 
 /**
- * Parse and validate a TopStep datetime string. Format: "08/31/2026 02:30:46 +03:00"
+ * Parse and validate a Topstep datetime string. Format: "08/31/2026 02:30:46 +03:00"
  * Without a timezone offset GMT time (offset +00:00) is assumed.
  *
  * @param  _In_  string   sDateTime - datetime string to parse
@@ -357,7 +358,7 @@ bool ParseUint32(string sUnsigned, int &signed) {
  *
  * @return bool - success status
  */
-datetime ParseTopStepDateTime(string sDateTime, datetime &timestamp) {
+datetime ParseTopstepDateTime(string sDateTime, datetime &timestamp) {
    string sValue, sValues[], sDate, sYY, sMM, sDD, sTime, sHH, sII, sSS, sOffsetHH, sOffsetII;
    int size, iYY, iMM, iDD, iHH, iII, iSS, iTzOffset, iOffsetHH, iOffsetII, chr;
 
