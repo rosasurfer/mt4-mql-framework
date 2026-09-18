@@ -202,18 +202,20 @@ bool ParseLines(string lines[]) {
    double openPrice, closePrice, profit, commission, fee, totalCost, netProfit;
 
    // parse lines
-   for (int i=0; i < sizeLines; i++) {
+   for (int i=0, n; i < sizeLines; i++) {               // i: all-line counter, n: data-line counter
+      if (!i) /*&&*/ if (StrStartsWith(line, UTF8_BOM)) {
+         line = StrSubstr(line, StringLen(UTF8_BOM));   // remove an existing UTF-8 BOM
+      }
       line = StrTrim(lines[i]);
+      if (line == "")                    continue;      // skip empty lines
+      if (StringGetChar(line, 0) == ';') continue;      // skip comment lines
+      n++;                                              // count data lines
 
-      // validate file header
-      if (i == 0) {
-         if (StrStartsWith(line, UTF8_BOM)) {           // remove an existing UTF-8 BOM
-            line = StrSubstr(line, StringLen(UTF8_BOM));
-         }
+      // validate file header in first data line
+      if (n == 1) {
          if (!StrCompareI(line, csvHeader))             return(!catch("ParseLines(2)  unsupported file format: TopStep CSV header not found", ERR_INVALID_FILE_FORMAT));
          continue;
       }
-      if (line == "") continue;                         // skip empty lines
 
       // split line into columns and parse cells
       foundCols = Explode(line, ",", cols, NULL);
