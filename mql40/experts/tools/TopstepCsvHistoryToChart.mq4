@@ -1,14 +1,14 @@
 /**
- * Helper EA to visualize the trade history of a TopStep account, exported in CSV format.
+ * Helper EA to visualize the trade history of a Topstep account, exported in CSV format.
  *
  * The EA parses the trade history and converts it to the framework's internal format. Then the history is processed
- * as if the EA traded it. Use the EA standard commands to show/hide the history.
+ * as if the EA traded it. Use the standard EA commands to show/hide historic trades.
  *
  *
  * Input parameters
  * ----------------
- *  • CsvFileName:       File path/name containing the CSV data export. Must be located in the MQL "files" directory.
- *  • CsvSymbol:         Symbol from the CSV file to map to the current chart. If empty the chart symbol is used.
+ *  • CsvFileName:       File path/name containing the CSV data export. Must be located in the "MQL4/Files" directory.
+ *  • CsvSymbol:         Symbol in the CSV file to map to the current chart. If empty the chart symbol is used.
  *  • AutoConfiguration: If enabled all input parameters can be pre-defined in the configuration.
  *
  *
@@ -29,8 +29,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string CsvFileName       = "";              // CSV filename in MQL "files" directory
-extern string CsvSymbol         = "";              // CSV symbol to map to the current chart (empty: chart symbol)
+extern string CsvFileName       = "";              // name of the CSV file located in the "MQL4/Files" directory
+extern string CsvSymbol         = "";              // symbol in the CSV file to map to the current chart (empty: chart symbol)
 extern bool   AutoConfiguration = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,24 +195,29 @@ bool ParseLines(string lines[]) {
    #define I_TRADE_DURATION   11    // TradeDuration (skipped)
    #define I_COMMISSION       12    // Commissions (absolute value)
 
+   string mappedSymbol = ifString(StringLen(CsvSymbol), CsvSymbol, Symbol());
    string line, cols[], sTicket, symbol, sType, sLots, sOpenTime, sCloseTime, sOpenPrice, sClosePrice, sProfit, sCommission, sFee;
-   int foundCols, ticket, type, lots;
+   int dataLines, allRecords, foundCols, ticket, type, lots;
    datetime openTime, closeTime;
    double openPrice, closePrice, profit, commission, fee, totalCost, netProfit;
 
    // parse lines
    for (int i=0; i < sizeLines; i++) {
-      line = StrTrim(lines[i]);
+      line = lines[i];
 
-      // validate file header
-      if (i == 0) {
-         if (StrStartsWith(line, UTF8_BOM)) {           // remove an existing UTF-8 BOM
-            line = StrSubstr(line, StringLen(UTF8_BOM));
-         }
-         if (!StrCompareI(line, csvHeader))             return(!catch("ParseLines(2)  unsupported file format: TopStep CSV header not found", ERR_INVALID_FILE_FORMAT));
+      if (!i) /*&&*/ if (StrStartsWith(line, UTF8_BOM)) {
+         line = StrSubstr(line, StringLen(UTF8_BOM));   // remove an existing UTF-8 BOM
+      }
+      line = StrTrim(line);
+      if (line == "")                    continue;      // skip empty lines
+      if (StringGetChar(line, 0) == ';') continue;      // skip comment lines
+      dataLines++;                                      // count data lines
+
+      // validate file header in first data line
+      if (dataLines == 1) {
+         if (!StrCompareI(line, csvHeader))             return(!catch("ParseLines(2)  unsupported file format: Topstep CSV header not found", ERR_INVALID_FILE_FORMAT));
          continue;
       }
-      if (line == "") continue;                         // skip empty lines
 
       // split line into columns and parse cells
       foundCols = Explode(line, ",", cols, NULL);
@@ -241,13 +246,13 @@ bool ParseLines(string lines[]) {
 
       // openTime: 08/31/2026 02:13:26 +03:00
       sOpenTime = StrTrim(cols[I_OPENTIME]);
-      if (!ParseTopStepDateTime(sOpenTime, openTime))   return(!catch("ParseLines(10)  unexpected format of field \"EnteredAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
+      if (!ParseTopstepDateTime(sOpenTime, openTime))   return(!catch("ParseLines(10)  unexpected format of field \"EnteredAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
       openTime = GmtToServerTime(openTime);
       if (IsNaT(openTime))                              return(!catch("ParseLines(11)  can't convert field \"EnteredAt\" in line "+ (i+1) +" to server time: "+ DoubleQuoteStr(sOpenTime), ERR_INVALID_FILE_FORMAT));
 
       // closeTime: 08/31/2026 02:13:26 +03:00
       sCloseTime = StrTrim(cols[I_CLOSETIME]);
-      if (!ParseTopStepDateTime(sCloseTime, closeTime)) return(!catch("ParseLines(12)  unexpected format of field \"ExitedAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
+      if (!ParseTopstepDateTime(sCloseTime, closeTime)) return(!catch("ParseLines(12)  unexpected format of field \"ExitedAt\" in line "+ (i+1) +": "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
       closeTime = GmtToServerTime(closeTime);
       if (IsNaT(closeTime))                             return(!catch("ParseLines(13)  can't convert field \"ExitedAt\" in line "+ (i+1) +" to server time: "+ DoubleQuoteStr(sCloseTime), ERR_INVALID_FILE_FORMAT));
 
@@ -285,17 +290,19 @@ bool ParseLines(string lines[]) {
 
       totalCost = NormalizeDouble(commission + fee, 2);
       netProfit = NormalizeDouble(profit + totalCost, 2);
+      allRecords++;
 
       // add history record if the row belongs to the mapped symbol
-      if (symbol == CsvSymbol) {
+      if (StrCompareI(symbol, mappedSymbol)) {
          if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCost, profit, netProfit, 0, 0, 0, 0, 0, 0) == EMPTY) {
             return(!catch("ParseLines(21)  invalid file format in line "+ (i+1) +": "+ DoubleQuoteStr(line), ERR_INVALID_FILE_FORMAT));
          }
       }
    }
+   if (!dataLines) return(!catch("ParseLines(22)  invalid file format: Topstep CSV header not found", ERR_INVALID_FILE_FORMAT));
 
    int size = ArrayRange(history, 0);
-   logInfo("ParseLines(22)  "+ size +" history record"+ Pluralize(size) +" parsed");
+   logInfo("ParseLines(23)  found "+ size +" record"+ Pluralize(size) +" (out of "+ allRecords +") for "+ ifString(StringLen(CsvSymbol), "the specified", "chart") +" symbol \""+ mappedSymbol +"\"");
    return(true);
 }
 
@@ -343,7 +350,7 @@ bool ParseUint32(string sUnsigned, int &signed) {
 
 
 /**
- * Parse and validate a TopStep datetime string. Format: "08/31/2026 02:30:46 +03:00"
+ * Parse and validate a Topstep datetime string. Format: "08/31/2026 02:30:46 +03:00"
  * Without a timezone offset GMT time (offset +00:00) is assumed.
  *
  * @param  _In_  string   sDateTime - datetime string to parse
@@ -351,7 +358,7 @@ bool ParseUint32(string sUnsigned, int &signed) {
  *
  * @return bool - success status
  */
-datetime ParseTopStepDateTime(string sDateTime, datetime &timestamp) {
+datetime ParseTopstepDateTime(string sDateTime, datetime &timestamp) {
    string sValue, sValues[], sDate, sYY, sMM, sDD, sTime, sHH, sII, sSS, sOffsetHH, sOffsetII;
    int size, iYY, iMM, iDD, iHH, iII, iSS, iTzOffset, iOffsetHH, iOffsetII, chr;
 
@@ -471,15 +478,17 @@ bool ValidateInputs() {
    if (StrStartsWith(fileName, "\"") && StrEndsWith(fileName, "\"")) {
       fileName = StrTrim(StrSubstr(fileName, 1, StringLen(fileName)-2));
    }
-   if (fileName == "")              return(!catch("ValidateInputs(1)  missing input parameter CsvFileName: \"\" (empty)", ERR_INVALID_PARAMETER));
-   if (!IsFile(fileName, MODE_MQL)) return(!catch("ValidateInputs(2)  invalid input parameter CsvFileName: \""+ fileName +"\" (file not found)", ERR_FILE_NOT_FOUND));
+   if (fileName == "")                          return(!catch("ValidateInputs(1)  missing input parameter CsvFileName: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (!IsFile(fileName, MODE_MQL)) {
+      if (StrEndsWithI(fileName, ".csv"))       return(!catch("ValidateInputs(2)  invalid input parameter CsvFileName: \""+ fileName +"\" (file not found)", ERR_FILE_NOT_FOUND));
+      if (!IsFile(fileName + ".csv", MODE_MQL)) return(!catch("ValidateInputs(3)  invalid input parameter CsvFileName: \""+ fileName +"\" (file not found)", ERR_FILE_NOT_FOUND));
+      fileName = fileName + ".csv";
+   }
    CsvFileName = fileName;
 
    // CsvSymbol
    if (AutoConfiguration) CsvSymbol = GetConfigString(expert, "CsvSymbol", CsvSymbol);
-   string symbol = StrTrim(CsvSymbol);
-   if (symbol == "") symbol = Symbol();
-   CsvSymbol = StrToUpper(symbol);
+   CsvSymbol = StrTrim(CsvSymbol);
 
    return(!catch("ValidateInputs(3)"));
 }
