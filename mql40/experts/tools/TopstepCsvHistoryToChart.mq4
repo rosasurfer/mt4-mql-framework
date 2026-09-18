@@ -203,10 +203,12 @@ bool ParseLines(string lines[]) {
 
    // parse lines
    for (int i=0, n; i < sizeLines; i++) {               // i: all-line counter, n: data-line counter
+      line = lines[i];
+
       if (!i) /*&&*/ if (StrStartsWith(line, UTF8_BOM)) {
          line = StrSubstr(line, StringLen(UTF8_BOM));   // remove an existing UTF-8 BOM
       }
-      line = StrTrim(lines[i]);
+      line = StrTrim(line);
       if (line == "")                    continue;      // skip empty lines
       if (StringGetChar(line, 0) == ';') continue;      // skip comment lines
       n++;                                              // count data lines
