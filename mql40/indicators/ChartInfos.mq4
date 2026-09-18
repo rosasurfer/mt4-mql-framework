@@ -1374,18 +1374,13 @@ bool UpdatePositions() {
       ArrayResize(offsets, 7);
       commentCol = 6;
 
-      if (positions.showAbsProfits) {
-         //           Type:  Lots  BE:  BePrice  Profit:  Abs    Comment
-         // offsets = {9,    46,   83,  28,      68,      39,    71};
-         offsets[commentCol] += 10;                                                 // shift Comment column a little
-      }
       if (positions.showMfae) {
          //           Type:  Lots  BE:  BePrice  Profit:  Pct    MFE/MAE   Comment
-         // offsets = {9,    46,   83,  28,      68,      39,    ...,      90};
+         // offsets = {9,    46,   83,  28,      68,      39,    61,       90};
          ArrayPushInt(offsets, 90);                                                 // add column for MFE/MAE
          commentCol++;
          if (positions.showAbsProfits) {
-            offsets[commentCol] += 20;                                              // shift Comment column a little more
+            offsets[commentCol] += 30;                                              // shift Comment column a little
          }
       }
       ArrayResize(xOffset, 0);
