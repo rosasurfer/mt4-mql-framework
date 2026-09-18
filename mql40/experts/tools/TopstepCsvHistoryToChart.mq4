@@ -20,7 +20,6 @@
  *
  *
  * TODO:
- *  - log the symbol used for mapping
  *  - show PnL in close marker
  *  - cache the parsed data over init cycles and convert to indicator
  */
@@ -196,8 +195,9 @@ bool ParseLines(string lines[]) {
    #define I_TRADE_DURATION   11    // TradeDuration (skipped)
    #define I_COMMISSION       12    // Commissions (absolute value)
 
+   string mappedSymbol = ifString(StringLen(CsvSymbol), CsvSymbol, Symbol());
    string line, cols[], sTicket, symbol, sType, sLots, sOpenTime, sCloseTime, sOpenPrice, sClosePrice, sProfit, sCommission, sFee;
-   int records, foundCols, ticket, type, lots;
+   int allRecords, foundCols, ticket, type, lots;
    datetime openTime, closeTime;
    double openPrice, closePrice, profit, commission, fee, totalCost, netProfit;
 
@@ -286,10 +286,10 @@ bool ParseLines(string lines[]) {
 
       totalCost = NormalizeDouble(commission + fee, 2);
       netProfit = NormalizeDouble(profit + totalCost, 2);
-      records++;
+      allRecords++;
 
       // add history record if the row belongs to the mapped symbol
-      if (symbol == CsvSymbol) {
+      if (StrCompareI(symbol, mappedSymbol)) {
          if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCost, profit, netProfit, 0, 0, 0, 0, 0, 0) == EMPTY) {
             return(!catch("ParseLines(21)  invalid file format in line "+ (i+1) +": "+ DoubleQuoteStr(line), ERR_INVALID_FILE_FORMAT));
          }
@@ -297,7 +297,7 @@ bool ParseLines(string lines[]) {
    }
 
    int size = ArrayRange(history, 0);
-   logInfo("ParseLines(22)  "+ records +" history record"+ Pluralize(records) +" parsed, "+ size +" record"+ Pluralize(size) +" mapped to chart symbol");
+   logInfo("ParseLines(22)  found "+ size +" record"+ Pluralize(size) +" (out of "+ allRecords +") for "+ ifString(StringLen(CsvSymbol), "the specified", "chart") +" symbol \""+ mappedSymbol +"\"");
    return(true);
 }
 
@@ -483,9 +483,7 @@ bool ValidateInputs() {
 
    // CsvSymbol
    if (AutoConfiguration) CsvSymbol = GetConfigString(expert, "CsvSymbol", CsvSymbol);
-   string symbol = StrTrim(CsvSymbol);
-   if (symbol == "") symbol = Symbol();
-   CsvSymbol = StrToUpper(symbol);
+   CsvSymbol = StrTrim(CsvSymbol);
 
    return(!catch("ValidateInputs(3)"));
 }
