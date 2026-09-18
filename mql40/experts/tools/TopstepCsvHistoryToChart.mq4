@@ -20,9 +20,7 @@
  *
  *
  * TODO:
- *  - rename to "TopstepCsvHistoryToChart"
  *  - log the symbol used for mapping
- *  - if missing prepend ".csv" to filename
  *  - show PnL in close marker
  *  - cache the parsed data over init cycles and convert to indicator
  */
@@ -475,8 +473,12 @@ bool ValidateInputs() {
    if (StrStartsWith(fileName, "\"") && StrEndsWith(fileName, "\"")) {
       fileName = StrTrim(StrSubstr(fileName, 1, StringLen(fileName)-2));
    }
-   if (fileName == "")              return(!catch("ValidateInputs(1)  missing input parameter CsvFileName: \"\" (empty)", ERR_INVALID_PARAMETER));
-   if (!IsFile(fileName, MODE_MQL)) return(!catch("ValidateInputs(2)  invalid input parameter CsvFileName: \""+ fileName +"\" (file not found)", ERR_FILE_NOT_FOUND));
+   if (fileName == "")                          return(!catch("ValidateInputs(1)  missing input parameter CsvFileName: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (!IsFile(fileName, MODE_MQL)) {
+      if (StrEndsWithI(fileName, ".csv"))       return(!catch("ValidateInputs(2)  invalid input parameter CsvFileName: \""+ fileName +"\" (file not found)", ERR_FILE_NOT_FOUND));
+      if (!IsFile(fileName + ".csv", MODE_MQL)) return(!catch("ValidateInputs(3)  invalid input parameter CsvFileName: \""+ fileName +"\" (file not found)", ERR_FILE_NOT_FOUND));
+      fileName = fileName + ".csv";
+   }
    CsvFileName = fileName;
 
    // CsvSymbol
