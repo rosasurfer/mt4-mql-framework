@@ -743,7 +743,7 @@ bool StartTrading(double signal[]) {
    int      magicNumber = CalculateMagicNumber(instance.id);
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   int ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
+   int ticket = OrderSendEx(Symbol(), type, Lots, price, orderSlippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
@@ -824,7 +824,7 @@ bool ReversePosition(double signal[]) {
       }
 
       // close the existing position
-      if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+      if (!OrderCloseEx(open.ticket, NULL, orderSlippage, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
       double closePrice = NormalizeDouble(oe.ClosePrice(oe), Digits);
       open.slippageP    = NormalizeDouble(open.slippageP + oe.Slippage(oe), Digits);
@@ -850,7 +850,7 @@ bool ReversePosition(double signal[]) {
    int      magicNumber = CalculateMagicNumber(instance.id);
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
+   ticket = OrderSendEx(Symbol(), type, Lots, price, orderSlippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
@@ -935,7 +935,7 @@ bool StopTrading(double trigger[]) {
    if (instance.status == STATUS_TRADING) {
       if (open.ticket > 0) {
          int oe[];
-         if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
+         if (!OrderCloseEx(open.ticket, NULL, orderSlippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
 
          double closePrice = NormalizeDouble(oe.ClosePrice(oe), Digits), closePriceSig = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
          open.slippageP    = NormalizeDouble(open.slippageP + oe.Slippage(oe), Digits);

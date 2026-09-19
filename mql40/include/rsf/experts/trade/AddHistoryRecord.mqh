@@ -31,26 +31,32 @@
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
 int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double lots, double part, datetime openTime, double openPrice, double openPriceSig, double stopLoss, double takeProfit, datetime closeTime, double closePrice, double closePriceSig, double slippageP, double swapM, double commissionM, double grossProfitM, double netProfitM, double netProfitP, double runupP, double rundownP, double sigProfitP, double sigRunupP, double sigRundownP) {
+   bool isUintTicket = (TradeConfig & TRADE_TICKETS_UINT != 0);
    bool isPartial = NE(part, 1);
 
    if (isPartial) {
       // resolve the partialClose[] index to insert at
       int size = ArrayRange(partialClose, 0);
       for (int i=size-1; i >= 0; i--) {                        // iterate from the end (in most cases faster)
-         if (ticket == partialClose[i][H_TICKET]) return(_EMPTY(catch("AddHistoryRecord(1)  "+ instance.name +" cannot add record, ticket #"+ ticket +" already exists (partialClose["+ i +"])", ERR_INVALID_PARAMETER)));
+         if (ticket == partialClose[i][H_TICKET]) return(_EMPTY(catch("AddHistoryRecord(1)  "+ instance.name +" cannot add record, ticket #"+ TicketToStr(ticket) +" already exists (partialClose["+ i +"])", ERR_INVALID_PARAMETER)));
 
          if (openTime > partialClose[i][H_OPENTIME]) {
             i++;
             break;
          }
          if (openTime == partialClose[i][H_OPENTIME]) {        // same openTime, compare tickets
-            if (ticket > partialClose[i][H_TICKET]) i++;
+            if (isUintTicket) {
+               if (UintGT(ticket, partialClose[i][H_TICKET])) i++;
+            }
+            else {
+               if (ticket > partialClose[i][H_TICKET]) i++;
+            }
             break;
          }
       }
       if (i < 0) i = 0;
 
-      // 'i' now holds the index to insert at
+      // `i` now holds the index to insert at
       if (i == size) {
          ArrayResize(partialClose, size+1);                    // append an empty slot or...
       }
@@ -93,20 +99,25 @@ int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double 
       // resolve the history[] index to insert at
       size = ArrayRange(history, 0);
       for (i=size-1; i >= 0; i--) {                            // iterate from the end (faster in most cases)
-         if (ticket == history[i][H_TICKET]) return(_EMPTY(catch("AddHistoryRecord(2)  "+ instance.name +" cannot add record, ticket #"+ ticket +" already exists (history["+ i +"])", ERR_INVALID_PARAMETER)));
+         if (ticket == history[i][H_TICKET]) return(_EMPTY(catch("AddHistoryRecord(2)  "+ instance.name +" cannot add record, ticket #"+ TicketToStr(ticket) +" already exists (history["+ i +"])", ERR_INVALID_PARAMETER)));
 
          if (openTime > history[i][H_OPENTIME]) {
             i++;
             break;
          }
          if (openTime == history[i][H_OPENTIME]) {             // same openTime, compare tickets
-            if (ticket > history[i][H_TICKET]) i++;
+            if (isUintTicket) {
+               if (UintGT(ticket, history[i][H_TICKET])) i++;
+            }
+            else {
+               if (ticket > history[i][H_TICKET]) i++;
+            }
             break;
          }
       }
       if (i < 0) i = 0;
 
-      // 'i' now holds the index to insert at
+      // `i` now holds the index to insert at
       if (i == size) {
          ArrayResize(history, size+1);                         // append an empty slot or...
       }

@@ -1,8 +1,11 @@
 /**
  * Trade related constants and global vars.
  */
+#define TRADE_TICKETS_UINT   1         // order tickets are unsigned integers (changes string representation)
 
-int order.slippage = 1;                // in MQL points
+int TradeConfig = 0;                   // flags describing non-standard order/trade configurations
+
+int orderSlippage = 1;                 // in MQL points
 
 
 // open order data
@@ -29,17 +32,17 @@ double   open.sigProfitP;              // full points
 double   open.sigRunupP;               // full points: max signal runup distance
 double   open.sigRundownP;             // full points: max signal rundown distance
 
-// If open.* fields are modified the following files must be updated:
-//  ea/functions/status/file/ReadStatus.OpenPosition.mqh
-//  ea/functions/status/file/SaveStatus.OpenPosition.mqh
-//  ea/functions/trade/MovePositionToHistory.mqh
-//  ea/functions/trade/OpenPositionToStr.mqh
+// If open.* vars are modified, the following files must be updated, too:
+//  - /mql40/include/rsf/experts/status/file/ReadStatus.OpenPosition.mqh
+//  - /mql40/include/rsf/experts/status/file/SaveStatus.OpenPosition.mqh
+//  - /mql40/include/rsf/experts/trade/MovePositionToHistory.mqh
+//  - /mql40/include/rsf/experts/trade/OpenPositionToStr.mqh
 
 
-// partially closed trades: when all parts of a position are closed a single aggregated trade is added to history[]
+// partially closed positions: when all parts of a position are closed, a single aggregated trade is added to history[]
 double partialClose[][25];
 
-// fully closed trades
+// fully closed positions
 double history[][25];
 
 #define H_TICKET            0          // indexes of partialClose[] and history[]
@@ -68,8 +71,8 @@ double history[][25];
 #define H_SIG_RUNUP_P      23          // full points
 #define H_SIG_RUNDOWN_P    24          // full points
 
-// If fields of partialClose[] or history[] are modified the following files must be updated:
-//  ea/functions/status/file/ReadStatus.HistoryRecord.mqh
-//  ea/functions/trade/AddHistoryRecord.mqh + every usage of AddHistoryRecord() elsewhere
-//  ea/functions/trade/HistoryRecordToStr.mqh
-//  ea/functions/trade/MovePositionToHistory.mqh
+// If partialClose[] or history[] are modified, the following files must be updated, too:
+//  - /mql40/include/rsf/experts/status/file/ReadStatus.HistoryRecord.mqh
+//  - /mql40/include/rsf/experts/trade/AddHistoryRecord.mqh + calls of AddHistoryRecord() in the code
+//  - /mql40/include/rsf/experts/trade/HistoryRecordToStr.mqh
+//  - /mql40/include/rsf/experts/trade/MovePositionToHistory.mqh
