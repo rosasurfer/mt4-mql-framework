@@ -1,10 +1,6 @@
 /**
  * Trade related constants and global vars.
  */
-#define TRADE_TICKETS_UINT   1         // order tickets are unsigned integers (changes string representation)
-
-int TradeConfig = 0;                   // flags describing non-standard order/trade configurations
-
 int orderSlippage = 1;                 // in MQL points
 
 

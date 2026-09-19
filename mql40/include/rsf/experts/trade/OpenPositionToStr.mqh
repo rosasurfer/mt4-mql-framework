@@ -12,9 +12,9 @@ string OpenPositionToStr(bool compact = false) {
    string sValues[22], pUnitFormat="."+ pDigits +"+";
 
    if (compact) {
-      sValues[ 0] = open.ticket;
-      sValues[ 1] = open.fromTicket;
-      sValues[ 2] = open.toTicket;
+      sValues[ 0] = TicketToStr(open.ticket);
+      sValues[ 1] = TicketToStr(open.fromTicket);
+      sValues[ 2] = TicketToStr(open.toTicket);
       sValues[ 3] = open.type;
       sValues[ 4] = NumberToStr(open.lots, ".+");
       sValues[ 5] = NumberToStr(open.part, ".1+");
@@ -36,9 +36,9 @@ string OpenPositionToStr(bool compact = false) {
       sValues[21] = ifString(!open.sigRundownP,  "0", DoubleToStr(open.sigRundownP, Digits));
    }
    else {
-      sValues[ 0] = "ticket="       + open.ticket;
-      sValues[ 1] = "fromTicket="   + open.fromTicket;
-      sValues[ 2] = "toTicket="     + open.toTicket;
+      sValues[ 0] = "ticket="       + TicketToStr(open.ticket);
+      sValues[ 1] = "fromTicket="   + TicketToStr(open.fromTicket);
+      sValues[ 2] = "toTicket="     + TicketToStr(open.toTicket);
       sValues[ 3] = "type="         + OperationTypeDescription(open.type);
       sValues[ 4] = "lots="         + NumberToStr(open.lots, ".+");
       sValues[ 5] = "part="         + NumberToStr(open.part, ".1+");

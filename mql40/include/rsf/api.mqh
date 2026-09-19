@@ -206,6 +206,7 @@ bool     Tester.IsPaused();;
 bool     Tester.IsStopped();;
 int      Tester.Pause(string caller="");;
 int      Tester.Stop(string caller="");;
+string   TicketToStr(int ticket);;
 datetime TimeCurrentEx(string caller, bool useLastBar = false, bool strict = true);;
 int      TimeDayEx(datetime time);;
 int      TimeDayOfWeekEx(datetime time);;

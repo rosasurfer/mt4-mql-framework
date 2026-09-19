@@ -70,7 +70,7 @@ int onInit() {
    if (__isTesting)   return(catch("onInit(1)  you can't test me", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    // Topstep uses `unsigned int` for ticket ids
-   TradeConfig |= TRADE_TICKETS_UINT;
+   __OrderConfig |= ORDER_TICKETS_UINT;
 
    // enable routing of chart commands
    string label = "EA.status";

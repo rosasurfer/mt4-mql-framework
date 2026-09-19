@@ -46,6 +46,7 @@ int      ShiftedBars;                                             //            
 int      last_error;                                              // last error of the current start() call
 int      prev_error;                                              // last error of the previous start() call
 
+int      __OrderConfig;                                           // flags describing non-standard order/trade configurations
 int      __orderStack[];                                          // FIFO stack of selected orders (per MQL module)
 int      __virtualTicks;                                          // virtual ticks in milliseconds (default: none)
 int      __virtualTicksTimerId;                                   // timer id for virtual ticks
@@ -127,6 +128,10 @@ double  INF;                                                      //  1.#INF |  
 #define UR_TEMPLATE                 UNINITREASON_TEMPLATE         // 7
 #define UR_INITFAILED               UNINITREASON_INITFAILED       // 8
 #define UR_CLOSE                    UNINITREASON_CLOSE            // 9
+
+
+// configuration flags for the order/trade environment
+#define ORDER_TICKETS_UINT          1           // tickets ids are "unsigned int"
 
 
 // account types

@@ -31,7 +31,7 @@
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
 int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double lots, double part, datetime openTime, double openPrice, double openPriceSig, double stopLoss, double takeProfit, datetime closeTime, double closePrice, double closePriceSig, double slippageP, double swapM, double commissionM, double grossProfitM, double netProfitM, double netProfitP, double runupP, double rundownP, double sigProfitP, double sigRunupP, double sigRundownP) {
-   bool isUintTicket = (TradeConfig & TRADE_TICKETS_UINT != 0);
+   bool isUintTicket = (__OrderConfig & ORDER_TICKETS_UINT != 0);
    bool isPartial = NE(part, 1);
 
    if (isPartial) {

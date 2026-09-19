@@ -3985,6 +3985,31 @@ int MarketWatch.Symbols() {
 
 
 /**
+ * Return a string representation of a ticket id. Handles `signed int` and `unsigned int` values,
+ * according to the configuration.
+ *
+ * @param  int ticket - ticket
+ *
+ * @return string
+ */
+string TicketToStr(int ticket) {
+   string sTicket;
+
+   if (__OrderConfig & ORDER_TICKETS_UINT != 0) {
+      double dTicket = ticket;
+      if (ticket < 0) {
+         dTicket += 4294967296.0;      // 2^32
+      }
+      sTicket = DoubleToStr(dTicket, 0);
+   }
+   else {
+      sTicket = ticket;
+   }
+   return(sTicket);
+}
+
+
+/**
  * Extended version of TimeCurrent().
  *
  * Return the server time of the last tick of all subscribed symbols as a Unix timestamp (seconds since 01.01.1970 server time).
@@ -6828,6 +6853,7 @@ void __DummyCalls() {
    Tester.IsStopped();
    Tester.Pause();
    Tester.Stop();
+   TicketToStr(NULL);
    TimeCurrentEx(NULL);
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
@@ -6841,6 +6867,10 @@ void __DummyCalls() {
    TimeYearEx(NULL);
    Toolbar.Experts(NULL);
    TradeCommandToStr(NULL);
+   UintGE(NULL, NULL);
+   UintGT(NULL, NULL);
+   UintLE(NULL, NULL);
+   UintLT(NULL, NULL);
    UninitReasonDescription(NULL);
    UrlEncode(NULL);
    WaitForTicket(NULL);

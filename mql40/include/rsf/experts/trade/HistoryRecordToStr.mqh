@@ -7,7 +7,7 @@
  *
  * @return string - string representation or an empty string in case of errors
  */
-string HistoryRecordToStr(int index, bool partial=false, bool compact=true) {
+string HistoryRecordToStr(int index, bool partial = false, bool compact = true) {
    partial = partial!=0;
    compact = compact!=0;
    // result: ticket,fromTicket,toTicket,type,lots,part,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippageP,swapM,commissionM,grossProfitM,netProfitM,netProfitP,runupP,rundownP,sigProfitP,sigRunupP,sigRundownP
@@ -69,9 +69,9 @@ string HistoryRecordToStr(int index, bool partial=false, bool compact=true) {
       sigRundownP   = history[index][H_SIG_RUNDOWN_P ];
    }
 
-   string sTicket        = ticket;
-   string sFromTicket    = fromTicket;
-   string sToTicket      = toTicket;
+   string sTicket        = TicketToStr(ticket);
+   string sFromTicket    = TicketToStr(fromTicket);
+   string sToTicket      = TicketToStr(toTicket);
    string sType          = type;
    string sLots          = NumberToStr(lots, ".+");
    string sPart          = NumberToStr(part, ".+");
