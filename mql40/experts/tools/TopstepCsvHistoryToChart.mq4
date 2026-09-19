@@ -69,6 +69,9 @@ int onInit() {
    if (IsLastError()) return(last_error);
    if (__isTesting)   return(catch("onInit(1)  you can't test me", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
+   // Topstep uses `unsigned int` for ticket ids
+   TradeConfig |= TRADE_TICKETS_UINT;
+
    // enable routing of chart commands
    string label = "EA.status";
    if (ObjectFind(label) != 0) {
@@ -176,6 +179,10 @@ bool ReadFile(string fileName, string &lines[]) {
 bool ParseLines(string lines[]) {
    int sizeLines = ArraySize(lines);
    if (!sizeLines) return(!catch("ParseLines(1)  invalid parameter lines[]: empty", ERR_INVALID_FILE_FORMAT));
+
+   // reset existing history
+   ArrayResize(partialClose, 0);
+   ArrayResize(history, 0);
 
    // define file format
    string csvHeader = "Id,ContractName,EnteredAt,ExitedAt,EntryPrice,ExitPrice,Fees,PnL,Size,Type,TradeDay,TradeDuration,Commissions";
@@ -302,7 +309,7 @@ bool ParseLines(string lines[]) {
    if (!dataLines) return(!catch("ParseLines(22)  invalid file format: Topstep CSV header not found", ERR_INVALID_FILE_FORMAT));
 
    int size = ArrayRange(history, 0);
-   logInfo("ParseLines(23)  found "+ size +" record"+ Pluralize(size) +" (out of "+ allRecords +") for "+ ifString(StringLen(CsvSymbol), "the specified", "chart") +" symbol \""+ mappedSymbol +"\"");
+   logInfo("ParseLines(23)  found "+ size +" record"+ Pluralize(size) +" (out of "+ allRecords +") for "+ ifString(StringLen(CsvSymbol), "", "chart ") +"symbol \""+ mappedSymbol +"\"");
    return(true);
 }
 
