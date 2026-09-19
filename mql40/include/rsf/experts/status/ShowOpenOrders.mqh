@@ -17,7 +17,7 @@ int ShowOpenOrders(bool show) {
 
       if (open.ticket != NULL) {
          double openPrice = ifDouble(status.activeMetric == METRIC_SIG_UNITS, open.priceSig, open.price);
-         string label = StringConcatenate("#", open.ticket, " ", types[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
+         string label = StringConcatenate("#", TicketToStr(open.ticket), " ", types[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
 
          if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);

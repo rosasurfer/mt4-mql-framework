@@ -302,7 +302,7 @@ bool ParseLines(string lines[]) {
       // add history record if the row belongs to the mapped symbol
       if (StrCompareI(symbol, mappedSymbol)) {
          if (AddHistoryRecord(ticket, NULL, NULL, type, lots, 1, openTime, openPrice, 0, 0, 0, closeTime, closePrice, 0, 0, 0, totalCost, profit, netProfit, 0, 0, 0, 0, 0, 0) == EMPTY) {
-            return(!catch("ParseLines(21)  invalid file format in line "+ (i+1) +": "+ DoubleQuoteStr(line), ERR_INVALID_FILE_FORMAT));
+            return(!catch("ParseLines(21)  invalid data in line "+ (i+1) +": "+ DoubleQuoteStr(line), ERR_INVALID_FILE_FORMAT));
          }
       }
    }

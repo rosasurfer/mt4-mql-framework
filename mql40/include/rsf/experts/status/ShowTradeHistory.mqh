@@ -54,7 +54,7 @@ int ShowTradeHistory(bool show) {
 int _ShowTradeHistory(double array[][]) {
    int trades = 0;
 
-   string openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
+   string sTicket="", openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
    int iOpenColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, iLineColors[]={Blue, Red};
 
    // process array[]
@@ -78,11 +78,12 @@ int _ShowTradeHistory(double array[][]) {
          openPrice  = array[i][H_OPENPRICE_SIG ];
          closePrice = array[i][H_CLOSEPRICE_SIG];
       }
+      sTicket     = TicketToStr(ticket);
       sOpenPrice  = NumberToStr(openPrice, PriceFormat);
       sClosePrice = NumberToStr(closePrice, PriceFormat);
 
       // open marker
-      openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
+      openLabel = StringConcatenate("#", sTicket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
       if (part == 1) {                                   // history[]
          if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
@@ -96,7 +97,7 @@ int _ShowTradeHistory(double array[][]) {
       //else partialClose[]: no open marker
 
       // trend line
-      lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+      lineLabel = StringConcatenate("#", sTicket, " ", sOpenPrice, " -> ", sClosePrice);
       if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
       ObjectSet(lineLabel, OBJPROP_RAY,    false);
       ObjectSet(lineLabel, OBJPROP_STYLE,  STYLE_DOT);

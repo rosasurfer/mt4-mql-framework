@@ -433,7 +433,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
    int      i, orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
    double   lots, units, openPrice, takeProfit, stopLoss;
-   string   comment="", label1="", label2="", label3="", sTP="", sSL="", orderTypes[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
+   string   comment="", label1="", label2="", label3="", sTicket="", sTP="", sSL="", orderTypes[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
    int      customTicketsSize = ArraySize(customTickets);
    static int displayedOrders = 0;
 
@@ -467,10 +467,11 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          takeProfit = OrderTakeProfit();
          stopLoss   = OrderStopLoss();
          comment    = OrderMarkerText(type, OrderMagicNumber(), OrderComment());
+         sTicket    = TicketToStr(ticket);
 
          if (type > OP_SELL) {
             // a pending order
-            label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
+            label1 = StringConcatenate("#", sTicket, " ", orderTypes[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
             // create pending order marker
             if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
@@ -482,7 +483,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          }
          else {
             // an open position
-            label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
+            label1 = StringConcatenate("#", sTicket, " ", orderTypes[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
             // create TakeProfit marker
             if (takeProfit != NULL) {
@@ -567,10 +568,11 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
       takeProfit =                     los.TakeProfitPrice(lfxOrders, i);
       stopLoss   =                     los.StopLossPrice  (lfxOrders, i);
       comment    =                     los.Comment        (lfxOrders, i);
+      sTicket    = TicketToStr(ticket);
 
       if (type > OP_SELL) {
          // Pending-Order
-         label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
+         label1 = StringConcatenate("#", sTicket, " ", orderTypes[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
 
          // Order anzeigen
          if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
@@ -581,7 +583,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
       }
       else {
          // offene Position
-         label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
+         label1 = StringConcatenate("#", sTicket, " ", orderTypes[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
 
          // TakeProfit anzeigen                                   // TODO: !!! TP fixen, wenn tpValue oder tpPercent angegeben sind
          if (takeProfit != NULL) {
@@ -772,7 +774,7 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
    int      i, n, orders, ticket, type, markerColors[] = {CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[] = {Blue, Red};
    datetime openTime, closeTime;
    double   lots, units, openPrice, closePrice, openEquity, profit;
-   string   sOpenPrice="", sClosePrice="", textOpen="", textClose="", openLabel="", lineLabel="", closeLabel="", sTypes[]={"buy", "sell"};
+   string   sTicket="", sOpenPrice="", sClosePrice="", textOpen="", textClose="", openLabel="", lineLabel="", closeLabel="", sTypes[]={"buy", "sell"};
    int      customTicketsSize = ArraySize(customTickets);
    static int returnValue = 0;
 
