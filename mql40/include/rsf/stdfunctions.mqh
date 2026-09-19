@@ -1546,6 +1546,70 @@ bool LE(double double1, double double2, int digits = 8) {
 
 
 /**
+ * Comparison of two "unsigned int" values for "Greater-Than".
+ *
+ * @param  int a - first value
+ * @param  int b - second value
+ *
+ * @return bool
+ */
+bool UintGT(int a, int b) {
+   if ((a < 0) != (b < 0)) {
+      return(a < 0);
+   }
+   return(a > b);
+}
+
+
+/**
+ * Comparison of two "unsigned int" values for "Greater-Or-Equal".
+ *
+ * @param  int a - first value
+ * @param  int b - second value
+ *
+ * @return bool
+ */
+bool UintGE(int a, int b) {
+   if (a == b) {
+      return(true);
+   }
+   return(UintGT(a, b));
+}
+
+
+/**
+ * Comparison of two "unsigned int" values for "Lower-Than".
+ *
+ * @param  int a - first value
+ * @param  int b - second value
+ *
+ * @return bool
+ */
+bool UintLT(int a, int b) {
+   if ((a < 0) != (b < 0)) {
+      return(a > 0);
+   }
+   return(a < b);
+}
+
+
+/**
+ * Comparison of two "unsigned int" values for "Lower-Or-Equal".
+ *
+ * @param  int a - first value
+ * @param  int b - second value
+ *
+ * @return bool
+ */
+bool UintLE(int a, int b) {
+   if (a == b) {
+      return(true);
+   }
+   return(UintLT(a, b));
+}
+
+
+/**
  * Helper function returning always TRUE. All parameters are ignored
  *
  * @param  (ignored)
