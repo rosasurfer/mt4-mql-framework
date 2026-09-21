@@ -524,7 +524,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
 
       if (!displayedOrders) /*&&*/ if (StrEndsWith(Symbol(), ".db")) {
          string fileName = GetTerminalConfigPathA();
-         string section = "Turtle Balance Reversals "+ Symbol(), keys[], key, value;
+         string section = "Turtle Balance Reversals "+ StrLeft(Symbol(), -3), keys[], key, value;
          int size = GetIniKeys(fileName, section, keys), bar;
 
          for (i=0; i < size; i++) {
@@ -534,10 +534,10 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (StrIsInteger(value)) value = Abs(StrToInteger(value));
             openTime = StrToTime(key);
             bar = iBarShiftNext(NULL, NULL, openTime);
-            openPrice = (High[bar] + Low[bar])/2;
+            openPrice = Low[bar] + (High[bar]-Low[bar])/2;           // PRICE_MEDIAN, valid for M1 only
 
             // create open position marker
-            label1 = StringConcatenate("#", (i+1), ": "+ value +" negative Donchian reversals");
+            label1 = StringConcatenate("#", i+1, ": ", value, " negative Donchian reversals from ", NumberToStr(openPrice, PriceFormat));
             if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
             ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
             ObjectSet(label1, OBJPROP_COLOR,     colors[OP_SELL]);
