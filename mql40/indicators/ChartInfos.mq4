@@ -534,7 +534,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (StrIsInteger(value)) value = Abs(StrToInteger(value));
             openTime = StrToTime(key);
             bar = iBarShiftNext(NULL, NULL, openTime);
-            openPrice = (High[bar] + Low[bar])/2;
+            openPrice = Low[bar];                           // use bar low as a safe choice
 
             // create open position marker
             label1 = StringConcatenate("#", (i+1), ": "+ value +" negative Donchian reversals");
