@@ -1,10 +1,10 @@
 /**
  * Inside Bars
  *
- * Marks inside bars and corresponding projection levels.
+ * Marks inside bars and 100% extension levels.
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE};
+int   __InitFlags[] = { INIT_TIMEZONE };
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ extern string Signal.SoundFile               = "Inside Bar.wav";
 #define CLOSE     4
 #define VOLUME    5
 
-int    timeframeIB;                             // IB timeframe to process
+int    insideBarTF;                             // IB timeframe to process
 int    maxInsideBars;
 string labels[];                                // chart object labels
 
@@ -59,9 +59,9 @@ int onInit() {
    // Timeframe
    string sValue = Timeframe;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Timeframe", sValue);
-   timeframeIB = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-   if (timeframeIB == -1) return(catch("onInit(1)  invalid input parameter Timeframe: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
-   Timeframe = TimeframeDescription(timeframeIB);
+   insideBarTF = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
+   if (insideBarTF == -1) return(catch("onInit(1)  invalid input parameter Timeframe: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   Timeframe = TimeframeDescription(insideBarTF);
    // NumberOfInsideBars
    int iValue = NumberOfInsideBars;
    if (AutoConfiguration) iValue = GetConfigInt(indicator, "NumberOfInsideBars", iValue);
@@ -99,22 +99,20 @@ int onInit() {
  */
 int onTick() {
    double rates[][6];
-   int changedBars;
+   int ratesTF, changedBars;
 
-   if (timeframeIB == PERIOD_M1) {
-      if (!CopyRates(rates, changedBars, PERIOD_M1)) return(last_error);
-   }
-   else {
-      if (!CopyRates(rates, changedBars, PERIOD_M5)) return(last_error);
-   }
+   if (insideBarTF == PERIOD_M1) ratesTF = PERIOD_M1;
+   else                          ratesTF = PERIOD_M5;
+
+   if (!CopyRates(ratesTF, rates, changedBars)) return(last_error);
 
    if (!ValidBars) {                         // if the chart changed rates must be marked as changed accordingly
       changedBars = ArrayRange(rates, 0);    // TODO: find rates offset of the actual change and modify 'changedBars'
    }
 
-   switch (timeframeIB) {
+   switch (insideBarTF) {
       case PERIOD_M1 :
-      case PERIOD_M5 : CheckInsideBars   (rates, changedBars, timeframeIB); break;
+      case PERIOD_M5 : CheckInsideBars   (rates, changedBars, insideBarTF); break;
       case PERIOD_M15: CheckInsideBarsM15(rates, changedBars);              break;
       case PERIOD_M30: CheckInsideBarsM30(rates, changedBars);              break;
       case PERIOD_H1 : CheckInsideBarsH1 (rates, changedBars);              break;
@@ -128,16 +126,16 @@ int onTick() {
 
 
 /**
- * Copy the rates of the specified timeframe to the target array and resolve the number of changed bars since the last tick.
+ * Copy the rates of the specified timeframe to the passed array and resolve the number of changed bars since the last tick.
  *
- * @param  _Out_ double target[][]  - array receiving the rates
- * @param  _Out_ int    changedBars - variable receiving the number of changed bars
  * @param  _In_  int    timeframe   - rates timeframe
+ * @param  _Out_ double rates[][]   - array receiving the rates
+ * @param  _Out_ int    changedBars - variable receiving the number of changed bars
  *
  * @return bool - success status
  */
-bool CopyRates(double &target[][], int &changedBars, int timeframe) {
-   int changed = iCopyRates(target, NULL, timeframe);
+bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
+   int changed = iCopyRates(rates, NULL, timeframe);
    if (changed < 0) return(false);
    changedBars = changed;
    return(true);
@@ -145,11 +143,11 @@ bool CopyRates(double &target[][], int &changedBars, int timeframe) {
 
 
 /**
- * Check the specified rates array for new or changed inside bars.
+ * Check the passed rates[] for new or changed inside bars.
  *
  * @param  double rates[][]   - rates array
- * @param  int    changedBars - number of changed bars in rates array
- * @param  int    timeframe   - rates timeframe
+ * @param  int    changedBars - number of changed bars in rates[]
+ * @param  int    timeframe   - inside bar timeframe
  *
  * @return bool - success status
  */
@@ -756,11 +754,12 @@ string CreateStatusLabel() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframe=",                DoubleQuoteStr(Timeframe),                ";", NL,
-                            "NumberOfInsideBars=",       NumberOfInsideBars,                       ";", NL,
+   return(StringConcatenate(
+      "Timeframe=",                DoubleQuoteStr(Timeframe),                ";", NL,
+      "NumberOfInsideBars=",       NumberOfInsideBars,                       ";", NL,
 
-                            "Signal.onInsideBar=",       BoolToStr(Signal.onInsideBar),            ";", NL,
-                            "Signal.onInsideBar.Types=", DoubleQuoteStr(Signal.onInsideBar.Types), ";", NL,
-                            "Signal.SoundFile=",         DoubleQuoteStr(Signal.SoundFile),         ";")
-   );
+      "Signal.onInsideBar=",       BoolToStr(Signal.onInsideBar),            ";", NL,
+      "Signal.onInsideBar.Types=", DoubleQuoteStr(Signal.onInsideBar.Types), ";", NL,
+      "Signal.SoundFile=",         DoubleQuoteStr(Signal.SoundFile),         ";"
+   ));
 }
