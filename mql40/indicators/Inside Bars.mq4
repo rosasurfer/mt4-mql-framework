@@ -30,13 +30,6 @@ extern string Signal.SoundFile               = "Inside Bar.wav";
 
 #property indicator_chart_window
 
-#define TIME      0                             // rates array indexes
-#define OPEN      1
-#define LOW       2
-#define HIGH      3
-#define CLOSE     4
-#define VOLUME    5
-
 int    insideBarTF;                             // IB timeframe to process
 int    maxInsideBars;
 string labels[];                                // chart object labels
@@ -168,8 +161,8 @@ bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
    }
 
    for (int i=2; i < bars; i++) {
-      if (rates[i][HIGH] >= rates[i-1][HIGH] && rates[i][LOW] <= rates[i-1][LOW]) {
-         CreateInsideBar(timeframe, rates[i-1][TIME], rates[i-1][HIGH], rates[i-1][LOW]);
+      if (rates[i][BAR400_HIGH] >= rates[i-1][BAR400_HIGH] && rates[i][BAR400_LOW] <= rates[i-1][BAR400_LOW]) {
+         CreateInsideBar(timeframe, rates[i-1][BAR400_TIME], rates[i-1][BAR400_HIGH], rates[i-1][BAR400_LOW]);
          more--;
          if (!more) break;
       }
@@ -205,12 +198,12 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBars) {
    double high, pHigh, low, pLow;
 
    for (int i, m15=-1; i < bars; i++) {                           // m15: M15 bar index
-      openTimeM5  = ratesM5[i][TIME];
+      openTimeM5  = ratesM5[i][BAR400_TIME];
       openTimeM15 = openTimeM5 - (openTimeM5 % (15*MINUTES));     // opentime of the corresponding M15 bar
 
       if (openTimeM15 == pOpenTimeM15) {                          // the current M5 bar belongs to the same M30 bar
-         high = MathMax(ratesM5[i][HIGH], high);
-         low  = MathMin(ratesM5[i][LOW], low);
+         high = MathMax(ratesM5[i][BAR400_HIGH], high);
+         low  = MathMin(ratesM5[i][BAR400_LOW], low);
       }
       else {
          if (m15 > 1 && high >= pHigh && low <= pLow) {
@@ -223,8 +216,8 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBars) {
          pOpenTimeM15  = openTimeM15;
          pHigh         = high;
          pLow          = low;
-         high          = ratesM5[i][HIGH];
-         low           = ratesM5[i][LOW];
+         high          = ratesM5[i][BAR400_HIGH];
+         low           = ratesM5[i][BAR400_LOW];
       }
    }
    return(true);
@@ -258,12 +251,12 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBars) {
    double high, pHigh, low, pLow;
 
    for (int i, m30=-1; i < bars; i++) {                           // m30: M30 bar index
-      openTimeM5  = ratesM5[i][TIME];
-      openTimeM30 = openTimeM5 - (openTimeM5 % (30*MINUTES));     // opentime of the corresponding M30 bar
+      openTimeM5  = ratesM5[i][BAR400_TIME];
+      openTimeM30 = openTimeM5 - openTimeM5 % (30 * MINUTES);     // opentime of the corresponding M30 bar
 
       if (openTimeM30 == pOpenTimeM30) {                          // the current M5 bar belongs to the same M30 bar
-         high = MathMax(ratesM5[i][HIGH], high);
-         low  = MathMin(ratesM5[i][LOW], low);
+         high = MathMax(ratesM5[i][BAR400_HIGH], high);
+         low  = MathMin(ratesM5[i][BAR400_LOW ], low);
       }
       else {
          if (m30 > 1 && high >= pHigh && low <= pLow) {
@@ -276,8 +269,8 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBars) {
          pOpenTimeM30  = openTimeM30;
          pHigh         = high;
          pLow          = low;
-         high          = ratesM5[i][HIGH];
-         low           = ratesM5[i][LOW];
+         high          = ratesM5[i][BAR400_HIGH];
+         low           = ratesM5[i][BAR400_LOW];
       }
    }
    return(true);
@@ -311,12 +304,12 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBars) {
    double high, pHigh, low, pLow;
 
    for (int i, h1=-1; i < bars; i++) {                            // h1: H1 bar index
-      openTimeM5 = ratesM5[i][TIME];
+      openTimeM5 = ratesM5[i][BAR400_TIME];
       openTimeH1 = openTimeM5 - (openTimeM5 % HOUR);              // opentime of the corresponding H1 bar
 
       if (openTimeH1 == pOpenTimeH1) {                            // the current M5 bar belongs to the same H1 bar
-         high = MathMax(ratesM5[i][HIGH], high);
-         low  = MathMin(ratesM5[i][LOW], low);
+         high = MathMax(ratesM5[i][BAR400_HIGH], high);
+         low  = MathMin(ratesM5[i][BAR400_LOW ], low);
       }
       else {
          if (h1 > 1 && high >= pHigh && low <= pLow) {
@@ -329,8 +322,8 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBars) {
          pOpenTimeH1  = openTimeH1;
          pHigh        = high;
          pLow         = low;
-         high         = ratesM5[i][HIGH];
-         low          = ratesM5[i][LOW];
+         high         = ratesM5[i][BAR400_HIGH];
+         low          = ratesM5[i][BAR400_LOW];
       }
    }
    return(true);
@@ -364,12 +357,12 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBars) {
    double high, pHigh, low, pLow;
 
    for (int i, h4=-1; i < bars; i++) {                            // h4: H4 bar index
-      openTimeM5 = ratesM5[i][TIME];
-      openTimeH4 = openTimeM5 - (openTimeM5 % (4*HOURS));         // opentime of the corresponding H4 bar
+      openTimeM5 = ratesM5[i][BAR400_TIME];
+      openTimeH4 = openTimeM5 - openTimeM5 % (4 * HOURS);         // opentime of the corresponding H4 bar
 
       if (openTimeH4 == pOpenTimeH4) {                            // the current H1 bar belongs to the same H4 bar
-         high = MathMax(ratesM5[i][HIGH], high);
-         low  = MathMin(ratesM5[i][LOW], low);
+         high = MathMax(ratesM5[i][BAR400_HIGH], high);
+         low  = MathMin(ratesM5[i][BAR400_LOW ], low);
       }
       else {                                                      // the current H1 bar belongs to a new H4 bar
          if (h4 > 1 && high >= pHigh && low <= pLow) {
@@ -382,8 +375,8 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBars) {
          pOpenTimeH4  = openTimeH4;
          pHigh        = high;
          pLow         = low;
-         high         = ratesM5[i][HIGH];
-         low          = ratesM5[i][LOW];
+         high         = ratesM5[i][BAR400_HIGH];
+         low          = ratesM5[i][BAR400_LOW];
       }
    }
    return(true);
@@ -417,12 +410,12 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBars) {
    double high, pHigh, low, pLow;
 
    for (int i, d1=-1; i < bars; i++) {                            // d1: D1 bar index
-      openTimeM5 = ratesM5[i][TIME];
-      openTimeD1 = openTimeM5 - (openTimeM5 % DAY);               // opentime of the corresponding D1 bar (Midnight)
+      openTimeM5 = ratesM5[i][BAR400_TIME];
+      openTimeD1 = openTimeM5 - openTimeM5 % DAY;                 // opentime of the corresponding D1 bar (Midnight)
 
       if (openTimeD1 == pOpenTimeD1) {                            // the current H1 bar belongs to the same D1 bar
-         high = MathMax(ratesM5[i][HIGH], high);
-         low  = MathMin(ratesM5[i][LOW], low);
+         high = MathMax(ratesM5[i][BAR400_HIGH], high);
+         low  = MathMin(ratesM5[i][BAR400_LOW ], low);
       }
       else {                                                      // the current H1 bar belongs to a new D1 bar
          if (d1 > 1 && high >= pHigh && low <= pLow) {
@@ -435,8 +428,8 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBars) {
          pOpenTimeD1  = openTimeD1;
          pHigh        = high;
          pLow         = low;
-         high         = ratesM5[i][HIGH];
-         low          = ratesM5[i][LOW];
+         high         = ratesM5[i][BAR400_HIGH];
+         low          = ratesM5[i][BAR400_LOW];
       }
    }
    return(true);
@@ -470,14 +463,14 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
    double high, pHigh, low, pLow;
 
    for (int i, w1=-1; i < bars; i++) {                            // w1: W1 bar index
-      openTimeM5 = ratesM5[i][TIME];
-      openTimeD1 = openTimeM5 - (openTimeM5 % DAY);               // opentime of the corresponding D1 bar (Midnight)
+      openTimeM5 = ratesM5[i][BAR400_TIME];
+      openTimeD1 = openTimeM5 - openTimeM5 % DAY;                 // opentime of the corresponding D1 bar (Midnight)
       int dow    = TimeDayOfWeek(openTimeD1);
       openTimeW1 = openTimeD1 - ((dow+6) % 7) * DAYS;             // opentime of the corresponding W1 bar (Monday 00:00)
 
       if (openTimeW1 == pOpenTimeW1) {                            // the current H1 bar belongs to the same W1 bar
-         high = MathMax(ratesM5[i][HIGH], high);
-         low  = MathMin(ratesM5[i][LOW], low);
+         high = MathMax(ratesM5[i][BAR400_HIGH], high);
+         low  = MathMin(ratesM5[i][BAR400_LOW ], low);
       }
       else {                                                      // the current H1 bar belongs to a new W1 bar
          if (w1 > 1 && high >= pHigh && low <= pLow) {
@@ -490,8 +483,8 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
          pOpenTimeW1  = openTimeW1;
          pHigh        = high;
          pLow         = low;
-         high         = ratesM5[i][HIGH];
-         low          = ratesM5[i][LOW];
+         high         = ratesM5[i][BAR400_HIGH];
+         low          = ratesM5[i][BAR400_LOW];
       }
    }
    return(true);
@@ -525,13 +518,13 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBars) {
    double high, pHigh, low, pLow;
 
    for (int i, mn1=-1; i < bars; i++) {                           // mn1: MN1 bar index
-      openTimeM5 = ratesM5[i][TIME];
-      openTimeD1 = openTimeM5 - (openTimeM5 % DAY);               // opentime of the corresponding D1 bar (Midnight)
+      openTimeM5 = ratesM5[i][BAR400_TIME];
+      openTimeD1 = openTimeM5 - openTimeM5 % DAY;                 // opentime of the corresponding D1 bar (Midnight)
       openTimeMN1 = openTimeD1 - (TimeDay(openTimeD1)-1) * DAYS;  // opentime of the corresponding MN1 bar (1st of month 00:00)
 
       if (openTimeMN1 == pOpenTimeMN1) {                          // the current H1 bar belongs to the same MN1 bar
-         high = MathMax(ratesM5[i][HIGH], high);
-         low  = MathMin(ratesM5[i][LOW], low);
+         high = MathMax(ratesM5[i][BAR400_HIGH], high);
+         low  = MathMin(ratesM5[i][BAR400_LOW ], low);
       }
       else {                                                      // the current H1 bar belongs to a new MN1 bar
          if (mn1 > 1 && high >= pHigh && low <= pLow) {
@@ -544,8 +537,8 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBars) {
          pOpenTimeMN1  = openTimeMN1;
          pHigh         = high;
          pLow          = low;
-         high          = ratesM5[i][HIGH];
-         low           = ratesM5[i][LOW];
+         high          = ratesM5[i][BAR400_HIGH];
+         low           = ratesM5[i][BAR400_LOW];
       }
    }
    return(true);
@@ -568,7 +561,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    if (chartOffset < 0) return(true);                          // no chart data yet available: skip the inside bar, it will be drawn after chart bars arrived
    chartOpenTime = Time[chartOffset];
 
-   datetime closeTime = openTime + timeframe*MINUTES;
+   datetime closeTime = openTime + timeframe * MINUTES;
    if (timeframe == PERIOD_MN1) {
       closeTime = openTime + 28 * DAYS;
       while (TimeMonth(openTime) == TimeMonth(closeTime)) {

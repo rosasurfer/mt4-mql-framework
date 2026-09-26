@@ -11,48 +11,38 @@
  *   double close;            8        double[4]
  *   double volume;           8        double[5]      // immer Ganzzahl
  * };                      = 48 byte = double[6]
- *
- *
- * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
-#define BAR.time        0
-#define BAR.open        1
-#define BAR.low         2
-#define BAR.high        3
-#define BAR.close       4
-#define BAR.volume      5
-
 
 // Getter
-datetime bar.Time      (/*BAR*/double bar[]         ) { return(bar[BAR.time  ]);                                       BAR.toStr(bar); }
-double   bar.Open      (/*BAR*/double bar[]         ) { return(bar[BAR.open  ]);                                       BAR.toStr(bar); }
-double   bar.Low       (/*BAR*/double bar[]         ) { return(bar[BAR.low   ]);                                       BAR.toStr(bar); }
-double   bar.High      (/*BAR*/double bar[]         ) { return(bar[BAR.high  ]);                                       BAR.toStr(bar); }
-double   bar.Close     (/*BAR*/double bar[]         ) { return(bar[BAR.close ]);                                       BAR.toStr(bar); }
-int      bar.Volume    (/*BAR*/double bar[]         ) { return(bar[BAR.volume]);                                       BAR.toStr(bar); }
+datetime bar.Time      (/*BAR*/double bar[]         ) { return(bar[BAR400_TIME  ]);                                       BAR.toStr(bar); }
+double   bar.Open      (/*BAR*/double bar[]         ) { return(bar[BAR400_OPEN  ]);                                       BAR.toStr(bar); }
+double   bar.Low       (/*BAR*/double bar[]         ) { return(bar[BAR400_LOW   ]);                                       BAR.toStr(bar); }
+double   bar.High      (/*BAR*/double bar[]         ) { return(bar[BAR400_HIGH  ]);                                       BAR.toStr(bar); }
+double   bar.Close     (/*BAR*/double bar[]         ) { return(bar[BAR400_CLOSE ]);                                       BAR.toStr(bar); }
+int      bar.Volume    (/*BAR*/double bar[]         ) { return(bar[BAR400_VOLUME]);                                       BAR.toStr(bar); }
 
-datetime bars.Time     (/*BAR*/double bar[][], int i) { return(bar[i][BAR.time  ]);                                    BAR.toStr(bar); }
-double   bars.Open     (/*BAR*/double bar[][], int i) { return(bar[i][BAR.open  ]);                                    BAR.toStr(bar); }
-double   bars.Low      (/*BAR*/double bar[][], int i) { return(bar[i][BAR.low   ]);                                    BAR.toStr(bar); }
-double   bars.High     (/*BAR*/double bar[][], int i) { return(bar[i][BAR.high  ]);                                    BAR.toStr(bar); }
-double   bars.Close    (/*BAR*/double bar[][], int i) { return(bar[i][BAR.close ]);                                    BAR.toStr(bar); }
-int      bars.Volume   (/*BAR*/double bar[][], int i) { return(bar[i][BAR.volume]);                                    BAR.toStr(bar); }
+datetime bars.Time     (/*BAR*/double bar[][], int i) { return(bar[i][BAR400_TIME  ]);                                    BAR.toStr(bar); }
+double   bars.Open     (/*BAR*/double bar[][], int i) { return(bar[i][BAR400_OPEN  ]);                                    BAR.toStr(bar); }
+double   bars.Low      (/*BAR*/double bar[][], int i) { return(bar[i][BAR400_LOW   ]);                                    BAR.toStr(bar); }
+double   bars.High     (/*BAR*/double bar[][], int i) { return(bar[i][BAR400_HIGH  ]);                                    BAR.toStr(bar); }
+double   bars.Close    (/*BAR*/double bar[][], int i) { return(bar[i][BAR400_CLOSE ]);                                    BAR.toStr(bar); }
+int      bars.Volume   (/*BAR*/double bar[][], int i) { return(bar[i][BAR400_VOLUME]);                                    BAR.toStr(bar); }
 
 
 // Setter
-datetime bar.setTime   (/*BAR*/double &bar[],          datetime time  ) {    bar[BAR.time  ] = time;   return(time  ); BAR.toStr(bar); }
-double   bar.setOpen   (/*BAR*/double &bar[],          double   open  ) {    bar[BAR.open  ] = open;   return(open  ); BAR.toStr(bar); }
-double   bar.setLow    (/*BAR*/double &bar[],          double   low   ) {    bar[BAR.low   ] = low;    return(low   ); BAR.toStr(bar); }
-double   bar.setHigh   (/*BAR*/double &bar[],          double   high  ) {    bar[BAR.high  ] = high;   return(high  ); BAR.toStr(bar); }
-double   bar.setClose  (/*BAR*/double &bar[],          double   close ) {    bar[BAR.close ] = close;  return(close ); BAR.toStr(bar); }
-int      bar.setVolume (/*BAR*/double &bar[],          int      volume) {    bar[BAR.volume] = volume; return(volume); BAR.toStr(bar); }
+datetime bar.setTime   (/*BAR*/double &bar[],          datetime time  ) {    bar[BAR400_TIME  ] = time;   return(time  ); BAR.toStr(bar); }
+double   bar.setOpen   (/*BAR*/double &bar[],          double   open  ) {    bar[BAR400_OPEN  ] = open;   return(open  ); BAR.toStr(bar); }
+double   bar.setLow    (/*BAR*/double &bar[],          double   low   ) {    bar[BAR400_LOW   ] = low;    return(low   ); BAR.toStr(bar); }
+double   bar.setHigh   (/*BAR*/double &bar[],          double   high  ) {    bar[BAR400_HIGH  ] = high;   return(high  ); BAR.toStr(bar); }
+double   bar.setClose  (/*BAR*/double &bar[],          double   close ) {    bar[BAR400_CLOSE ] = close;  return(close ); BAR.toStr(bar); }
+int      bar.setVolume (/*BAR*/double &bar[],          int      volume) {    bar[BAR400_VOLUME] = volume; return(volume); BAR.toStr(bar); }
 
-datetime bars.setTime  (/*BAR*/double &bar[][], int i, datetime time  ) { bar[i][BAR.time  ] = time;   return(time  ); BAR.toStr(bar); }
-double   bars.setOpen  (/*BAR*/double &bar[][], int i, double   open  ) { bar[i][BAR.open  ] = open;   return(open  ); BAR.toStr(bar); }
-double   bars.setLow   (/*BAR*/double &bar[][], int i, double   low   ) { bar[i][BAR.low   ] = low;    return(low   ); BAR.toStr(bar); }
-double   bars.setHigh  (/*BAR*/double &bar[][], int i, double   high  ) { bar[i][BAR.high  ] = high;   return(high  ); BAR.toStr(bar); }
-double   bars.setClose (/*BAR*/double &bar[][], int i, double   close ) { bar[i][BAR.close ] = close;  return(close ); BAR.toStr(bar); }
-int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume) { bar[i][BAR.volume] = volume; return(volume); BAR.toStr(bar); }
+datetime bars.setTime  (/*BAR*/double &bar[][], int i, datetime time  ) { bar[i][BAR400_TIME  ] = time;   return(time  ); BAR.toStr(bar); }
+double   bars.setOpen  (/*BAR*/double &bar[][], int i, double   open  ) { bar[i][BAR400_OPEN  ] = open;   return(open  ); BAR.toStr(bar); }
+double   bars.setLow   (/*BAR*/double &bar[][], int i, double   low   ) { bar[i][BAR400_LOW   ] = low;    return(low   ); BAR.toStr(bar); }
+double   bars.setHigh  (/*BAR*/double &bar[][], int i, double   high  ) { bar[i][BAR400_HIGH  ] = high;   return(high  ); BAR.toStr(bar); }
+double   bars.setClose (/*BAR*/double &bar[][], int i, double   close ) { bar[i][BAR400_CLOSE ] = close;  return(close ); BAR.toStr(bar); }
+int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume) { bar[i][BAR400_VOLUME] = volume; return(volume); BAR.toStr(bar); }
 
 
 /**

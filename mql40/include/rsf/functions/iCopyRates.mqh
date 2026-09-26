@@ -1,10 +1,11 @@
 /**
- * Assign the specified timeseries to the target array and return the number of bars changed since the last tick. Supports
- * loading of custom or non-standard timeseries.
+ * Assigns the specified timeseries to the target array and returns the number of changed bars since the last tick.
  *
- * Extended version of the built-in function ArrayCopyRates() with a different return value and better error handling.
- * This function should be used when a timeseries is requested and IndicatorCounted() is not available, i.e. in experts or in
- * indicators with the requested timeseries different from the current chart timeseries.
+ * This function is a wrapper around the built-in function ArrayCopyRates() with a different return value and better error
+ * handling. It can be used to get timeseries and number of changed bars since last tick of any symbol or period, not only
+ * from the current chart. It can also be used in contexts where IndicatorCounted() is not available (e.g. in experts).
+ *
+ * The function supports custom symbols and custom timeframes, as long as the history file exists.
  *
  * The first dimension of the target array holds the bar offset, the second dimension holds the elements:
  *   0 - open time
@@ -20,17 +21,18 @@
  *
  * @return int - number of bars changed since the last tick or EMPTY (-1) in case of errors
  *
- * Notes: (1) No real copying is performed and no additional memory is allocated. Instead a delegating instance to the
+ *
+ * Notes: (1) No real copying is performed and no additional memory is allocated. Instead a delegate to the terminal's
  *            internal rates array is assigned and access is redirected.
- *        (2) When assigning to a local variable the target array doesn't act like a regular array. Static behavior needs to
+ *        (2) When assigning to a local array variable the array doesn't act like a regular array. Static behavior needs to
  *            be explicitely declared if needed.
- *        (3) When a timeseries is accessed the first time typically the status ERS_HISTORY_UPDATE is set and new data may
+ *        (3) When a timeseries is accessed the first time, typically status ERS_HISTORY_UPDATE is set and new data may
  *            arrive later.
- *        (4) If the timeseries is empty 0 is returned and no error is set. This is different to the implementation of the
- *            built-in function ArrayCopyRates().
- *        (5) If the array is passed to a DLL the DLL receives a pointer to the internal data array of type HISTORY_BAR_400[]
- *            (MetaQuotes alias: RateInfo). This array is reverse-indexed (index 0 holds the oldest bar). As more rates
- *            arrive the array is dynamically extended.
+ *        (4) If the timeseries is empty, 0 (zero) is returned and no error is set. This differs from the implementation of
+ *            the built-in function ArrayCopyRates().
+ *        (5) If the array is passed to a DLL, the DLL receives a pointer to the terminal's internal rates array of type
+ *            HISTORY_BAR_400[]. This array is reverse-indexed (index 0 holds the oldest bar). As more rates arrive the array
+ *            dynamically grows.
  */
 int iCopyRates(double &target[][], string symbol = "0", int timeframe = NULL) {
    if (ArrayDimension(target) != 2) return(_EMPTY(catch("iCopyRates(1)  invalid parameter target[] (illegal number of dimensions: "+ ArrayDimension(target) +")", ERR_INCOMPATIBLE_ARRAY)));
@@ -39,13 +41,6 @@ int iCopyRates(double &target[][], string symbol = "0", int timeframe = NULL) {
 
    if (symbol == "0") symbol = Symbol();                       // (string) NULL
    if (!timeframe) timeframe = Period();
-
-   #define TIME               0                                // rates array indexes
-   #define OPEN               1
-   #define LOW                2
-   #define HIGH               3
-   #define CLOSE              4
-   #define VOLUME             5
 
    // maintain a map "symbol,timeframe" => data[] to enable parallel usage with multiple timeseries
    #define CR.Tick            0                                // last value of global var Tick for detecting multiple calls during the same price tick
@@ -98,8 +93,8 @@ int iCopyRates(double &target[][], string symbol = "0", int timeframe = NULL) {
 
    // resolve the number of changed bars; uses the same logic as iChangedBars()
    if (bars > 0) {
-      firstBarTime = target[     0][TIME];
-      lastBarTime  = target[bars-1][TIME];
+      firstBarTime = target[     0][BAR400_TIME];
+      lastBarTime  = target[bars-1][BAR400_TIME];
 
       if (!data[i][CR.Tick]) {                                                   // first call for the timeseries
          changedBars = bars;
