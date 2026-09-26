@@ -1,7 +1,7 @@
 /**
  * Inside Bars
  *
- * Marks inside bars and 100% extension levels.
+ * Marks inside bars and IB 100% extension levels.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = { INIT_TIMEZONE };
@@ -152,26 +152,26 @@ bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
  * @return bool - success status
  */
 bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
-   // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of M1/M5 are correctly
-   // aligned. On timeframes > M5 this assumption may be wrong for some brokers/symbols.
+   // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of M1/M5 are
+   // correctly aligned. On timeframes > M5 this assumption may be wrong.
+   if (changedBars <= 1) return(true);                         // skip regular ticks, they don't change IB status
+
    int bars = ArrayRange(rates, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         more = 1;                                                // on BarOpen: check the last IB only
-         bars = 3;
-      }
-      else {
-         DeleteInsideBars(timeframe);                             // on init or data pumping: delete all existing bars
-         more = maxInsideBars;                                    // check the configured number of IBs
-      }
+   if (changedBars == 2) {
+      more = 1;                                                // on BarOpen: check the last IB only
+      bars = 3;
+   }
+   else {
+      DeleteInsideBars(timeframe);                             // on init() or data pumping: delete all existing bars
+      more = maxInsideBars;                                    // check the configured number of IBs
+   }
 
-      for (int i=2; i < bars; i++) {
-         if (rates[i][HIGH] >= rates[i-1][HIGH] && rates[i][LOW] <= rates[i-1][LOW]) {
-            CreateInsideBar(timeframe, rates[i-1][TIME], rates[i-1][HIGH], rates[i-1][LOW]);
-            more--;
-            if (!more) break;
-         }
+   for (int i=2; i < bars; i++) {
+      if (rates[i][HIGH] >= rates[i-1][HIGH] && rates[i][LOW] <= rates[i-1][LOW]) {
+         CreateInsideBar(timeframe, rates[i-1][TIME], rates[i-1][HIGH], rates[i-1][LOW]);
+         more--;
+         if (!more) break;
       }
    }
    return(true);
@@ -181,51 +181,50 @@ bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
 /**
  * Check rates for M15 inside bars. Operates on M5 rates as M15 bars may be unevenly aligned.
  *
- * @param  double ratesM5[][]   - M5 rates array
- * @param  int    changedBarsM5 - number of changed M5 bars
+ * @param  double ratesM5[][] - M5 rates array
+ * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+bool CheckInsideBarsM15(double ratesM5[][], int changedBars) {
+   if (changedBars <= 1) return(true);                         // skip regular ticks, they don't change IB status
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_M15)) return(true);                // same as changedBars = 1
-         more = 1;                                                // on BarOpen: check the last IB only
-         bars = 8;                                                // cover M5 periods of 2 finished M15 bars
+   int bars = ArrayRange(ratesM5, 0), more;
+
+   if (changedBars == 2) {
+      if (!IsBarOpen(PERIOD_M15)) return(!last_error);         // same as changedBars = 1
+      more = 1;                                                // on BarOpen: check the last IB only
+      bars = 8;                                                // cover M5 periods of 2 finished M15 bars
+   }
+   else {
+      DeleteInsideBars(PERIOD_M15);                            // on init or data pumping: delete all existing bars
+      more = maxInsideBars;                                    // check the configured number of IBs
+   }
+
+   datetime openTimeM5, openTimeM15, pOpenTimeM15, ppOpenTimeM15;
+   double high, pHigh, low, pLow;
+
+   for (int i, m15=-1; i < bars; i++) {                        // m15: M15 bar index
+      openTimeM5  = ratesM5[i][TIME];
+      openTimeM15 = openTimeM5 - (openTimeM5 % (15*MINUTES));  // opentime of the corresponding M15 bar
+
+      if (openTimeM15 == pOpenTimeM15) {                       // the current M5 bar belongs to the same M30 bar
+         high = MathMax(ratesM5[i][HIGH], high);
+         low  = MathMin(ratesM5[i][LOW], low);
       }
       else {
-         DeleteInsideBars(PERIOD_M15);                            // on init or data pumping: delete all existing bars
-         more = maxInsideBars;                                    // check the configured number of IBs
-      }
-
-      datetime openTimeM5, openTimeM15, pOpenTimeM15, ppOpenTimeM15;
-      double high, pHigh, low, pLow;
-
-      for (int i, m15=-1; i < bars; i++) {                        // m15: M15 bar index
-         openTimeM5  = ratesM5[i][TIME];
-         openTimeM15 = openTimeM5 - (openTimeM5 % (15*MINUTES));  // opentime of the corresponding M15 bar
-
-         if (openTimeM15 == pOpenTimeM15) {                       // the current M5 bar belongs to the same M30 bar
-            high = MathMax(ratesM5[i][HIGH], high);
-            low  = MathMin(ratesM5[i][LOW], low);
+         if (m15 > 1 && high >= pHigh && low <= pLow) {
+            CreateInsideBar(PERIOD_M15, ppOpenTimeM15, pHigh, pLow);
+            more--;
+            if (!more) break;
          }
-         else {
-            if (m15 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_M15, ppOpenTimeM15, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            m15++;
-            ppOpenTimeM15 = pOpenTimeM15;
-            pOpenTimeM15  = openTimeM15;
-            pHigh         = high;
-            pLow          = low;
-            high          = ratesM5[i][HIGH];
-            low           = ratesM5[i][LOW];
-         }
+         m15++;
+         ppOpenTimeM15 = pOpenTimeM15;
+         pOpenTimeM15  = openTimeM15;
+         pHigh         = high;
+         pLow          = low;
+         high          = ratesM5[i][HIGH];
+         low           = ratesM5[i][LOW];
       }
    }
    return(true);
@@ -235,50 +234,50 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
 /**
  * Check rates for M30 inside bars. Operates on M5 rates as M30 bars may be unevenly aligned.
  *
- * @param  double ratesM5[][]   - M5 rates array
- * @param  int    changedBarsM5 - number of changed M5 bars
+ * @param  double ratesM5[][] - M5 rates array
+ * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
+bool CheckInsideBarsM30(double ratesM5[][], int changedBars) {
+   if (changedBars <= 1) return(true);                         // skip regular ticks, they don't change IB status
+
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
-      if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_M30)) return(true);                // same as changedBarsM5 = 1
-         more = 1;                                                // on BarOpen: check the last IB only
-         bars = 14;                                               // cover M5 periods of 2 finished M30 bars
+   if (changedBars == 2) {
+      if (!IsBarOpen(PERIOD_M30)) return(!last_error);         // same as changedBars = 1
+      more = 1;                                                // on BarOpen: check the last IB only
+      bars = 14;                                               // cover M5 periods of 2 finished M30 bars
+   }
+   else {
+      DeleteInsideBars(PERIOD_M30);                            // on init or data pumping: delete all existing bars
+      more = maxInsideBars;                                    // check the configured number of IBs
+   }
+
+   datetime openTimeM5, openTimeM30, pOpenTimeM30, ppOpenTimeM30;
+   double high, pHigh, low, pLow;
+
+   for (int i, m30=-1; i < bars; i++) {                        // m30: M30 bar index
+      openTimeM5  = ratesM5[i][TIME];
+      openTimeM30 = openTimeM5 - (openTimeM5 % (30*MINUTES));  // opentime of the corresponding M30 bar
+
+      if (openTimeM30 == pOpenTimeM30) {                       // the current M5 bar belongs to the same M30 bar
+         high = MathMax(ratesM5[i][HIGH], high);
+         low  = MathMin(ratesM5[i][LOW], low);
       }
       else {
-         DeleteInsideBars(PERIOD_M30);                            // on init or data pumping: delete all existing bars
-         more = maxInsideBars;                                    // check the configured number of IBs
-      }
-
-      datetime openTimeM5, openTimeM30, pOpenTimeM30, ppOpenTimeM30;
-      double high, pHigh, low, pLow;
-
-      for (int i, m30=-1; i < bars; i++) {                        // m30: M30 bar index
-         openTimeM5  = ratesM5[i][TIME];
-         openTimeM30 = openTimeM5 - (openTimeM5 % (30*MINUTES));  // opentime of the corresponding M30 bar
-
-         if (openTimeM30 == pOpenTimeM30) {                       // the current M5 bar belongs to the same M30 bar
-            high = MathMax(ratesM5[i][HIGH], high);
-            low  = MathMin(ratesM5[i][LOW], low);
+         if (m30 > 1 && high >= pHigh && low <= pLow) {
+            CreateInsideBar(PERIOD_M30, ppOpenTimeM30, pHigh, pLow);
+            more--;
+            if (!more) break;
          }
-         else {
-            if (m30 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_M30, ppOpenTimeM30, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            m30++;
-            ppOpenTimeM30 = pOpenTimeM30;
-            pOpenTimeM30  = openTimeM30;
-            pHigh         = high;
-            pLow          = low;
-            high          = ratesM5[i][HIGH];
-            low           = ratesM5[i][LOW];
-         }
+         m30++;
+         ppOpenTimeM30 = pOpenTimeM30;
+         pOpenTimeM30  = openTimeM30;
+         pHigh         = high;
+         pLow          = low;
+         high          = ratesM5[i][HIGH];
+         low           = ratesM5[i][LOW];
       }
    }
    return(true);
@@ -288,50 +287,50 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
 /**
  * Check rates for H1 inside bars. Operates on M5 rates as H1 bars may be unevenly aligned.
  *
- * @param  double ratesM5[][]   - M5 rates array
- * @param  int    changedBarsM5 - number of changed M5 bars
+ * @param  double ratesM5[][] - M5 rates array
+ * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
+bool CheckInsideBarsH1(double ratesM5[][], int changedBars) {
+   if (changedBars <= 1) return(true);                         // skip regular ticks, they don't change IB status
+
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
-      if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_H1)) return(true);                 // same as changedBarsM5 = 1
-         more = 1;                                                // on BarOpen: check the last IB only
-         bars = 26;                                               // cover M5 periods of 2 finished H1 bars
+   if (changedBars == 2) {
+      if (!IsBarOpen(PERIOD_H1)) return(!last_error);          // same as changedBars = 1
+      more = 1;                                                // on BarOpen: check the last IB only
+      bars = 26;                                               // cover M5 periods of 2 finished H1 bars
+   }
+   else {
+      DeleteInsideBars(PERIOD_H1);                             // on init or data pumping: delete all existing bars
+      more = maxInsideBars;                                    // check the configured number of IBs
+   }
+
+   datetime openTimeM5, openTimeH1, pOpenTimeH1, ppOpenTimeH1;
+   double high, pHigh, low, pLow;
+
+   for (int i, h1=-1; i < bars; i++) {                         // h1: H1 bar index
+      openTimeM5 = ratesM5[i][TIME];
+      openTimeH1 = openTimeM5 - (openTimeM5 % HOUR);           // opentime of the corresponding H1 bar
+
+      if (openTimeH1 == pOpenTimeH1) {                         // the current M5 bar belongs to the same H1 bar
+         high = MathMax(ratesM5[i][HIGH], high);
+         low  = MathMin(ratesM5[i][LOW], low);
       }
       else {
-         DeleteInsideBars(PERIOD_H1);                             // on init or data pumping: delete all existing bars
-         more = maxInsideBars;                                    // check the configured number of IBs
-      }
-
-      datetime openTimeM5, openTimeH1, pOpenTimeH1, ppOpenTimeH1;
-      double high, pHigh, low, pLow;
-
-      for (int i, h1=-1; i < bars; i++) {                         // h1: H1 bar index
-         openTimeM5 = ratesM5[i][TIME];
-         openTimeH1 = openTimeM5 - (openTimeM5 % HOUR);           // opentime of the corresponding H1 bar
-
-         if (openTimeH1 == pOpenTimeH1) {                         // the current M5 bar belongs to the same H1 bar
-            high = MathMax(ratesM5[i][HIGH], high);
-            low  = MathMin(ratesM5[i][LOW], low);
+         if (h1 > 1 && high >= pHigh && low <= pLow) {
+            CreateInsideBar(PERIOD_H1, ppOpenTimeH1, pHigh, pLow);
+            more--;
+            if (!more) break;
          }
-         else {
-            if (h1 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_H1, ppOpenTimeH1, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            h1++;
-            ppOpenTimeH1 = pOpenTimeH1;
-            pOpenTimeH1  = openTimeH1;
-            pHigh        = high;
-            pLow         = low;
-            high         = ratesM5[i][HIGH];
-            low          = ratesM5[i][LOW];
-         }
+         h1++;
+         ppOpenTimeH1 = pOpenTimeH1;
+         pOpenTimeH1  = openTimeH1;
+         pHigh        = high;
+         pLow         = low;
+         high         = ratesM5[i][HIGH];
+         low          = ratesM5[i][LOW];
       }
    }
    return(true);
@@ -341,50 +340,50 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
 /**
  * Check rates for H4 inside bars. Operates on M5 rates as H4 bars may be unevenly aligned.
  *
- * @param  double ratesM5[][]   - M5 rates array
- * @param  int    changedBarsM5 - number of changed M5 bars
+ * @param  double ratesM5[][] - M5 rates array
+ * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
+bool CheckInsideBarsH4(double ratesM5[][], int changedBars) {
+   if (changedBars <= 1) return(true);                         // skip regular ticks, they don't change IB status
+
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
-      if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_H4)) return(true);                 // same as changedBarsM5 = 1
-         more = 1;                                                // on BarOpen: check the last IB only
-         bars = 98;                                               // cover M5 periods of 2 finished H4 bars
+   if (changedBars == 2) {
+      if (!IsBarOpen(PERIOD_H4)) return(!last_error);          // same as changedBars = 1
+      more = 1;                                                // on BarOpen: check the last IB only
+      bars = 98;                                               // cover M5 periods of 2 finished H4 bars
+   }
+   else {
+      DeleteInsideBars(PERIOD_H4);                             // on init or data pumping: delete all existing bars
+      more = maxInsideBars;                                    // check the configured number of IBs
+   }
+
+   datetime openTimeM5, openTimeH4, pOpenTimeH4, ppOpenTimeH4;
+   double high, pHigh, low, pLow;
+
+   for (int i, h4=-1; i < bars; i++) {                         // h4: H4 bar index
+      openTimeM5 = ratesM5[i][TIME];
+      openTimeH4 = openTimeM5 - (openTimeM5 % (4*HOURS));      // opentime of the corresponding H4 bar
+
+      if (openTimeH4 == pOpenTimeH4) {                         // the current H1 bar belongs to the same H4 bar
+         high = MathMax(ratesM5[i][HIGH], high);
+         low  = MathMin(ratesM5[i][LOW], low);
       }
-      else {
-         DeleteInsideBars(PERIOD_H4);                             // on init or data pumping: delete all existing bars
-         more = maxInsideBars;                                    // check the configured number of IBs
-      }
-
-      datetime openTimeM5, openTimeH4, pOpenTimeH4, ppOpenTimeH4;
-      double high, pHigh, low, pLow;
-
-      for (int i, h4=-1; i < bars; i++) {                         // h4: H4 bar index
-         openTimeM5 = ratesM5[i][TIME];
-         openTimeH4 = openTimeM5 - (openTimeM5 % (4*HOURS));      // opentime of the corresponding H4 bar
-
-         if (openTimeH4 == pOpenTimeH4) {                         // the current H1 bar belongs to the same H4 bar
-            high = MathMax(ratesM5[i][HIGH], high);
-            low  = MathMin(ratesM5[i][LOW], low);
+      else {                                                   // the current H1 bar belongs to a new H4 bar
+         if (h4 > 1 && high >= pHigh && low <= pLow) {
+            CreateInsideBar(PERIOD_H4, ppOpenTimeH4, pHigh, pLow);
+            more--;
+            if (!more) break;
          }
-         else {                                                   // the current H1 bar belongs to a new H4 bar
-            if (h4 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_H4, ppOpenTimeH4, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            h4++;
-            ppOpenTimeH4 = pOpenTimeH4;
-            pOpenTimeH4  = openTimeH4;
-            pHigh        = high;
-            pLow         = low;
-            high         = ratesM5[i][HIGH];
-            low          = ratesM5[i][LOW];
-         }
+         h4++;
+         ppOpenTimeH4 = pOpenTimeH4;
+         pOpenTimeH4  = openTimeH4;
+         pHigh        = high;
+         pLow         = low;
+         high         = ratesM5[i][HIGH];
+         low          = ratesM5[i][LOW];
       }
    }
    return(true);
@@ -394,50 +393,50 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
 /**
  * Check rates for D1 inside bars. Operates on M5 rates as D1 bars may be unevenly aligned.
  *
- * @param  double ratesM5[][]   - M5 rates array
- * @param  int    changedBarsM5 - number of changed M5 bars
+ * @param  double ratesM5[][] - M5 rates array
+ * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
+bool CheckInsideBarsD1(double ratesM5[][], int changedBars) {
+   if (changedBars <= 1) return(true);                         // skip regular ticks, they don't change IB status
+
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
-      if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_D1)) return(true);                 // same as changedBarsM5 = 1
-         more = 1;                                                // on BarOpen: check the last IB only
-         bars = 578;                                              // cover M5 periods of 2 finished D1 bars
+   if (changedBars == 2) {
+      if (!IsBarOpen(PERIOD_D1)) return(!last_error);          // same as changedBars = 1
+      more = 1;                                                // on BarOpen: check the last IB only
+      bars = 578;                                              // cover M5 periods of 2 finished D1 bars
+   }
+   else {
+      DeleteInsideBars(PERIOD_D1);                             // on init or data pumping: delete all existing bars
+      more = maxInsideBars;                                    // check the configured number of IBs
+   }
+
+   datetime openTimeM5, openTimeD1, pOpenTimeD1, ppOpenTimeD1;
+   double high, pHigh, low, pLow;
+
+   for (int i, d1=-1; i < bars; i++) {                         // d1: D1 bar index
+      openTimeM5 = ratesM5[i][TIME];
+      openTimeD1 = openTimeM5 - (openTimeM5 % DAY);            // opentime of the corresponding D1 bar (Midnight)
+
+      if (openTimeD1 == pOpenTimeD1) {                         // the current H1 bar belongs to the same D1 bar
+         high = MathMax(ratesM5[i][HIGH], high);
+         low  = MathMin(ratesM5[i][LOW], low);
       }
-      else {
-         DeleteInsideBars(PERIOD_D1);                             // on init or data pumping: delete all existing bars
-         more = maxInsideBars;                                    // check the configured number of IBs
-      }
-
-      datetime openTimeM5, openTimeD1, pOpenTimeD1, ppOpenTimeD1;
-      double high, pHigh, low, pLow;
-
-      for (int i, d1=-1; i < bars; i++) {                         // d1: D1 bar index
-         openTimeM5 = ratesM5[i][TIME];
-         openTimeD1 = openTimeM5 - (openTimeM5 % DAY);            // opentime of the corresponding D1 bar (Midnight)
-
-         if (openTimeD1 == pOpenTimeD1) {                         // the current H1 bar belongs to the same D1 bar
-            high = MathMax(ratesM5[i][HIGH], high);
-            low  = MathMin(ratesM5[i][LOW], low);
+      else {                                                   // the current H1 bar belongs to a new D1 bar
+         if (d1 > 1 && high >= pHigh && low <= pLow) {
+            CreateInsideBar(PERIOD_D1, ppOpenTimeD1, pHigh, pLow);
+            more--;
+            if (!more) break;
          }
-         else {                                                   // the current H1 bar belongs to a new D1 bar
-            if (d1 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_D1, ppOpenTimeD1, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            d1++;
-            ppOpenTimeD1 = pOpenTimeD1;
-            pOpenTimeD1  = openTimeD1;
-            pHigh        = high;
-            pLow         = low;
-            high         = ratesM5[i][HIGH];
-            low          = ratesM5[i][LOW];
-         }
+         d1++;
+         ppOpenTimeD1 = pOpenTimeD1;
+         pOpenTimeD1  = openTimeD1;
+         pHigh        = high;
+         pLow         = low;
+         high         = ratesM5[i][HIGH];
+         low          = ratesM5[i][LOW];
       }
    }
    return(true);
@@ -447,52 +446,52 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
 /**
  * Check rates for W1 inside bars. Operates on M5 rates as W1 bars may be unevenly aligned.
  *
- * @param  double ratesM5[][]   - M5 rates array
- * @param  int    changedBarsM5 - number of changed M5 bars
+ * @param  double ratesM5[][] - M5 rates array
+ * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
+bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
+   if (changedBars <= 1) return(true);                         // skip regular ticks, they don't change IB status
+
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
-      if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_W1)) return(true);                 // same as changedBarsM5 = 1
-         more = 1;                                                // on BarOpen: check the last IB only
-         bars = 4034;                                             // cover M5 periods of 2 finished W1 bars
+   if (changedBars == 2) {
+      if (!IsBarOpen(PERIOD_W1)) return(!last_error);          // same as changedBars = 1
+      more = 1;                                                // on BarOpen: check the last IB only
+      bars = 4034;                                             // cover M5 periods of 2 finished W1 bars
+   }
+   else {
+      DeleteInsideBars(PERIOD_W1);                             // on init or data pumping: delete all existing bars
+      more = maxInsideBars;                                    // check the configured number of IBs
+   }
+
+   datetime openTimeM5, openTimeD1, openTimeW1, pOpenTimeW1, ppOpenTimeW1;
+   double high, pHigh, low, pLow;
+
+   for (int i, w1=-1; i < bars; i++) {                         // w1: W1 bar index
+      openTimeM5 = ratesM5[i][TIME];
+      openTimeD1 = openTimeM5 - (openTimeM5 % DAY);            // opentime of the corresponding D1 bar (Midnight)
+      int dow    = TimeDayOfWeekEx(openTimeD1);
+      openTimeW1 = openTimeD1 - ((dow+6) % 7) * DAYS;          // opentime of the corresponding W1 bar (Monday 00:00)
+
+      if (openTimeW1 == pOpenTimeW1) {                         // the current H1 bar belongs to the same W1 bar
+         high = MathMax(ratesM5[i][HIGH], high);
+         low  = MathMin(ratesM5[i][LOW], low);
       }
-      else {
-         DeleteInsideBars(PERIOD_W1);                             // on init or data pumping: delete all existing bars
-         more = maxInsideBars;                                    // check the configured number of IBs
-      }
-
-      datetime openTimeM5, openTimeD1, openTimeW1, pOpenTimeW1, ppOpenTimeW1;
-      double high, pHigh, low, pLow;
-
-      for (int i, w1=-1; i < bars; i++) {                         // w1: W1 bar index
-         openTimeM5 = ratesM5[i][TIME];
-         openTimeD1 = openTimeM5 - (openTimeM5 % DAY);            // opentime of the corresponding D1 bar (Midnight)
-         int dow    = TimeDayOfWeekEx(openTimeD1);
-         openTimeW1 = openTimeD1 - ((dow+6) % 7) * DAYS;          // opentime of the corresponding W1 bar (Monday 00:00)
-
-         if (openTimeW1 == pOpenTimeW1) {                         // the current H1 bar belongs to the same W1 bar
-            high = MathMax(ratesM5[i][HIGH], high);
-            low  = MathMin(ratesM5[i][LOW], low);
+      else {                                                   // the current H1 bar belongs to a new W1 bar
+         if (w1 > 1 && high >= pHigh && low <= pLow) {
+            CreateInsideBar(PERIOD_W1, ppOpenTimeW1, pHigh, pLow);
+            more--;
+            if (!more) break;
          }
-         else {                                                   // the current H1 bar belongs to a new W1 bar
-            if (w1 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_W1, ppOpenTimeW1, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            w1++;
-            ppOpenTimeW1 = pOpenTimeW1;
-            pOpenTimeW1  = openTimeW1;
-            pHigh        = high;
-            pLow         = low;
-            high         = ratesM5[i][HIGH];
-            low          = ratesM5[i][LOW];
-         }
+         w1++;
+         ppOpenTimeW1 = pOpenTimeW1;
+         pOpenTimeW1  = openTimeW1;
+         pHigh        = high;
+         pLow         = low;
+         high         = ratesM5[i][HIGH];
+         low          = ratesM5[i][LOW];
       }
    }
    return(true);
@@ -502,52 +501,52 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
 /**
  * Check rates for MN1 inside bars. Operates on M5 rates as MN1 bars may be unevenly aligned.
  *
- * @param  double ratesM5[][]   - M5 rates array
- * @param  int    changedBarsM5 - number of changed M5 bars
+ * @param  double ratesM5[][] - M5 rates array
+ * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
+bool CheckInsideBarsMN1(double ratesM5[][], int changedBars) {
+   if (changedBars <= 1) return(true);                         // skip regular ticks, they don't change IB status
+
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
-      if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_MN1)) return(true);                // same as changedBarsM5 = 1
-         more = 1;                                                // on BarOpen: check the last IB only
-         bars = 17858;                                            // cover M5 periods of 2 finished MN1 bars
+   if (changedBars == 2) {
+      if (!IsBarOpen(PERIOD_MN1)) return(!last_error);         // same as changedBars = 1
+      more = 1;                                                // on BarOpen: check the last IB only
+      bars = 17858;                                            // cover M5 periods of 2 finished MN1 bars
+   }
+   else {
+      DeleteInsideBars(PERIOD_MN1);                            // on init or data pumping: delete all existing bars
+      more = maxInsideBars;                                    // check the configured number of IBs
+   }
+
+   datetime openTimeM5, openTimeD1, openTimeMN1, pOpenTimeMN1, ppOpenTimeMN1;
+   double high, pHigh, low, pLow;
+
+   for (int i, mn1=-1; i < bars; i++) {                        // mn1: MN1 bar index
+      openTimeM5 = ratesM5[i][TIME];
+      openTimeD1 = openTimeM5 - (openTimeM5 % DAY);            // opentime of the corresponding D1 bar (Midnight)
+      int day = TimeDayEx(openTimeD1);
+      openTimeMN1 = openTimeD1 - (day-1) * DAYS;               // opentime of the corresponding MN1 bar (1st of month 00:00)
+
+      if (openTimeMN1 == pOpenTimeMN1) {                       // the current H1 bar belongs to the same MN1 bar
+         high = MathMax(ratesM5[i][HIGH], high);
+         low  = MathMin(ratesM5[i][LOW], low);
       }
-      else {
-         DeleteInsideBars(PERIOD_MN1);                            // on init or data pumping: delete all existing bars
-         more = maxInsideBars;                                    // check the configured number of IBs
-      }
-
-      datetime openTimeM5, openTimeD1, openTimeMN1, pOpenTimeMN1, ppOpenTimeMN1;
-      double high, pHigh, low, pLow;
-
-      for (int i, mn1=-1; i < bars; i++) {                        // mn1: MN1 bar index
-         openTimeM5 = ratesM5[i][TIME];
-         openTimeD1 = openTimeM5 - (openTimeM5 % DAY);            // opentime of the corresponding D1 bar (Midnight)
-         int day = TimeDayEx(openTimeD1);
-         openTimeMN1 = openTimeD1 - (day-1) * DAYS;               // opentime of the corresponding MN1 bar (1st of month 00:00)
-
-         if (openTimeMN1 == pOpenTimeMN1) {                       // the current H1 bar belongs to the same MN1 bar
-            high = MathMax(ratesM5[i][HIGH], high);
-            low  = MathMin(ratesM5[i][LOW], low);
+      else {                                                   // the current H1 bar belongs to a new MN1 bar
+         if (mn1 > 1 && high >= pHigh && low <= pLow) {
+            CreateInsideBar(PERIOD_MN1, ppOpenTimeMN1, pHigh, pLow);
+            more--;
+            if (!more) break;
          }
-         else {                                                   // the current H1 bar belongs to a new MN1 bar
-            if (mn1 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_MN1, ppOpenTimeMN1, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            mn1++;
-            ppOpenTimeMN1 = pOpenTimeMN1;
-            pOpenTimeMN1  = openTimeMN1;
-            pHigh         = high;
-            pLow          = low;
-            high          = ratesM5[i][HIGH];
-            low           = ratesM5[i][LOW];
-         }
+         mn1++;
+         ppOpenTimeMN1 = pOpenTimeMN1;
+         pOpenTimeMN1  = openTimeMN1;
+         pHigh         = high;
+         pLow          = low;
+         high          = ratesM5[i][HIGH];
+         low           = ratesM5[i][LOW];
       }
    }
    return(true);
@@ -613,8 +612,13 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    }
 
    // signal new inside bars
-   if (!__isSuperContext && Signal.onInsideBar) /*&&*/ if (IsBarOpen(timeframe)) {
-      return(onInsideBar(timeframe, closeTime, high, low));
+   if (!__isSuperContext && Signal.onInsideBar) {
+      if (IsBarOpen(timeframe)) {
+         return(onInsideBar(timeframe, closeTime, high, low));
+      }
+      if (last_error != 0) {
+         return(false);
+      }
    }
    return(!catch("CreateInsideBar(1)"));
 }
