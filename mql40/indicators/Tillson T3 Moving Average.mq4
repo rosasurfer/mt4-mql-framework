@@ -396,7 +396,6 @@ int onTick() {
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
-
    return(last_error);
 }
 

@@ -240,7 +240,7 @@ int onTick() {
          }
       }
    }
-   return(catch("onTick(2)"));
+   return(last_error);
 }
 
 

@@ -279,7 +279,7 @@ int onTick() {
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
-   return(catch("onTick(3)"));
+   return(last_error);
 }
 
 
