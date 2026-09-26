@@ -65,14 +65,14 @@ bool IsBarOpen(int timeframe = NULL) {
          }
          else if (timeframe == PERIOD_W1) {
             stdTimeframes[i][IBO_STARTTIME] = Tick.time - Tick.time % DAYS - (TimeDayOfWeek(Tick.time) + 6) % 7 * DAYS;
-            stdTimeframes[i][IBO_ENDTIME  ] = stdTimeframes[i][IBO_STARTTIME] + 7 * DAYS;
+            stdTimeframes[i][IBO_ENDTIME  ] = stdTimeframes[i][IBO_STARTTIME] + (timeframe * MINUTES);
          }
          else if (timeframe == PERIOD_MN1) {
             stdTimeframes[i][IBO_STARTTIME] = Tick.time - Tick.time % DAYS - (TimeDay(Tick.time) - 1) * DAYS;
             stdTimeframes[i][IBO_ENDTIME  ] = stdTimeframes[i][IBO_STARTTIME] + 28 * DAYS;
 
             while (TimeMonth(stdTimeframes[i][IBO_STARTTIME]) == TimeMonth(stdTimeframes[i][IBO_ENDTIME])) {
-               stdTimeframes[i][IBO_ENDTIME] += 1 * DAY;
+               stdTimeframes[i][IBO_ENDTIME] += DAY;
             }
          }
       }
