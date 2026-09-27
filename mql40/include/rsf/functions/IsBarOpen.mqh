@@ -1,17 +1,16 @@
 /**
- * Whether the current tick represents a BarOpen event in the specified timeframe. This function can be used to determine
- * BarOpen events for a timeframe other than the current chart timeframe. If called multiple times during a tick, each call
- * returns the same result. Supports custom timeframes.
+ * Whether the current tick represents a BarOpen event in the specified timeframe. Can be used to detect BarOpen events in
+ * timeframes other than the current chart timeframe. Supports custom timeframes.
  *
- * @param  int timeframe [optional] - timeframe to check (default: the current timeframe)
+ * @param  int timeframe [optional] - timeframe to check (default: current timeframe)
  *
  * @return bool
  *
  *
  * Notes
  * -----
- *  - This function correctly resolves BarOpen events even if the bar alignment of the stored history is incorrect.
- *  - This function cannot resolve BarOpen events without a previous tick (except in tester).
+ *  - The function correctly resolves BarOpen events even if the bar alignment of the stored history is incorrect.
+ *  - The function cannot resolve BarOpen events without a previous tick (except in tester).
  */
 bool IsBarOpen(int timeframe = NULL) {
    static bool contextChecked = false; if (!contextChecked) {
@@ -28,7 +27,8 @@ bool IsBarOpen(int timeframe = NULL) {
       contextChecked = true;
    }
    if (__CoreFunction != CF_START) return(!catch("IsBarOpen(5)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__CoreFunction), ERR_FUNC_NOT_ALLOWED));
-   if (timeframe < 0)              return(!catch("IsBarOpen(6)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
+   if (!Tick.time)                 return(!catch("IsBarOpen(6)  tick time not available: Tick.time=0", ERR_ILLEGAL_STATE));
+   if (timeframe < 0)              return(!catch("IsBarOpen(7)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
    if (!timeframe) timeframe = Period();
 
    // to improve performance start/end times of standard timeframes are cached
@@ -36,7 +36,8 @@ bool IsBarOpen(int timeframe = NULL) {
    #define IBO_ENDTIME   1                // period close time
    static int stdTimeframes[9][2];
 
-   datetime starttime;
+   bool isStdTimeframe = true;
+   datetime starttime = 0;
    int i = -1;
 
    switch (timeframe) {
@@ -50,14 +51,13 @@ bool IsBarOpen(int timeframe = NULL) {
       case PERIOD_W1:  i = 7; break;
       case PERIOD_MN1: i = 8; break;
 
-      // custom timeframe: recalculate period start time on every call
-      default:
+      default:                                              // custom TF: recalculate period start time on every call
+         isStdTimeframe = false;
          starttime = Tick.time - Tick.time % (timeframe * MINUTES);
-         break;
    }
 
-   // standard timeframe: update + cache current start/end times
-   if (!starttime) {
+   if (isStdTimeframe) {
+      // update + cache current start/end times
       if (Tick.time >= stdTimeframes[i][IBO_ENDTIME]) {     // TRUE at first call and at BarOpen
          if (i < 7) {
             stdTimeframes[i][IBO_STARTTIME] = Tick.time - Tick.time % (timeframe * MINUTES);
@@ -88,5 +88,8 @@ bool IsBarOpen(int timeframe = NULL) {
    else {
       result = (lastTick < starttime);
    }
-   return(result);
+
+   int error = GetLastError();
+   if (!error) return(result);
+   return(!catch("IsBarOpen(8)", error));
 }
