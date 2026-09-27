@@ -2946,39 +2946,48 @@ string MarketInfoModeToStr(int mode) {
  * @return int - error status
  */
 int DebugMarketInfo(string caller = "") {
-   string symbol = Symbol();
-   double value;
-   int error, len = 21 + StringLen(symbol);
+   string symbol         = Symbol();
+   string accountServer  = GetAccountServer();
+   string accountCompany = AccountCompany();
+   string accountName    = AccountName();
 
-   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+   datetime serverTime = TimeCurrent();
+
+   int len1 = 18 + StringLen(symbol);
+   int len2 = 11 + Max(StringLen(accountServer), StringLen(accountCompany), StringLen(accountName));
+   int len3 =  9 + ifInt(serverTime, 19, 1);
+   int len  = Max(len1, len2, len3), error;
+
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ------------------------
    debug(caller +"  Account");                                             //  Account
-   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ------------------------
 
-   debug(caller +"  server  = "+ DoubleQuoteStr(GetAccountServer()));
-   debug(caller +"  company = "+ DoubleQuoteStr(AccountCompany()));
-   debug(caller +"  name    = "+ DoubleQuoteStr(AccountName()));
-   debug(caller +"  number  = "+ GetAccountNumber());
+   debug(caller +"  server:  "+ DoubleQuoteStr(GetAccountServer()));
+   debug(caller +"  company: "+ DoubleQuoteStr(AccountCompany()));
+   debug(caller +"  name:    "+ DoubleQuoteStr(AccountName()));
+   debug(caller +"  number:  "+ GetAccountNumber());
+   debug(caller +"  time:    "+ ifString(serverTime, TimeToStr(serverTime, TIME_FULL), "0"));
 
-   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
-   debug(caller +"  Global variables (\""+ symbol +"\")");                 //  Global variables ("EURUSD")
-   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ------------------------
+   debug(caller +"  Global vars for \""+ symbol +"\"");                    //  Global vars for "EURUSD"
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ------------------------
 
    debug(caller +"  built-in: Digits      = "+ Digits);
    debug(caller +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
-   debug(caller +"  custom:   Pip         = "+ NumberToStr(Pip, PriceFormat));
-   debug(caller +"  custom:   PipDigits   = "+ PipDigits);
-
-   debug(caller +"  custom:   pUnit       = "+ NumberToStr(pUnit, pUnitFormat));
-
-   debug(caller +"  custom:   PriceFormat = \""+ PriceFormat +"\"");
+   debug(caller +"  user:     Pip         = "+ NumberToStr(Pip, PriceFormat));
+   debug(caller +"  user:     PipDigits   = "+ PipDigits);
+   debug(caller +"  user:     pUnit       = "+ NumberToStr(pUnit, pUnitFormat));
+   debug(caller +"  user:     PriceFormat = \""+ PriceFormat +"\"");
    debug(caller +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
    debug(caller +"  built-in: Bars        = "+ Bars);
 
-   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ------------------------
    debug(caller +"  MarketInfo(\""+ symbol +"\")");                        //  MarketInfo("EURUSD")
-   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ------------------------
 
-   // see MODE explanations in "include/stddefines.mqh"
+   double value;
+
+   // @see documentation of MarketInfo() identifiers in "/mql40/include/rsf/stddefines.mqh"
    value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError();                 debug(caller +"  MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
    value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError();                 debug(caller +"  MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
    value = MarketInfo(symbol, 3                     ); error = GetLastError(); if (value != 0) debug(caller +"  3                      = "+                    NumberToStr(value, ".+")                              , error);
@@ -4020,8 +4029,8 @@ string TicketToStr(int ticket) {
  * errors.
  *
  * @param  string caller                - location identifier of the caller
- * @param  bool   useLastBar [optional] - whether to return the time of the last bar if TimeLocal() returns 0 (default: no)
- * @param  bool   strict     [optional] - whether TimeLocal() returning 0 causes a fatal terminating error (default: yes)
+ * @param  bool   useLastBar [optional] - whether to return the time of the last bar if TimeCurrent() returns 0 (default: no)
+ * @param  bool   strict     [optional] - whether TimeCurrent() returning 0 causes a terminating error (default: yes)
  *
  * @return datetime - time or NULL (0) in case of errors
  */
