@@ -1,36 +1,39 @@
 /**
- * Assign the specified timeseries to the target array and return the number of bars changed since the last tick. Supports
- * loading of custom or non-standard timeseries.
+ * Assigns the specified timeseries to the target array and returns the number of changed bars since the last tick.
  *
- * Extended version of the built-in function ArrayCopyRates() with a different return value and better error handling.
- * This function should be used when a timeseries is requested and IndicatorCounted() is not available, i.e. in experts or in
- * indicators with the requested timeseries different from the current chart timeseries.
+ * This function is a wrapper around the built-in function ArrayCopyRates() with a different return value and better error
+ * handling. It can be used to get timeseries and number of changed bars since last tick of any symbol or period, not only
+ * from the current chart. It can also be used in contexts where IndicatorCounted() is not available (e.g. in experts).
  *
- * The first dimension of the target array holds the bar offset, the second dimension holds the elements:
- *   0 - open time
- *   1 - open price
- *   2 - low price
- *   3 - high price
- *   4 - close price
- *   5 - volume (tick count)
+ * The function supports custom symbols and custom timeframes, as long as the history file exists.
  *
- * @param  _Out_ double target[][6]          - array to assign rates to (read-only)
+ * The first dimension of the target array (rows) holds the bar offset, the second dimension (columns) holds the elements:
+ *  #define BAR400_TIME   (0) - bar open time
+ *  #define BAR400_OPEN   (1) - bar open price
+ *  #define BAR400_LOW    (2) - bar low price
+ *  #define BAR400_HIGH   (3) - bar high price
+ *  #define BAR400_CLOSE  (4) - bar close price
+ *  #define BAR400_VOLUME (5) - bar volume (tick count)
+ *
+ * @param  _Out_ double target[][6]          - array to assign rates to (read-only, reverse-indexed)
  * @param  _In_  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
  * @param  _In_  int    timeframe [optional] - timeframe of the timeseries (default: the current chart timeframe)
  *
  * @return int - number of bars changed since the last tick or EMPTY (-1) in case of errors
  *
- * Notes: (1) No real copying is performed and no additional memory is allocated. Instead a delegating instance to the
+ *
+ * Notes: (1) No real copying is performed and no additional memory is allocated. Instead a delegate to the terminal's
  *            internal rates array is assigned and access is redirected.
- *        (2) When assigning to a local variable the target array doesn't act like a regular array. Static behavior needs to
- *            be explicitely declared if needed.
- *        (3) When a timeseries is accessed the first time typically the status ERS_HISTORY_UPDATE is set and new data may
- *            arrive later.
- *        (4) If the timeseries is empty 0 is returned and no error is set. This is different to the implementation of the
- *            built-in function ArrayCopyRates().
- *        (5) If the array is passed to a DLL the DLL receives a pointer to the internal data array of type HISTORY_BAR_400[]
- *            (MetaQuotes alias: RateInfo). This array is reverse-indexed (index 0 holds the oldest bar). As more rates
- *            arrive the array is dynamically extended.
+ *        (2) The assigned array is reverse-indexed and read-only.
+ *        (3) If assigning to a local array variable, the array stops behaving like a regular array and starts behaving like
+ *            an integer (it's a pointer now). Thus static behavior needs to be explicitely declared if needed.
+ *        (4) If a timeseries is accessed the first time, typically status ERS_HISTORY_UPDATE is set and new data may arrive
+ *            later.
+ *        (5) If the timeseries is empty, 0 (zero) is returned and no error is set. This differs from the implementation of
+ *            the built-in function ArrayCopyRates().
+ *        (6) If the array is passed to a DLL, the DLL receives a pointer to the terminal's internal rates array of type
+ *            HISTORY_BAR_400[]. This array is reverse-indexed (index 0 holds the oldest bar). As more rates arrive the array
+ *            dynamically grows.
  */
 int iCopyRates(double &target[][], string symbol = "0", int timeframe = NULL) {
    if (ArrayDimension(target) != 2) return(_EMPTY(catch("iCopyRates(1)  invalid parameter target[] (illegal number of dimensions: "+ ArrayDimension(target) +")", ERR_INCOMPATIBLE_ARRAY)));
@@ -40,19 +43,12 @@ int iCopyRates(double &target[][], string symbol = "0", int timeframe = NULL) {
    if (symbol == "0") symbol = Symbol();                       // (string) NULL
    if (!timeframe) timeframe = Period();
 
-   #define TIME               0                                // rates array indexes
-   #define OPEN               1
-   #define LOW                2
-   #define HIGH               3
-   #define CLOSE              4
-   #define VOLUME             5
-
    // maintain a map "symbol,timeframe" => data[] to enable parallel usage with multiple timeseries
-   #define CR.Tick            0                                // last value of global var Tick for detecting multiple calls during the same price tick
-   #define CR.Bars            1                                // last number of bars of the timeseries
-   #define CR.ChangedBars     2                                // last returned value of ChangedBars
-   #define CR.FirstBarTime    3                                // opentime of the first bar of the timeseries (newest bar)
-   #define CR.LastBarTime     4                                // opentime of the last bar of the timeseries (oldest bar)
+   #define CR_Ticks           0                                // last value of global var Ticks for detecting multiple calls during the same price tick
+   #define CR_Bars            1                                // last number of bars of the timeseries
+   #define CR_ChangedBars     2                                // last returned value of ChangedBars
+   #define CR_YoungestBarTime 3                                // opentime of the youngest bar of the timeseries
+   #define CR_OldestBarTime   4                                // opentime of the oldest bar of the timeseries
 
    string keys[];                                              // TODO: store all data elsewhere to survive indicator init cycles
    int    data[][5];                                           // TODO: reset data on account change
@@ -63,76 +59,79 @@ int iCopyRates(double &target[][], string symbol = "0", int timeframe = NULL) {
       if (keys[i] == key) break;
    }
    if (i == size) {                                            // add the key if not found
-      ArrayResize(keys, size+1); keys[i] = key;
+      ArrayResize(keys, size+1);
       ArrayResize(data, size+1);
+      keys[i] = key;
    }
 
    /*
-   - When a timeseries is accessed the first time ArrayCopyRates() typically sets the status ERS_HISTORY_UPDATE and new data
-     may arrive later.
-   - If an empty timeseries is re-requested before new data has arrived ArrayCopyRates() returns -1 and sets the error
+   - If a timeseries is accessed the first time, ArrayCopyRates() typically sets status ERS_HISTORY_UPDATE and new data may
+     arrive later.
+   - If an empty timeseries is re-requested and before new data has arrived, ArrayCopyRates() returns -1 and sets error
      ERR_ARRAY_ERROR (also in tester). Here the error is interpreted as ERR_SERIES_NOT_AVAILABLE, suppressed and 0 is returned.
    - If an empty timeseries is requested after recompilation or without a server connection no error may be set.
-   - ArrayCopyRates() doesn't set an error if the timeseries is unknown (symbol or timeframe).
+   - WARN: ArrayCopyRates() doesn't set an error if the timeseries is unknown (symbol or timeframe).
    */
 
    int bars = ArrayCopyRates(target, symbol, timeframe);
    int error = GetLastError();
 
    if (bars < 0) {
-      if (error!=ERR_ARRAY_ERROR && error!=ERR_SERIES_NOT_AVAILABLE)
+      if (error!=ERR_ARRAY_ERROR && error!=ERR_SERIES_NOT_AVAILABLE) {
          return(_EMPTY(catch("iCopyRates(4)->ArrayCopyRates("+ symbol +", "+ PeriodDescription(timeframe) +") => "+ bars, intOr(error, ERR_RUNTIME_ERROR))));
+      }
       error = NO_ERROR;
       bars = 0;
    }
-   if (error && error!=ERS_HISTORY_UPDATE)
+   if (error && error!=ERS_HISTORY_UPDATE) {
       return(_EMPTY(catch("iCopyRates(5)->ArrayCopyRates("+ symbol +", "+ PeriodDescription(timeframe) +") => "+ bars, error)));
+   }
    error = NO_ERROR;
 
    // always return the same result for the same tick
-   if (Ticks == data[i][CR.Tick])
-      return(data[i][CR.ChangedBars]);
+   if (Ticks == data[i][CR_Ticks]) {
+      return(data[i][CR_ChangedBars]);
+   }
 
-   datetime firstBarTime=0, lastBarTime=0;
+   datetime firstBarTime = 0, lastBarTime = 0;
    int changedBars = 0;
 
    // resolve the number of changed bars; uses the same logic as iChangedBars()
    if (bars > 0) {
-      firstBarTime = target[     0][TIME];
-      lastBarTime  = target[bars-1][TIME];
+      firstBarTime = target[     0][BAR400_TIME];
+      lastBarTime  = target[bars-1][BAR400_TIME];
 
-      if (!data[i][CR.Tick]) {                                                   // first call for the timeseries
+      if (!data[i][CR_Ticks]) {                                                     // first call for the timeseries
          changedBars = bars;
       }
-      else if (bars==data[i][CR.Bars] && lastBarTime==data[i][CR.LastBarTime]) { // number of bars is unchanged and last bar is still the same
-         changedBars = 1;                                                        // a regular tick
+      else if (bars==data[i][CR_Bars] && lastBarTime==data[i][CR_OldestBarTime]) {  // number of bars is unchanged and last bar is still the same
+         changedBars = 1;                                                           // a regular tick
       }
-      else if (bars==data[i][CR.Bars]) {                                         // number of bars is unchanged but last bar changed: the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
-         if (IsLogInfo()) logInfo("iCopyRates(6)  number of bars unchanged but oldest bar differs, hit the timeseries MAX_CHART_BARS? (bars="+ bars +", lastBar="+ TimeToStr(lastBarTime, TIME_FULL) +", prevLastBar="+ TimeToStr(data[i][CR.LastBarTime], TIME_FULL) +")");
-         // find the bar stored in data[i][CR.FirstBarTime]
-         int offset = iBarShift(symbol, timeframe, data[i][CR.FirstBarTime], true);
-         if (offset == -1) changedBars = bars;                                   // CR.FirstBarTime not found: mark all bars as changed
-         else              changedBars = offset + 1;                             // +1 to cover a simultaneous BarOpen event
+      else if (bars==data[i][CR_Bars]) {                                            // number of bars is unchanged but last bar changed:
+         // find the bar stored in data[i][CR_YoungestBarTime]                      // the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
+         int offset = iBarShift(symbol, timeframe, data[i][CR_YoungestBarTime], true);
+         if (offset == -1) changedBars = bars;                                      // youngest bar not found: mark all bars as changed
+         else              changedBars = offset + 1;                                // +1 to cover a simultaneous BarOpen event
       }
-      else {                                                                     // the number of bars changed
-         if (bars < data[i][CR.Bars]) {
-            changedBars = bars;                                                  // the account changed: mark all bars as changed
+      else {                                                                        // the number of bars changed
+         if (bars < data[i][CR_Bars]) {
+            changedBars = bars;                                                     // the timeseries changed completely: mark all bars as changed
          }
-         else if (firstBarTime == data[i][CR.FirstBarTime]) {
-            changedBars = bars;                                                  // a data gap was filled: ambiguous => mark all bars as changed
+         else if (firstBarTime == data[i][CR_YoungestBarTime]) {
+            changedBars = bars;                                                     // a data gap was filled: ambiguous => mark all bars as changed
          }
          else {
-            changedBars = bars - data[i][CR.Bars] + 1;                           // new bars at the beginning: +1 to cover BarOpen events
+            changedBars = bars - data[i][CR_Bars] + 1;                              // new bars at the beginning: +1 to cover BarOpen events
          }
       }
    }
 
    // store all data
-   data[i][CR.Tick        ] = Ticks;
-   data[i][CR.Bars        ] = bars;
-   data[i][CR.ChangedBars ] = changedBars;
-   data[i][CR.FirstBarTime] = firstBarTime;
-   data[i][CR.LastBarTime ] = lastBarTime;
+   data[i][CR_Ticks          ] = Ticks;
+   data[i][CR_Bars           ] = bars;
+   data[i][CR_ChangedBars    ] = changedBars;
+   data[i][CR_YoungestBarTime] = firstBarTime;
+   data[i][CR_OldestBarTime  ] = lastBarTime;
 
    return(changedBars);
 }

@@ -603,16 +603,16 @@ double  INF;                                                      //  1.#INF |  
 #define STR_PAD_BOTH                         3
 
 
-// Array IDs für von ArrayCopyRates() definierte Arrays
-#define BAR.time                             0
-#define BAR.open                             1
-#define BAR.low                              2
-#define BAR.high                             3
-#define BAR.close                            4
-#define BAR.volume                           5
+// indexes for arrays created by ArrayCopyRates(double[][6], ...), MQL4.0 and MQL4.5
+#define BAR400_TIME                          0
+#define BAR400_OPEN                          1
+#define BAR400_LOW                           2
+#define BAR400_HIGH                          3
+#define BAR400_CLOSE                         4
+#define BAR400_VOLUME                        5
 
 
-// Price-Bar IDs (siehe Historyfunktionen)
+// price bar ids, @see rsfHistory.mq4
 #define BAR_T                                0  // (double) datetime
 #define BAR_O                                1
 #define BAR_H                                2

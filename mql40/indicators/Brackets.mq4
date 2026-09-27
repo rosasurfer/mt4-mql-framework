@@ -112,13 +112,13 @@ bool UpdateBrackets() {
       ArrayInitialize(brackets, 0);
 
       int i=0, fromBar, toBar, highBar, lowBar;
-      datetime opentime=rates[0][BAR.time], midnight=opentime - opentime%DAYS + 1*DAY, rangeStart, rangeEnd;
+      datetime opentime=rates[0][BAR400_TIME], midnight=opentime - opentime % DAYS + DAY, rangeStart, rangeEnd;
       //debug("UpdateBrackets(0.1)  Tick="+ Ticks +"  changedRateBars="+ changedRateBars +"  rates[0]="+ GmtTimeFormat(opentime, "%a, %Y.%m.%d %H:%M"));
 
       while (i < maxBrackets) {
          midnight  -= 1*DAY;
-         rangeStart = midnight + bracketStart*MINUTES;
-         rangeEnd   = midnight + bracketEnd*MINUTES;
+         rangeStart = midnight + bracketStart * MINUTES;
+         rangeEnd   = midnight + bracketEnd * MINUTES;
          fromBar    = iBarShiftNext    (NULL, ratesTimeframe, rangeStart); if (fromBar == -1) continue;  // -1: no such data (rangeStart too young)
          toBar      = iBarShiftPrevious(NULL, ratesTimeframe, rangeEnd-1); if (toBar   == -1) break;     // -1: no such data (rangeEnd too old)
          if (fromBar < toBar) continue;                                                                  // no such data (gap in rates)
@@ -128,10 +128,8 @@ bool UpdateBrackets() {
 
          brackets[i][I_STARTTIME] = rangeStart;
          brackets[i][I_ENDTIME  ] = rangeEnd;
-         brackets[i][I_HIGH     ] = rates[highBar][BAR.high];
-         brackets[i][I_LOW      ] = rates[lowBar ][BAR.low ];
-
-         //debug("UpdateBrackets(0.2)  Tick="+ Ticks +"  bracket from["+ fromBar +"]="+ GmtTimeFormat(rates[fromBar][BAR.time], "%a, %Y.%m.%d %H:%M") +"  to["+ toBar +"]="+ GmtTimeFormat(rates[toBar][BAR.time], "%a, %Y.%m.%d %H:%M"));
+         brackets[i][I_HIGH     ] = rates[highBar][BAR400_HIGH];
+         brackets[i][I_LOW      ] = rates[lowBar ][BAR400_LOW ];
          i++;
       }
       if (i < maxBrackets) ArrayResize(brackets, i);
