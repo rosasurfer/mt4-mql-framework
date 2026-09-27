@@ -164,13 +164,13 @@ bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
          bars = 3;
       }
       else {
-         DeleteInsideBars(timeframe);                             // on init or data pumping: delete all existing bars
+         if (!DeleteInsideBars(timeframe)) return(false);         // on init() or data pumping: delete existing IBs
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
       for (int i=2; i < bars; i++) {
          if (rates[i][HIGH] >= rates[i-1][HIGH] && rates[i][LOW] <= rates[i-1][LOW]) {
-            CreateInsideBar(timeframe, rates[i-1][TIME], rates[i-1][HIGH], rates[i-1][LOW]);
+            if (!CreateInsideBar(timeframe, rates[i-1][TIME], rates[i-1][HIGH], rates[i-1][LOW])) return(false);
             more--;
             if (!more) break;
          }
@@ -194,12 +194,13 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
 
    if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
       if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_M15)) return(true);                // same as changedBars = 1
+         if (!Tick.time)             return(true);
+         if (!IsBarOpen(PERIOD_M15)) return(!last_error);         // same as changedBars = 1
          more = 1;                                                // on BarOpen: check the last IB only
          bars = 8;                                                // cover M5 periods of 2 finished M15 bars
       }
       else {
-         DeleteInsideBars(PERIOD_M15);                            // on init or data pumping: delete all existing bars
+         if (!DeleteInsideBars(PERIOD_M15)) return(false);        // on init() or data pumping: delete existing IBs
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -216,7 +217,7 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
          }
          else {
             if (m15 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_M15, ppOpenTimeM15, pHigh, pLow);
+               if (!CreateInsideBar(PERIOD_M15, ppOpenTimeM15, pHigh, pLow)) return(false);
                more--;
                if (!more) break;
             }
@@ -247,12 +248,13 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
 
    if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
       if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_M30)) return(true);                // same as changedBarsM5 = 1
+         if (!Tick.time)             return(true);
+         if (!IsBarOpen(PERIOD_M30)) return(!last_error);         // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
          bars = 14;                                               // cover M5 periods of 2 finished M30 bars
       }
       else {
-         DeleteInsideBars(PERIOD_M30);                            // on init or data pumping: delete all existing bars
+         if (!DeleteInsideBars(PERIOD_M30)) return(false);        // on init() or data pumping: delete existing IBs
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -269,7 +271,7 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
          }
          else {
             if (m30 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_M30, ppOpenTimeM30, pHigh, pLow);
+               if (!CreateInsideBar(PERIOD_M30, ppOpenTimeM30, pHigh, pLow)) return(false);
                more--;
                if (!more) break;
             }
@@ -300,12 +302,13 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
 
    if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
       if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_H1)) return(true);                 // same as changedBarsM5 = 1
+         if (!Tick.time)            return(true);
+         if (!IsBarOpen(PERIOD_H1)) return(!last_error);          // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
          bars = 26;                                               // cover M5 periods of 2 finished H1 bars
       }
       else {
-         DeleteInsideBars(PERIOD_H1);                             // on init or data pumping: delete all existing bars
+         if (!DeleteInsideBars(PERIOD_H1)) return(false);         // on init() or data pumping: delete existing IBs
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -322,7 +325,7 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
          }
          else {
             if (h1 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_H1, ppOpenTimeH1, pHigh, pLow);
+               if (!CreateInsideBar(PERIOD_H1, ppOpenTimeH1, pHigh, pLow)) return(false);
                more--;
                if (!more) break;
             }
@@ -353,12 +356,13 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
 
    if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
       if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_H4)) return(true);                 // same as changedBarsM5 = 1
+         if (!Tick.time)            return(true);
+         if (!IsBarOpen(PERIOD_H4)) return(!last_error);          // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
          bars = 98;                                               // cover M5 periods of 2 finished H4 bars
       }
       else {
-         DeleteInsideBars(PERIOD_H4);                             // on init or data pumping: delete all existing bars
+         if (!DeleteInsideBars(PERIOD_H4)) return(false);         // on init() or data pumping: delete existing IBs
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -375,7 +379,7 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
          }
          else {                                                   // the current H1 bar belongs to a new H4 bar
             if (h4 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_H4, ppOpenTimeH4, pHigh, pLow);
+               if (!CreateInsideBar(PERIOD_H4, ppOpenTimeH4, pHigh, pLow)) return(false);
                more--;
                if (!more) break;
             }
@@ -406,12 +410,13 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
 
    if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
       if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_D1)) return(true);                 // same as changedBarsM5 = 1
+         if (!Tick.time)            return(true);
+         if (!IsBarOpen(PERIOD_D1)) return(!last_error);          // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
          bars = 578;                                              // cover M5 periods of 2 finished D1 bars
       }
       else {
-         DeleteInsideBars(PERIOD_D1);                             // on init or data pumping: delete all existing bars
+         if (!DeleteInsideBars(PERIOD_D1)) return(false);         // on init() or data pumping: delete existing IBs
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -428,7 +433,7 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
          }
          else {                                                   // the current H1 bar belongs to a new D1 bar
             if (d1 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_D1, ppOpenTimeD1, pHigh, pLow);
+               if (!CreateInsideBar(PERIOD_D1, ppOpenTimeD1, pHigh, pLow)) return(false);
                more--;
                if (!more) break;
             }
@@ -459,12 +464,13 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
 
    if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
       if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_W1)) return(true);                 // same as changedBarsM5 = 1
+         if (!Tick.time)            return(true);
+         if (!IsBarOpen(PERIOD_W1)) return(!last_error);          // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
          bars = 4034;                                             // cover M5 periods of 2 finished W1 bars
       }
       else {
-         DeleteInsideBars(PERIOD_W1);                             // on init or data pumping: delete all existing bars
+         if (!DeleteInsideBars(PERIOD_W1)) return(false);         // on init() or data pumping: delete existing IBs
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -483,7 +489,7 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
          }
          else {                                                   // the current H1 bar belongs to a new W1 bar
             if (w1 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_W1, ppOpenTimeW1, pHigh, pLow);
+               if (!CreateInsideBar(PERIOD_W1, ppOpenTimeW1, pHigh, pLow)) return(false);
                more--;
                if (!more) break;
             }
@@ -514,12 +520,13 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
 
    if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
       if (changedBarsM5 == 2) {
-         if (!IsBarOpen(PERIOD_MN1)) return(true);                // same as changedBarsM5 = 1
+         if (!Tick.time)             return(true);
+         if (!IsBarOpen(PERIOD_MN1)) return(!last_error);         // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
          bars = 17858;                                            // cover M5 periods of 2 finished MN1 bars
       }
       else {
-         DeleteInsideBars(PERIOD_MN1);                            // on init or data pumping: delete all existing bars
+         if (!DeleteInsideBars(PERIOD_MN1)) return(false);        // on init() or data pumping: delete existing IBs
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -538,7 +545,7 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
          }
          else {                                                   // the current H1 bar belongs to a new MN1 bar
             if (mn1 > 1 && high >= pHigh && low <= pLow) {
-               CreateInsideBar(PERIOD_MN1, ppOpenTimeMN1, pHigh, pLow);
+               if (!CreateInsideBar(PERIOD_MN1, ppOpenTimeMN1, pHigh, pLow)) return(false);
                more--;
                if (!more) break;
             }
@@ -615,8 +622,13 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    }
 
    // signal new inside bars
-   if (!__isSuperContext && Signal.onInsideBar) /*&&*/ if (IsBarOpen(timeframe)) {
-      return(onInsideBar(timeframe, closeTime, high, low));
+   if (!__isSuperContext && Signal.onInsideBar && Tick.time) {
+      if (IsBarOpen(timeframe)) {
+         return(onInsideBar(timeframe, closeTime, high, low));
+      }
+      else if (last_error != 0) {
+         return(false);
+      }
    }
    return(!catch("CreateInsideBar(1)"));
 }
