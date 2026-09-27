@@ -24,7 +24,6 @@ extern string Signal.SoundFile               = "Inside Bar.wav";
 #include <rsf/stdlib.mqh>
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/iBarShiftNext.mqh>
-#include <rsf/functions/iCopyRates.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
@@ -91,78 +90,223 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   double rates[][6];
-   int ratesTF, changedBars;
+   if (Symbol() == "BTCUSD.db") debug("onTick(0.1)  Tick.time="+ ifString(Tick.time, TimeToStr(Tick.time), "0"));
 
-   if (insideBarTF == PERIOD_M1) ratesTF = PERIOD_M1;
-   else                          ratesTF = PERIOD_M5;
+   // Simplifying the analysis by using a different than the current timeframe only works with broker-connected symbols.
+   // For compatibility with offline charts and/or synthetic symbols, the current chart timeframe must be used. This means
+   // signaling for a lower timeframe (e.g. H1) will pause if the chart is switched to a higher timeframe (e.g. H4).
+   // Drawing lower timeframe IBs on a higher timeframe chart is not possible, anyway.
+   if (Period() > insideBarTF) return(last_error);
+   if (ChangedBars < 2)        return(last_error);                // skip regular ticks, they never change IB status
 
-   if (!CopyRates(ratesTF, rates, changedBars)) return(last_error);
-
-   if (!ValidBars) {                         // if the chart changed rates must be marked as changed accordingly
-      changedBars = ArrayRange(rates, 0);    // TODO: find rates offset of the actual change and modify 'changedBars'
+   if (insideBarTF == Period()) {
+      CheckSameTimeframeIB();
    }
-
-   switch (insideBarTF) {
-      case PERIOD_M1 :
-      case PERIOD_M5 : CheckInsideBars   (rates, changedBars, insideBarTF); break;
-      case PERIOD_M15: CheckInsideBarsM15(rates, changedBars);              break;
-      case PERIOD_M30: CheckInsideBarsM30(rates, changedBars);              break;
-      case PERIOD_H1 : CheckInsideBarsH1 (rates, changedBars);              break;
-      case PERIOD_H4 : CheckInsideBarsH4 (rates, changedBars);              break;
-      case PERIOD_D1 : CheckInsideBarsD1 (rates, changedBars);              break;
-      case PERIOD_W1 : CheckInsideBarsW1 (rates, changedBars);              break;
-      case PERIOD_MN1: CheckInsideBarsMN1(rates, changedBars);              break;
+   else {
+      CheckHigherTimeframeIB();
    }
    return(last_error);
+
+
+   double rates[][6];
+   switch (insideBarTF) {
+      case PERIOD_M1:  CheckInsideBarsM1();       break;
+      case PERIOD_M5:  CheckInsideBarsM5 (rates); break;
+      case PERIOD_M15: CheckInsideBarsM15(rates); break;
+      case PERIOD_M30: CheckInsideBarsM30(rates); break;
+      case PERIOD_H1 : CheckInsideBarsH1 (rates); break;
+      case PERIOD_H4 : CheckInsideBarsH4 (rates); break;
+      case PERIOD_D1 : CheckInsideBarsD1 (rates); break;
+      case PERIOD_W1 : CheckInsideBarsW1 (rates); break;
+      case PERIOD_MN1: CheckInsideBarsMN1(rates); break;
+   }
 }
 
 
 /**
- * Copy the rates of the specified timeframe to the passed array and resolve the number of changed bars since the last tick.
- *
- * @param  _In_  int    timeframe   - rates timeframe
- * @param  _Out_ double rates[][]   - array receiving the rates
- * @param  _Out_ int    changedBars - variable receiving the number of changed bars
+ * Check current bars for new or changed inside bars of the same timeframe.
  *
  * @return bool - success status
  */
-bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
-   int changed = iCopyRates(rates, NULL, timeframe);
-   if (changed < 0) return(false);
-   changedBars = changed;
+bool CheckSameTimeframeIB() {
    return(true);
 }
 
 
 /**
- * Check the passed rates[] for new or changed inside bars.
- *
- * @param  double rates[][]   - rates array
- * @param  int    changedBars - number of changed bars in rates[]
- * @param  int    timeframe   - inside bar timeframe
+ * Check bars for new or changed inside bars of a higher timeframe.
  *
  * @return bool - success status
  */
-bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
-   // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of M1/M5 are
-   // correctly aligned. On timeframes > M5 this assumption may be wrong.
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
+bool CheckHigherTimeframeIB() {
+   int more, bars;
 
-   int bars = ArrayRange(rates, 0), more;
+   if (Symbol() == "BTCUSD.db") insideBarTF = 2;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
+      if (Symbol() == "BTCUSD.db") debug("CheckHigherTimeframeIB(0.1)");
+      if (!IsBarOpen(insideBarTF)) return(!last_error);              // if not BarOpen, it's the same as ChangedBars = 1
+      if (Symbol() == "BTCUSD.db") debug("CheckHigherTimeframeIB(0.2)");
+      more = 1;                                                      // if BarOpen: check the finished HigherTF bar only
+      bars = 1 + 2 * insideBarTF/Period();                           // cover LowerTF bars of 2 finished HigherTF bars,
+      if (Symbol() == "BTCUSD.db") debug("CheckHigherTimeframeIB(0.3)  BarOpen("+ TimeframeDescription(insideBarTF) +")");
+   }                                                                 // that's current bar + actual IB + preceding outside bar
+   else {
+      DeleteInsideBars(insideBarTF);                                 // on init() or additional data: delete all existing IBs
+      more = maxInsideBars;                                          // re-check for the configured number of IBs
+      bars = Bars;
+   }
+
+   datetime htf0Time, htf1Time, htf2Time;
+   double htf1High, htf1Low, htf2High, htf2Low;
+   int bar1From, bar1To, bar2From, bar2To;
+
+   // inspect current chart bars
+   for (int bar=0; bar < bars; bar++) {
+      // resolve htfTime[0]: current HTF bar
+      if (!htf0Time) {
+         htf0Time = Time[bar] - Time[bar] % (insideBarTF * MINUTES);
+         bar = iBarShiftNext(NULL, NULL, htf0Time);                  // offset of the corresponding chart bar
+         if (bar < 0)            return(!catch("CheckHigherTimeframeIB(1)  chart bar for htfTime[0]="+ TimeToStr(htf0Time) +" not found", ERR_ILLEGAL_STATE));
+         if (bar == EMPTY_VALUE) return(false);
+         bar++;
+         if (bar >= bars) break;
+         bar1To = bar;
+      }
+
+      // resolve htfTime[1]: the next possible inside bar
+      if (!htf1Time) {
+         htf1Time = Time[bar] - Time[bar] % (insideBarTF * MINUTES);
+         bar = iBarShiftNext(NULL, NULL, htf1Time);                  // offset of the corresponding chart bar
+         if (bar < 0)            return(!catch("CheckHigherTimeframeIB(2)  chart bar for htfTime[1]="+ TimeToStr(htf1Time) +" not found", ERR_ILLEGAL_STATE));
+         if (bar == EMPTY_VALUE) return(false);
+         bar1From = bar;
+         bar++;
+         if (bar >= bars) break;
+      }
+
+      // resolve htfTime[2]: the next possible outside bar
+      bar2To   = bar;
+      htf2Time = Time[bar] - Time[bar] % (insideBarTF * MINUTES);
+      bar = iBarShiftNext(NULL, NULL, htf2Time);                     // offset of the corresponding chart bar
+      if (bar < 0)            return(!catch("CheckHigherTimeframeIB(3)  chart bar for htfTime[2]="+ TimeToStr(htf2Time) +" not found", ERR_ILLEGAL_STATE));
+      if (bar == EMPTY_VALUE) return(false);
+      bar2From = bar;
+
+      // resolve high/low of htf[1] and htf[2]
+      if (!htf1High) htf1High = High[iHighest(NULL, NULL, MODE_HIGH, bar1From-bar1To+1, bar1To)];
+      if (!htf1Low)  htf1Low  = Low [iLowest (NULL, NULL, MODE_LOW,  bar1From-bar1To+1, bar1To)];
+
+      htf2High = High[iHighest(NULL, NULL, MODE_HIGH, bar2From-bar2To+1, bar2To)];
+      htf2Low  = Low [iLowest (NULL, NULL, MODE_LOW,  bar2From-bar2To+1, bar2To)];
+
+      // resolve the actual inside bar status
+      if (htf2High >= htf1High && htf2Low <= htf1Low) {
+         if (Symbol() == "BTCUSD.db") {
+            if (ValidBars > 0) {
+               debug("CheckHigherTimeframeIB(0.4)  calling CreateInsideBar()...");
+            }
+         }
+         else {
+            CreateInsideBar(insideBarTF, htf1Time, htf1High, htf1Low);
+         }
+         more--;
+         if (!more) break;
+      }
+
+      // prepare next iteration
+      htf0Time = htf1Time;
+      htf1Time = htf2Time;
+      bar1To   = bar2To;
+      bar1From = bar2From;
+      htf1High = htf2High;
+      htf1Low  = htf2Low;
+   }
+   return(!catch("CheckHigherTimeframeIB(4)"));
+
+
+
+
+   // --- old ---------------------------------------------------------------------------------------------------------------
+   datetime openTimeHtf, pOpenTimeHtf, ppOpenTimeHtf;                // prevOpenTimeHtf/prevPrevOpenTimeHtf
+   double high, pHigh, low, pLow;                                    // high/prevHigh, low/prevLow
+   int htfBar = -1;
+
+   for (bar=0; bar < bars; bar++) {
+      openTimeHtf = Time[bar] - Time[bar] % (insideBarTF * MINUTES); // opentime of the HigherTF bar
+
+      if (openTimeHtf == pOpenTimeHtf) {                             // same HigherTF bar
+         high = MathMax(High[bar], high);
+         low  = MathMin(Low [bar], low);
+      }
+      else {                                                         // new (older) HigherTF bar
+         if (htfBar > 1 && high >= pHigh && low <= pLow) {
+            CreateInsideBar(insideBarTF, ppOpenTimeHtf, pHigh, pLow);
+            more--;
+            if (!more) break;
+         }
+         htfBar++;
+         ppOpenTimeHtf = pOpenTimeHtf;
+         pOpenTimeHtf  = openTimeHtf;
+         pHigh         = high;
+         pLow          = low;
+         high          = High[bar];
+         low           = Low [bar];
+      }
+   }
+   return(true);
+}
+
+
+
+/**
+ * Check the current timeseries for new or changed M1 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsM1() {
+   int bars=Bars, more;
+
+   if (ChangedBars == 2) {
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 3;
    }
    else {
-      DeleteInsideBars(timeframe);                                // on init() or data pumping: delete all existing bars
+      DeleteInsideBars(insideBarTF);                              // on init() or data pumping: delete all existing bars
       more = maxInsideBars;                                       // check the configured number of IBs
    }
 
    for (int i=2; i < bars; i++) {
-      if (rates[i][BAR400_HIGH] >= rates[i-1][BAR400_HIGH] && rates[i][BAR400_LOW] <= rates[i-1][BAR400_LOW]) {
-         CreateInsideBar(timeframe, rates[i-1][BAR400_TIME], rates[i-1][BAR400_HIGH], rates[i-1][BAR400_LOW]);
+      if (High[i] >= High[i-1] && Low[i] <= Low[i-1]) {
+         CreateInsideBar(insideBarTF, Time[i-1], High[i-1], Low[i-1]);
+         more--;
+         if (!more) break;
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check the current timeseries for new or changed M5 inside bars.
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsM5(double rates[][]) {
+   int bars=Bars, more;
+
+   if (ChangedBars == 2) {
+      more = 1;                                                   // on BarOpen: check the last IB only
+      bars = 3;
+   }
+   else {
+      DeleteInsideBars(insideBarTF);                              // on init() or data pumping: delete all existing bars
+      more = maxInsideBars;                                       // check the configured number of IBs
+   }
+
+   for (int i=2; i < bars; i++) {
+      if (High[i] >= High[i-1] && Low[i] <= Low[i-1]) {
+         CreateInsideBar(insideBarTF, Time[i-1], High[i-1], Low[i-1]);
          more--;
          if (!more) break;
       }
@@ -175,16 +319,13 @@ bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
  * Check rates for M15 inside bars. Operates on M5 rates as M15 bars may be unevenly aligned.
  *
  * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsM15(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
+bool CheckInsideBarsM15(double ratesM5[][]) {
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
       if (!IsBarOpen(PERIOD_M15)) return(!last_error);            // same as changedBars = 1
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 8;                                                   // cover M5 periods of 2 finished M15 bars
@@ -228,16 +369,13 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBars) {
  * Check rates for M30 inside bars. Operates on M5 rates as M30 bars may be unevenly aligned.
  *
  * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsM30(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
+bool CheckInsideBarsM30(double ratesM5[][]) {
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
       if (!IsBarOpen(PERIOD_M30)) return(!last_error);            // same as changedBars = 1
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 14;                                                  // cover M5 periods of 2 finished M30 bars
@@ -281,16 +419,13 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBars) {
  * Check rates for H1 inside bars. Operates on M5 rates as H1 bars may be unevenly aligned.
  *
  * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsH1(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
+bool CheckInsideBarsH1(double ratesM5[][]) {
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
       if (!IsBarOpen(PERIOD_H1)) return(!last_error);             // same as changedBars = 1
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 26;                                                  // cover M5 periods of 2 finished H1 bars
@@ -334,16 +469,13 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBars) {
  * Check rates for H4 inside bars. Operates on M5 rates as H4 bars may be unevenly aligned.
  *
  * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsH4(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
+bool CheckInsideBarsH4(double ratesM5[][]) {
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
       if (!IsBarOpen(PERIOD_H4)) return(!last_error);             // same as changedBars = 1
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 98;                                                  // cover M5 periods of 2 finished H4 bars
@@ -387,16 +519,13 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBars) {
  * Check rates for D1 inside bars. Operates on M5 rates as D1 bars may be unevenly aligned.
  *
  * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsD1(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
+bool CheckInsideBarsD1(double ratesM5[][]) {
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
       if (!IsBarOpen(PERIOD_D1)) return(!last_error);             // same as changedBars = 1
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 578;                                                 // cover M5 periods of 2 finished D1 bars
@@ -440,16 +569,13 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBars) {
  * Check rates for W1 inside bars. Operates on M5 rates as W1 bars may be unevenly aligned.
  *
  * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
+bool CheckInsideBarsW1(double ratesM5[][]) {
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
       if (!IsBarOpen(PERIOD_W1)) return(!last_error);             // same as changedBars = 1
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 4034;                                                // cover M5 periods of 2 finished W1 bars
@@ -495,16 +621,13 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
  * Check rates for MN1 inside bars. Operates on M5 rates as MN1 bars may be unevenly aligned.
  *
  * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBarsMN1(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
+bool CheckInsideBarsMN1(double ratesM5[][]) {
    int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
       if (!IsBarOpen(PERIOD_MN1)) return(!last_error);            // same as changedBars = 1
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 17858;                                               // cover M5 periods of 2 finished MN1 bars
