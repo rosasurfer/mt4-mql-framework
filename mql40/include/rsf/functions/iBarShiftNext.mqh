@@ -7,7 +7,7 @@
  * @param  datetime time            - Zeitpunkt (Serverzeit)
  * @param  int      mute [optional] - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
- * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für die Datenreihe);
+ * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für die Datenreihe),
  *               EMPTY_VALUE, falls ein Fehler auftrat
  *
  * Note: Ein gemeldeter Status ERS_HISTORY_UPDATE ist kein Fehler und wird nicht weitergemeldet.
@@ -41,12 +41,14 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, in
    int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);                          // throws ERR_ARRAY_ERROR, wenn solche Daten (noch) nicht existieren
    error = GetLastError();
 
-   if (bars<=0 || error) {                                                                // Da immer beide Bedingungen geprüft werden müssen, braucht das OR nicht optimiert werden.
-      if (bars<=0 || error!=ERS_HISTORY_UPDATE) {
-         if (!error || error==ERS_HISTORY_UPDATE || error==ERR_ARRAY_ERROR)               // aus ERR_ARRAY_ERROR wird ERR_SERIES_NOT_AVAILABLE
-            error = ERR_SERIES_NOT_AVAILABLE;
-         if (error==ERR_SERIES_NOT_AVAILABLE && mute & F_ERR_SERIES_NOT_AVAILABLE)
+   if (bars <= 0 || error) {                                                              // Da immer beide Bedingungen geprüft werden müssen, braucht das OR nicht optimiert werden.
+      if (bars <= 0 || error != ERS_HISTORY_UPDATE) {
+         if (!error || error == ERS_HISTORY_UPDATE || error == ERR_ARRAY_ERROR) {
+            error = ERR_SERIES_NOT_AVAILABLE;                                             // aus ERR_ARRAY_ERROR wird ERR_SERIES_NOT_AVAILABLE
+         }
+         if (error == ERR_SERIES_NOT_AVAILABLE && mute & F_ERR_SERIES_NOT_AVAILABLE) {
             return(_EMPTY_VALUE(SetLastError(error)));                                    // leise
+         }
          return(_EMPTY_VALUE(catch("iBarShiftNext(3)->ArrayCopySeries("+ symbol +","+ PeriodDescription(period) +") => "+ bars, error))); // laut
       }
    }
@@ -59,8 +61,9 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, in
    else if (time < times[0]) {                                                            // Kurslücke, die nächste existierende Bar zurückgeben
       bar   = iBarShift(symbol, period, time) - 1;
       error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)
+      if (error && error != ERS_HISTORY_UPDATE) {
          return(_EMPTY_VALUE(catch("iBarShiftNext(4)->iBarShift("+ symbol +","+ PeriodDescription(period) +") => "+ bar, error)));
+      }
    }
    else /*time > times[0]*/ {                                                             // Zeitpunkt ist zu jung für die Reihe
       //bar ist und bleibt -1
