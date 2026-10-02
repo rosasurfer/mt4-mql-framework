@@ -94,6 +94,7 @@ int onInit() {
    // reset the command handler
    string sNull[];
    GetChartCommand("", sNull);
+   GetChartCommand("ParameterStepper", sNull);
 
    // validate inputs
    int initReason = ProgramInitReason();
