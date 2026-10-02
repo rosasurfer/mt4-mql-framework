@@ -325,7 +325,7 @@ bool ParseLines(string lines[]) {
 
       // split line into columns and parse cells
       foundCols = Explode(line, ",", cols, NULL);
-      if (foundCols != sizeCols)                        return(!catch("ParseLines(3)  unsupported file format in line "+ (i+1) +": found "+ foundCols +" data cells (expected "+ sizeCols +")", ERR_INVALID_FILE_FORMAT));
+      if (foundCols != sizeCols)                        return(!catch("ParseLines(3)  unsupported file format in line "+ (i+1) +": found "+ foundCols +" data cell"+ Pluralize(foundCols) +" (expected "+ sizeCols +")", ERR_INVALID_FILE_FORMAT));
 
       // ticket (32-bit unsigned int)
       sTicket = StrTrim(cols[I_TICKET]);
