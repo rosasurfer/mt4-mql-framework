@@ -100,6 +100,8 @@ int onInit() {
    int initReason = ProgramInitReason();
    if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE || initReason==IR_SYMBOLCHANGE) {
       if (ValidateInputs()) {
+         RestoreStatus();
+
          // parse the specified file
          string lines[];
          if (!ReadFile(CsvFileName, lines)) return(last_error);
@@ -113,6 +115,19 @@ int onInit() {
       }
    }
    return(catch("onInit(1)"));
+}
+
+
+/**
+ * Deinitilization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   int reason = UninitializeReason();
+   if (reason==UR_CHARTCLOSE || reason==UR_CLOSE) {
+      StoreStatus();
+   }
 }
 
 
@@ -586,6 +601,39 @@ bool ValidateInputs() {
    PriceShift.Step = MathAbs(PriceShift.Step);
 
    return(!catch("ValidateInputs(4)"));
+}
+
+
+/**
+ * Store the status of the parameter stepper in the chart (for template reloads and terminal restarts).
+ *
+ * @return bool - success status
+ */
+bool StoreStatus() {
+   if (__isChart && PriceShift.Step) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+      Chart.StoreDouble(prefix +"PriceShift", PriceShift);
+   }
+   return(catch("StoreStatus(1)"));
+}
+
+
+/**
+ * Restore the status of the parameter stepper from the chart.
+ *
+ * @return bool - success status
+ */
+bool RestoreStatus() {
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
+
+   double dValue;
+   if (Chart.RestoreDouble(prefix +"PriceShift", dValue)) {    // restore and remove it
+      if (PriceShift.Step != 0) {                              // apply if stepper is still active
+         PriceShift = dValue;
+      }
+   }
+   return(!catch("RestoreStatus(1)"));
 }
 
 
