@@ -1,14 +1,17 @@
 /**
- * Helper EA to visualize the trade history of a Topstep account, exported in CSV format.
+ * EA to visualize the trade history of a Topstep account, exported in CSV format.
  *
- * The EA parses the trade history and converts it to the framework's internal format. Then the history is processed
- * as if the EA traded it. Use the standard EA commands to show/hide historic trades.
+ * The EA parses the Topstep history and converts it to the framework's internal history format. Then history is processed
+ * as if the EA traded it. Use the standard EA commands to show/hide the trades.
  *
  *
  * Input parameters
  * ----------------
- *  • CsvFileName:       File path/name containing the CSV data export. Must be located in the "MQL4/Files" directory.
+ *  • CsvFileName:       File path/name containing the CSV data export, relative to the terminal's "MQL4/Files" directory.
  *  • CsvSymbol:         Symbol in the CSV file to map to the current chart. If empty the chart symbol is used.
+ *  • PriceShift:        Offset to apply to converted open/close prices.
+ *  • PriceShift.Step:   Option to control parameter "PriceShift" via keyboard. If non-zero it defines the step size of the
+ *                       parameter stepper. If 0 (zero) parameter stepping is disabled.
  *  • AutoConfiguration: If enabled all input parameters can be pre-defined in the configuration.
  *
  *
@@ -29,9 +32,13 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string CsvFileName       = "";              // name of the CSV file located in the "MQL4/Files" directory
-extern string CsvSymbol         = "";              // symbol in the CSV file to map to the current chart (empty: chart symbol)
-extern bool   AutoConfiguration = true;
+extern string CsvFileName                    = ""; // name of the CSV file located in directory "MQL4/Files"
+extern string CsvSymbol                      = ""; // symbol in the CSV file to map to the current chart (empty: chart symbol)
+extern double PriceShift                     = 0;  // offset to apply to converted open/close prices
+extern double PriceShift.Step                = 0;  // step size for parameter stepping
+
+extern string ___a__________________________ = "";
+extern bool   AutoConfiguration              = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -59,6 +66,10 @@ string Instance.ID = "999";                        // dummy, needed by StoreVola
 
 #include <rsf/experts/trade/AddHistoryRecord.mqh>
 
+// parameter stepper directions
+#define STEP_UP    1
+#define STEP_DOWN -1
+
 
 /**
  * Initialization.
@@ -83,11 +94,14 @@ int onInit() {
    // reset the command handler
    string sNull[];
    GetChartCommand("", sNull);
+   GetChartCommand("ParameterStepper", sNull);
 
    // validate inputs
    int initReason = ProgramInitReason();
    if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE || initReason==IR_SYMBOLCHANGE) {
       if (ValidateInputs()) {
+         RestoreStatus();
+
          // parse the specified file
          string lines[];
          if (!ReadFile(CsvFileName, lines)) return(last_error);
@@ -101,6 +115,19 @@ int onInit() {
       }
    }
    return(catch("onInit(1)"));
+}
+
+
+/**
+ * Deinitilization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   int reason = UninitializeReason();
+   if (reason==UR_CHARTCLOSE || reason==UR_CLOSE) {
+      StoreStatus();
+   }
 }
 
 
@@ -123,7 +150,12 @@ int onDeinitRemove() {
 int onTick() {
    if (__isChart) {
       if (!HandleCommands()) return(last_error);
+
+      if (PriceShift.Step != 0) {
+         if (!HandleCommands("ParameterStepper")) return(last_error);
+      }
    }
+
    return(catch("onTick(1)"));
 }
 
@@ -147,7 +179,72 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
+   else if (cmd == "parameter") {
+      if (params == "up")   return(ParameterStepper(STEP_UP, keys));
+      if (params == "down") return(ParameterStepper(STEP_DOWN, keys));
+   }
    return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(fullCmd)));
+}
+
+
+/**
+ * Step up/down input parameter "PriceShift".
+ *
+ * @param  int direction - STEP_UP | STEP_DOWN
+ * @param  int keys      - pressed modifier keys
+ *
+ * @return bool - success status
+ */
+bool ParameterStepper(int direction, int keys) {
+   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   if (!PriceShift.Step) {
+      PlaySoundEx("Plonk.wav");
+      return(false);
+   }
+
+   double shiftValue;
+
+   // update input PriceShift
+   if (direction == STEP_UP) {
+      PriceShift = NormalizeDouble(PriceShift + PriceShift.Step, Digits);
+      shiftValue = PriceShift.Step;
+   }
+   else {
+      PriceShift = NormalizeDouble(PriceShift - PriceShift.Step, Digits);
+      shiftValue = -PriceShift.Step;
+   }
+   if (IsLogDebug()) logDebug("ParameterStepper(1)  PriceShift = "+ NumberToStr(PriceShift, PriceFormat));
+
+   // iterate over the history and modify all trades
+   int size = ArrayRange(partialClose, 0);
+   for (int i=0; i < size; i++) {
+      if (partialClose[i][H_OPENPRICE     ] != 0) partialClose[i][H_OPENPRICE     ] = NormalizeDouble(partialClose[i][H_OPENPRICE     ] + shiftValue, Digits);
+      if (partialClose[i][H_OPENPRICE_SIG ] != 0) partialClose[i][H_OPENPRICE_SIG ] = NormalizeDouble(partialClose[i][H_OPENPRICE_SIG ] + shiftValue, Digits);
+      if (partialClose[i][H_STOPLOSS      ] != 0) partialClose[i][H_STOPLOSS      ] = NormalizeDouble(partialClose[i][H_STOPLOSS      ] + shiftValue, Digits);
+      if (partialClose[i][H_TAKEPROFIT    ] != 0) partialClose[i][H_TAKEPROFIT    ] = NormalizeDouble(partialClose[i][H_TAKEPROFIT    ] + shiftValue, Digits);
+      if (partialClose[i][H_CLOSEPRICE    ] != 0) partialClose[i][H_CLOSEPRICE    ] = NormalizeDouble(partialClose[i][H_CLOSEPRICE    ] + shiftValue, Digits);
+      if (partialClose[i][H_CLOSEPRICE_SIG] != 0) partialClose[i][H_CLOSEPRICE_SIG] = NormalizeDouble(partialClose[i][H_CLOSEPRICE_SIG] + shiftValue, Digits);
+   }
+   size = ArrayRange(history, 0);
+   for (i=0; i < size; i++) {
+      if (history[i][H_OPENPRICE     ] != 0) history[i][H_OPENPRICE     ] = NormalizeDouble(history[i][H_OPENPRICE     ] + shiftValue, Digits);
+      if (history[i][H_OPENPRICE_SIG ] != 0) history[i][H_OPENPRICE_SIG ] = NormalizeDouble(history[i][H_OPENPRICE_SIG ] + shiftValue, Digits);
+      if (history[i][H_STOPLOSS      ] != 0) history[i][H_STOPLOSS      ] = NormalizeDouble(history[i][H_STOPLOSS      ] + shiftValue, Digits);
+      if (history[i][H_TAKEPROFIT    ] != 0) history[i][H_TAKEPROFIT    ] = NormalizeDouble(history[i][H_TAKEPROFIT    ] + shiftValue, Digits);
+      if (history[i][H_CLOSEPRICE    ] != 0) history[i][H_CLOSEPRICE    ] = NormalizeDouble(history[i][H_CLOSEPRICE    ] + shiftValue, Digits);
+      if (history[i][H_CLOSEPRICE_SIG] != 0) history[i][H_CLOSEPRICE_SIG] = NormalizeDouble(history[i][H_CLOSEPRICE_SIG] + shiftValue, Digits);
+   }
+
+   // update the display
+   if (status.showTradeHistory) {
+      if (ToggleTradeHistory(false)) {
+         ToggleTradeHistory(false);
+      }
+   }
+
+   PlaySoundEx("Parameter Step.wav");
+   return(true);
 }
 
 
@@ -228,7 +325,7 @@ bool ParseLines(string lines[]) {
 
       // split line into columns and parse cells
       foundCols = Explode(line, ",", cols, NULL);
-      if (foundCols != sizeCols)                        return(!catch("ParseLines(3)  unsupported file format in line "+ (i+1) +": found "+ foundCols +" data cells (expected "+ sizeCols +")", ERR_INVALID_FILE_FORMAT));
+      if (foundCols != sizeCols)                        return(!catch("ParseLines(3)  unsupported file format in line "+ (i+1) +": found "+ foundCols +" data cell"+ Pluralize(foundCols) +" (expected "+ sizeCols +")", ERR_INVALID_FILE_FORMAT));
 
       // ticket (32-bit unsigned int)
       sTicket = StrTrim(cols[I_TICKET]);
@@ -268,12 +365,14 @@ bool ParseLines(string lines[]) {
       if (!StrIsNumeric(sOpenPrice))                    return(!catch("ParseLines(14)  unexpected format of field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
       openPrice = StrToDouble(sOpenPrice);
       if (openPrice <= 0)                               return(!catch("ParseLines(15)  invalid field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
+      openPrice = NormalizeDouble(openPrice + PriceShift, Digits);
 
       // closePrice
       sClosePrice = StrTrim(cols[I_CLOSEPRICE]);
       if (!StrIsNumeric(sClosePrice))                    return(!catch("ParseLines(16)  unexpected format of field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       closePrice = StrToDouble(sClosePrice);
       if (closePrice <= 0)                               return(!catch("ParseLines(17)  invalid field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
+      closePrice = NormalizeDouble(closePrice + PriceShift, Digits);
 
       // profit
       sProfit = StrTrim(cols[I_PROFIT]);
@@ -281,14 +380,14 @@ bool ParseLines(string lines[]) {
       profit = StrToDouble(sProfit);
       profit = NormalizeDouble(profit, 2);
 
-      // commission (absolute value)
+      // commission (may be stored as positive value)
       sCommission = StrTrim(cols[I_COMMISSION]);
       if (!StrIsNumeric(sCommission))                    return(!catch("ParseLines(19)  unexpected format of field \"Commissions\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       commission = StrToDouble(sCommission);
       commission = -MathAbs(commission);
       commission = NormalizeDouble(commission, 2);
 
-      // exchange fee (absolute value)
+      // exchange fee (may be stored as positive value)
       sFee = StrTrim(cols[I_FEE]);
       if (!StrIsNumeric(sFee))                           return(!catch("ParseLines(20)  unexpected format of field \"Fees\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       fee = StrToDouble(sFee);
@@ -492,12 +591,49 @@ bool ValidateInputs() {
       fileName = fileName + ".csv";
    }
    CsvFileName = fileName;
-
    // CsvSymbol
    if (AutoConfiguration) CsvSymbol = GetConfigString(expert, "CsvSymbol", CsvSymbol);
    CsvSymbol = StrTrim(CsvSymbol);
+   // PriceShift
+   if (AutoConfiguration) PriceShift = GetConfigDouble(expert, "PriceShift", PriceShift);
+   // PriceShift.Step
+   if (AutoConfiguration) PriceShift.Step = GetConfigDouble(expert, "PriceShift.Step", PriceShift.Step);
+   PriceShift.Step = MathAbs(PriceShift.Step);
 
-   return(!catch("ValidateInputs(3)"));
+   return(!catch("ValidateInputs(4)"));
+}
+
+
+/**
+ * Store the status of the parameter stepper in the chart (for template reloads and terminal restarts).
+ *
+ * @return bool - success status
+ */
+bool StoreStatus() {
+   if (__isChart && PriceShift.Step) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+      Chart.StoreDouble(prefix +"PriceShift", PriceShift);
+   }
+   return(catch("StoreStatus(1)"));
+}
+
+
+/**
+ * Restore the status of the parameter stepper from the chart.
+ *
+ * @return bool - success status
+ */
+bool RestoreStatus() {
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
+
+   double dValue;
+   if (Chart.RestoreDouble(prefix +"PriceShift", dValue)) {    // restore and remove it
+      if (PriceShift.Step != 0) {                              // apply if stepper is still active
+         PriceShift = dValue;
+      }
+   }
+   return(!catch("RestoreStatus(1)"));
 }
 
 
@@ -516,8 +652,10 @@ void EmergencyStop() {
  */
 string InputsToStr() {
    return(StringConcatenate(
-      "CsvFileName=",       DoubleQuoteStr(CsvFileName),  ";", NL,
-      "CsvSymbol=",         DoubleQuoteStr(CsvSymbol),    ";", NL,
-      "AutoConfiguration=", BoolToStr(AutoConfiguration), ";", NL
+      "CsvFileName=",       DoubleQuoteStr(CsvFileName),         ";", NL,
+      "CsvSymbol=",         DoubleQuoteStr(CsvSymbol),           ";", NL,
+      "PriceShift=",        NumberToStr(PriceShift, ".1+"),      ";", NL,
+      "PriceShift.Step=",   NumberToStr(PriceShift.Step, ".1+"), ";", NL,
+      "AutoConfiguration=", BoolToStr(AutoConfiguration),        ";", NL
    ));
 }
