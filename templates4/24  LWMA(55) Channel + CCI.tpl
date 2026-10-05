@@ -1,14 +1,18 @@
-<!-- 
+<!--
+EMA(144)
 Donchian Channel(50)
-Donchian Channel(30) Width in main window 
+LWMA(55) Channel + Colored Bars
+===============================
+CCI(14)
 -->
+
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=2
+scale=4
 graph=1
 fore=0
 grid=0
@@ -41,7 +45,7 @@ askline_color=13158600
 stops_color=17919
 
 <window>
-height=5000
+height=4300
 fixed_height=0
 
 <indicator>
@@ -119,6 +123,25 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
+name=MA Channel Colored Bars
+flags=339
+window_num=0
+<inputs>
+MaChannel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+MaChannel.Periods=55
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=Donchian Channel
 flags=339
 window_num=0
@@ -128,7 +151,8 @@ ShowChannel=1
 Channel.UpperColor=16711680
 Channel.LowerColor=255
 ShowReversals=on* | off | +N | -N
-Reversal.Width=2
+Reversal.Symbol=dot | thin-ring* | ring | thick-ring
+Reversal.Width=3
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
 Sound.onChannelWidening=0
@@ -143,19 +167,64 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Donchian Channel Width
+name=MA Channel
 flags=339
-window_num=1
+window_num=0
 <inputs>
-Periods=50
+MA1.Method=LWMA
+MA1.Periods=55
+ShowChartLegend=1
 </inputs>
 </expert>
-level_0=10
-level_1=20
-level_2=200
-level_3=500
-level_4=1000
-levels_color=15453831
+show_data=1
+</indicator>
+</window>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+MA1.Method=LWMA
+MA1.Periods=55
+ShowChartLegend=1
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<window>
+height=800
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=CCI
+flags=339
+window_num=2
+<inputs>
+Periods=14
+AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+Signal.onTrendChange=1
+Signal.onTrendChange.Types=sound* | alert* | mail
+</inputs>
+</expert>
+draw_2=2
+color_2=3329330
+weight_2=2
+draw_3=2
+color_3=255
+weight_3=2
+min=-170
+max=170
+levels_color=12632256
+levels_style=2
+levels_weight=1
+level_0=100
+level_1=0
+level_2=-100
 show_data=1
 </indicator>
 </window>
