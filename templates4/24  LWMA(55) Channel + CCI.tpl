@@ -207,6 +207,7 @@ window_num=2
 <inputs>
 Periods=14
 AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+Signal.Level=170
 Signal.onMomentum=1
 Signal.onMomentum.Types=sound* | alert* | mail
 </inputs>

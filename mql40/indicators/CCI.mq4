@@ -28,7 +28,8 @@ extern int    Histogram.Width                = 2;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
-extern bool   Signal.onMomentum              = false;                   // on crossing of +/-100
+extern int    Signal.Level                   = 100;
+extern bool   Signal.onMomentum              = false;
 extern string Signal.onMomentum.Types        = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
@@ -119,6 +120,10 @@ int onInit() {
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)    return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
+   // Signal.Level
+   if (AutoConfiguration) Signal.Level = GetConfigInt(indicator, "Signal.Level", Signal.Level);
+   Signal.Level = Abs(Signal.Level);
+   if (Signal.Level > 300)  return(catch("onInit(7)  invalid input parameter Signal.Level: "+ Signal.Level +" (must be from 0-300)", ERR_INVALID_INPUT_PARAMETER));
 
    // Signal.onMomentum
    string signalId = "Signal.onMomentum";
@@ -184,7 +189,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods);
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods), sigLevel = Signal.Level;
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
@@ -207,19 +212,19 @@ int onTick() {
 
          // update trade direction and length
          if (prevTrend > 0) {
-            if (cci[bar] > -100) trend[bar] = prevTrend + 1;   // continue long segment
-            else                 trend[bar] = -1;              // new short signal
+            if (cci[bar] > -sigLevel) trend[bar] = prevTrend + 1;       // continue long segment
+            else                      trend[bar] = -1;                  // new short signal
          }
          else if (prevTrend < 0) {
-            if (cci[bar] < 100) trend[bar] = prevTrend - 1;    // continue short segment
-            else                trend[bar] = 1;                // long signal
+            if (cci[bar] < sigLevel) trend[bar] = prevTrend - 1;        // continue short segment
+            else                     trend[bar] = 1;                    // long signal
          }
          else if (cci[bar+1] != EMPTY_VALUE) {
-            if (cci[bar+1] < 100 && cci[bar] >= 100) {
-               trend[bar] = 1;                                 // 1st long signal
+            if (cci[bar+1] < sigLevel && cci[bar] >= sigLevel) {
+               trend[bar] = 1;                                          // 1st long signal
             }
-            else if (cci[bar+1] > -100 && cci[bar] <= -100) {
-               trend[bar] = -1;                                // 1st short signal
+            else if (cci[bar+1] > -sigLevel && cci[bar] <= -sigLevel) {
+               trend[bar] = -1;                                         // 1st short signal
             }
          }
 
@@ -278,11 +283,13 @@ bool onCommand(string cmd, string params, int keys) {
 bool onMomentum(int direction) {
    if (direction!=MODE_LONG && direction!=MODE_SHORT) return(!catch("onMomentum(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // skip the signal if it was already handled elsewhere
+   // compose signal messages
    string sPeriod   = PeriodDescription();
    string indicator = "CCI("+ Periods +")";
-   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicator +".onMomentum("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1  = indicator +" "+ ifString(direction==MODE_LONG, "long", "short") +" signal (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string eventName = "rsf."+ StdSymbol() +","+ sPeriod +"."+ indicator +".onMomentum("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string sSigLevel = Signal.Level;
+   if (Signal.Level != 0) sSigLevel = ifString(direction==MODE_LONG, "+", "-") + sSigLevel;
+   string message1  = indicator +" momentum "+ ifString(direction==MODE_LONG, "up", "down") +": "+ sSigLevel +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    string message2  = Symbol() +","+ PeriodDescription() +": "+ message1;
    string localTime = TimeToStr(TimeLocalEx("onMomentum(2)"), TIME_MINUTES|TIME_SECONDS);
    string alias     = GetAccountAlias();
@@ -422,7 +429,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    string stepSize      = ifString(Periods.Step, ":"+ Periods.Step, "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   string sSignal       = ifString(Signal.onMomentum, " signal", "");
+   string sSignal       = ifString(Signal.onMomentum, " signal @"+ Signal.Level, "") +"   ";
    string name          = "CCI("+ Periods + stepSize + sAppliedPrice +")"+ sSignal;
    IndicatorShortName(name);                          // subwindow chart legend
 
@@ -470,6 +477,7 @@ string InputsToStr() {
       "Histogram.Width=",         Histogram.Width,                         ";", NL,
       "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
 
+      "Signal.Level=",            Signal.Level,                            ";", NL,
       "Signal.onMomentum=",       BoolToStr(Signal.onMomentum),            ";", NL,
       "Signal.onMomentum.Types=", DoubleQuoteStr(Signal.onMomentum.Types), ";", NL,
       "Signal.Sound.Up=",         DoubleQuoteStr(Signal.Sound.Up),         ";", NL,
