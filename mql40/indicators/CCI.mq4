@@ -13,7 +13,7 @@ int __DeinitFlags[];
 
 extern int    Periods                        = 14;
 extern int    Periods.Step                   = 0;                       // step size for parameter stepper via hotkey
-extern string AppliedPrice                   = "Open | High | Low | Close | Median | Typical* | Weighted";
+extern string AppliedPrice                   = "Open | High | Low | Close | Median | Typical | Weighted*";
 
 extern string ___a__________________________ = "=== Display settings ===";
 extern color  Histogram.Color.Long           = LimeGreen;
