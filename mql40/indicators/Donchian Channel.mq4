@@ -7,8 +7,8 @@
  * Input parameters
  * ----------------
  *  • Periods:                     Look-back periods of the Donchian Channel.
- *  • Periods.Step:                Option to control parameter "Period" via keyboard. If non-zero it defines the step size of
- *                                 the parameter stepper. If 0 (zero) parameter stepping is disabled.
+ *  • Periods.Step:                Option to control parameter "Period" via keyboard. If non-zero it defines the step size
+ *                                 of the parameter stepper. If 0 (zero) parameter stepping is disabled.
  *  • ShowChannel:                 Whether to display the Donchian Channel.
  *  • Channel.UpperColor:          Color of the upper Donchian Channel band.
  *  • Channel.LowerColor:          Color of the lower Donchian Channel band.
