@@ -17,7 +17,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Periods                        = 14;
+extern int    Periods                        = 20;
 extern int    Periods.Step                   = 0;                       // step size for parameter stepper via hotkey
 extern string AppliedPrice                   = "Open | High | Low | Close | Median | Typical* | Weighted";
 
