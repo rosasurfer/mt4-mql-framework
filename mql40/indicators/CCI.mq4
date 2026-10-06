@@ -64,8 +64,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #property indicator_minimum  -180
 
 double cci     [];                                 // all CCI values
-double cciLong [];                                 // long colored CCI values
-double cciShort[];                                 // short colored CCI values
+double cciLong [];                                 // long colored CCI values (contains positive + negative values)
+double cciShort[];                                 // short colored CCI values (contains positive + negative values)
 double trend   [];                                 // last color segment length
 
 int appliedPrice;
@@ -189,7 +189,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods), sigLevel = Signal.Level;
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods), signalLevel = Signal.Level;
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
@@ -210,21 +210,43 @@ int onTick() {
       if (bar < Bars-1) {
          int prevTrend = trend[bar+1];
 
-         // update trade direction and length
-         if (prevTrend > 0) {
-            if (cci[bar] > -sigLevel) trend[bar] = prevTrend + 1;       // continue long segment
-            else                      trend[bar] = -1;                  // new short signal
-         }
-         else if (prevTrend < 0) {
-            if (cci[bar] < sigLevel) trend[bar] = prevTrend - 1;        // continue short segment
-            else                     trend[bar] = 1;                    // long signal
-         }
-         else if (cci[bar+1] != EMPTY_VALUE) {
-            if (cci[bar+1] < sigLevel && cci[bar] >= sigLevel) {
-               trend[bar] = 1;                                          // 1st long signal
+         // update trend direction and length
+         if (signalLevel != 0) {
+            // signalLevel is non-zero: histogram color flips on touch
+            if (prevTrend > 0) {
+               if (cci[bar] > -signalLevel) trend[bar] = prevTrend + 1;       // continue long segment
+               else                         trend[bar] = -1;                  // new short segment
             }
-            else if (cci[bar+1] > -sigLevel && cci[bar] <= -sigLevel) {
-               trend[bar] = -1;                                         // 1st short signal
+            else if (prevTrend < 0) {
+               if (cci[bar] < signalLevel) trend[bar] = prevTrend - 1;        // continue short segment
+               else                        trend[bar] = 1;                    // new log segment
+            }
+            else if (cci[bar+1] != EMPTY_VALUE) {
+               if (cci[bar+1] < signalLevel && cci[bar] >= signalLevel) {
+                  trend[bar] = 1;                                             // 1st long segment
+               }
+               else if (cci[bar+1] > -signalLevel && cci[bar] <= -signalLevel) {
+                  trend[bar] = -1;                                            // 1st short segment
+               }
+            }
+         }
+         else {
+            // signalLevel is zero: histogram color flips on cross
+            if (prevTrend > 0) {
+               if (cci[bar] >= 0) trend[bar] = prevTrend + 1;                 // continue long segment
+               else               trend[bar] = -1;                            // new short segment
+            }
+            else if (prevTrend < 0) {
+               if (cci[bar] <= 0) trend[bar] = prevTrend - 1;                 // continue short segment
+               else               trend[bar] = 1;                             // new log segment
+            }
+            else if (cci[bar+1] != EMPTY_VALUE) {
+               if (cci[bar+1] <= 0 && cci[bar] > 0) {
+                  trend[bar] = 1;                                             // 1st long segment
+               }
+               else if (cci[bar+1] >= 0 && cci[bar] < 0) {
+                  trend[bar] = -1;                                            // 1st short segment
+               }
             }
          }
 
@@ -244,8 +266,8 @@ int onTick() {
       }
    }
 
-   if (!__isSuperContext) {
-      if (Signal.onMomentum) /*&&*/ if (IsBarOpen()) {
+   if (!__isSuperContext && Signal.onMomentum) {
+      if (IsBarOpen()) {
          int iTrend = trend[1];
          if      (iTrend ==  1) onMomentum(MODE_LONG);
          else if (iTrend == -1) onMomentum(MODE_SHORT);
