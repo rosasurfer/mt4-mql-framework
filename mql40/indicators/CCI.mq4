@@ -13,11 +13,11 @@ int __DeinitFlags[];
 
 extern int    Periods                        = 14;
 extern int    Periods.Step                   = 0;                       // step size for parameter stepper via hotkey
-extern string AppliedPrice                   = "Open | High | Low | Close | Median | Typical | Weighted*";
+extern string AppliedPrice                   = "Open | High | Low | Close | Median | Typical* | Weighted";
 
 extern string ___a__________________________ = "=== Display settings ===";
-extern color  Histogram.Color.Long           = LimeGreen;
-extern color  Histogram.Color.Short          = Red;
+extern color  Histogram.Color.Up             = LimeGreen;
+extern color  Histogram.Color.Down           = Red;
 extern int    Histogram.Width                = 2;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
@@ -105,10 +105,10 @@ int onInit() {
    if (Histogram.Width < 0) return(catch("onInit(4)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Width > 5) return(catch("onInit(5)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (AutoConfiguration) Histogram.Color.Long  = GetConfigColor(indicator, "Histogram.Color.Long",  Histogram.Color.Long);
-   if (AutoConfiguration) Histogram.Color.Short = GetConfigColor(indicator, "Histogram.Color.Short", Histogram.Color.Short);
-   if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
-   if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
+   if (AutoConfiguration) Histogram.Color.Up   = GetConfigColor(indicator, "Histogram.Color.Up",   Histogram.Color.Up);
+   if (AutoConfiguration) Histogram.Color.Down = GetConfigColor(indicator, "Histogram.Color.Down", Histogram.Color.Down);
+   if (Histogram.Color.Up   == 0xFF000000) Histogram.Color.Up   = CLR_NONE;
+   if (Histogram.Color.Down == 0xFF000000) Histogram.Color.Down = CLR_NONE;
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)    return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
@@ -263,7 +263,7 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Event handler called on BarOpen if direction of the trend changed.
+ * Event handler called onBarOpen if direction of the trend changed.
  *
  * @param  int direction
  *
@@ -414,9 +414,10 @@ bool RestoreStatus() {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   string stepSize = ifString(Periods.Step, ":"+ Periods.Step, "");
-   string sSignal  = ifString(Signal.onTrendChange, " signal", "");
-   string name     = "CCI("+ Periods + stepSize +")"+ sSignal;
+   string stepSize      = ifString(Periods.Step, ":"+ Periods.Step, "");
+   string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
+   string sSignal       = ifString(Signal.onTrendChange, " signal", "");
+   string name          = "CCI("+ Periods + stepSize + sAppliedPrice +")"+ sSignal;
    IndicatorShortName(name);                          // subwindow chart legend
 
    IndicatorBuffers(indicator_buffers);
@@ -439,8 +440,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_TREND, DRAW_NONE);
 
    int drawType = ifInt(Histogram.Width, DRAW_HISTOGRAM, DRAW_NONE);
-   SetIndexStyle(MODE_LONG,  drawType, EMPTY, Histogram.Width, Histogram.Color.Long);
-   SetIndexStyle(MODE_SHORT, drawType, EMPTY, Histogram.Width, Histogram.Color.Short);
+   SetIndexStyle(MODE_LONG,  drawType, EMPTY, Histogram.Width, Histogram.Color.Up);
+   SetIndexStyle(MODE_SHORT, drawType, EMPTY, Histogram.Width, Histogram.Color.Down);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -453,18 +454,19 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Periods=",                    Periods,                                    ";", NL,
-                            "Periods.Step=",               Periods.Step,                               ";", NL,
-                            "AppliedPrice=",               DoubleQuoteStr(AppliedPrice),               ";", NL,
+   return(StringConcatenate(
+      "Periods=",                    Periods,                                    ";", NL,
+      "Periods.Step=",               Periods.Step,                               ";", NL,
+      "AppliedPrice=",               DoubleQuoteStr(AppliedPrice),               ";", NL,
 
-                            "Histogram.Color.Long=",       ColorToStr(Histogram.Color.Long),           ";", NL,
-                            "Histogram.Color.Short=",      ColorToStr(Histogram.Color.Short),          ";", NL,
-                            "Histogram.Width=",            Histogram.Width,                            ";", NL,
-                            "MaxBarsBack=",                MaxBarsBack,                                ";", NL,
+      "Histogram.Color.Up=",         ColorToStr(Histogram.Color.Up),             ";", NL,
+      "Histogram.Color.Down=",       ColorToStr(Histogram.Color.Down),           ";", NL,
+      "Histogram.Width=",            Histogram.Width,                            ";", NL,
+      "MaxBarsBack=",                MaxBarsBack,                                ";", NL,
 
-                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
-                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
-                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
-                            "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
+      "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";", NL,
+      "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";", NL,
+      "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";", NL,
+      "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
    );
 }
