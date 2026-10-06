@@ -3,7 +3,13 @@
  *
  * Defined as the upscaled ratio of current distance to average distance from a Moving Average (default: SMA).
  * The upscaling factor of 66.67 was chosen so that the majority of indicator values falls between +200 and -200.
- * Signal level is +/-100.
+ *
+ * The signal level determines when the CCI histogram changes color. It changes upon the first cross of the signal level in
+ * the other direction.
+ *
+ * A CCI crossing the signal level says nothing about trend. It simply says that above-average momentum has occurred in that
+ * particular bar - nothing more, nothing less. Whether such a crossing leads to a trend becomes apparent only if price
+ * continues to move in the same direction.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -22,8 +28,8 @@ extern int    Histogram.Width                = 2;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
-extern bool   Signal.onTrendChange           = false;                   // on crossing of +/-100
-extern string Signal.onTrendChange.Types     = "sound* | alert | mail | telegram";
+extern bool   Signal.onMomentum              = false;                   // on crossing of +/-100
+extern string Signal.onMomentum.Types        = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -114,14 +120,14 @@ int onInit() {
    if (MaxBarsBack < -1)    return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
-   // Signal.onTrendChange
-   string signalId = "Signal.onTrendChange";
-   ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange);
-   if (Signal.onTrendChange) {
-      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
-         return(catch("onInit(7)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
+   // Signal.onMomentum
+   string signalId = "Signal.onMomentum";
+   ConfigureSignals(signalId, AutoConfiguration, Signal.onMomentum);
+   if (Signal.onMomentum) {
+      if (!ConfigureSignalTypes(signalId, Signal.onMomentum.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
+         return(catch("onInit(7)  invalid input parameter Signal.onMomentum.Types: "+ DoubleQuoteStr(Signal.onMomentum.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.telegram);
+      Signal.onMomentum = (signal.sound || signal.alert || signal.mail || signal.telegram);
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -234,10 +240,10 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
+      if (Signal.onMomentum) /*&&*/ if (IsBarOpen()) {
          int iTrend = trend[1];
-         if      (iTrend ==  1) onTrendChange(MODE_LONG);
-         else if (iTrend == -1) onTrendChange(MODE_SHORT);
+         if      (iTrend ==  1) onMomentum(MODE_LONG);
+         else if (iTrend == -1) onMomentum(MODE_SHORT);
       }
    }
    return(last_error);
@@ -263,23 +269,23 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Event handler called onBarOpen if direction of the trend changed.
+ * Event handler called onBarOpen if sudden momentun occurred in the other direction.
  *
  * @param  int direction
  *
  * @return bool - success status
  */
-bool onTrendChange(int direction) {
-   if (direction!=MODE_LONG && direction!=MODE_SHORT) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool onMomentum(int direction) {
+   if (direction!=MODE_LONG && direction!=MODE_SHORT) return(!catch("onMomentum(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
    string indicator = "CCI("+ Periods +")";
-   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicator +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicator +".onMomentum("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = indicator +" "+ ifString(direction==MODE_LONG, "long", "short") +" signal (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    string message2  = Symbol() +","+ PeriodDescription() +": "+ message1;
-   string localTime = TimeToStr(TimeLocalEx("onTrendChange(2)"), TIME_MINUTES|TIME_SECONDS);
-   string accountAlias = GetAccountAlias();
+   string localTime = TimeToStr(TimeLocalEx("onMomentum(2)"), TIME_MINUTES|TIME_SECONDS);
+   string alias     = GetAccountAlias();
 
    int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
@@ -292,7 +298,7 @@ bool onTrendChange(int direction) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onTrendChange(3)  "+ message1);
+      if (eventAction) logInfo("onMomentum(3)  "+ message1);
    }
 
    // sound: once per system
@@ -325,7 +331,7 @@ bool onTrendChange(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ accountAlias +")");
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ alias +")");
    }
 
    // telegram: once per system
@@ -336,9 +342,9 @@ bool onTrendChange(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ alias +")");
    }
-   return(!catch("onTrendChange(4)"));
+   return(!catch("onMomentum(4)"));
 }
 
 
@@ -416,7 +422,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    string stepSize      = ifString(Periods.Step, ":"+ Periods.Step, "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   string sSignal       = ifString(Signal.onTrendChange, " signal", "");
+   string sSignal       = ifString(Signal.onMomentum, " signal", "");
    string name          = "CCI("+ Periods + stepSize + sAppliedPrice +")"+ sSignal;
    IndicatorShortName(name);                          // subwindow chart legend
 
@@ -455,18 +461,18 @@ bool SetIndicatorOptions(bool redraw = false) {
  */
 string InputsToStr() {
    return(StringConcatenate(
-      "Periods=",                    Periods,                                    ";", NL,
-      "Periods.Step=",               Periods.Step,                               ";", NL,
-      "AppliedPrice=",               DoubleQuoteStr(AppliedPrice),               ";", NL,
+      "Periods=",                 Periods,                                 ";", NL,
+      "Periods.Step=",            Periods.Step,                            ";", NL,
+      "AppliedPrice=",            DoubleQuoteStr(AppliedPrice),            ";", NL,
 
-      "Histogram.Color.Up=",         ColorToStr(Histogram.Color.Up),             ";", NL,
-      "Histogram.Color.Down=",       ColorToStr(Histogram.Color.Down),           ";", NL,
-      "Histogram.Width=",            Histogram.Width,                            ";", NL,
-      "MaxBarsBack=",                MaxBarsBack,                                ";", NL,
+      "Histogram.Color.Up=",      ColorToStr(Histogram.Color.Up),          ";", NL,
+      "Histogram.Color.Down=",    ColorToStr(Histogram.Color.Down),        ";", NL,
+      "Histogram.Width=",         Histogram.Width,                         ";", NL,
+      "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
 
-      "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";", NL,
-      "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";", NL,
-      "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";", NL,
-      "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
+      "Signal.onMomentum=",       BoolToStr(Signal.onMomentum),            ";", NL,
+      "Signal.onMomentum.Types=", DoubleQuoteStr(Signal.onMomentum.Types), ";", NL,
+      "Signal.Sound.Up=",         DoubleQuoteStr(Signal.Sound.Up),         ";", NL,
+      "Signal.Sound.Down=",       DoubleQuoteStr(Signal.Sound.Down),       ";")
    );
 }
