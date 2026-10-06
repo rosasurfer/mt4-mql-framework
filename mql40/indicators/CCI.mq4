@@ -10,6 +10,33 @@
  * A CCI crossing the signal level says nothing about trend. It simply says that above-average momentum has occurred in that
  * particular bar - nothing more, nothing less. Whether such a crossing leads to a trend becomes apparent only if price
  * continues to move in the same direction.
+ *
+ *
+ * Input parameters
+ * ----------------
+ *  • Periods:                 Look-back periods.
+ *  • Periods.Step:            Option to control parameter "Period" via keyboard. If non-zero it defines the step size of
+ *                             the parameter stepper. If 0 (zero) stepping of parameter "Period" is disabled.
+ *  • AppliedPrice:            Price type to use for CCI calculation.
+ *
+ *  • Histogram.Color.Up:      Color of histogram segments marking an assumed up trend.
+ *  • Histogram.Color.Down:    Color of histogram segments marking an assumed down trend.
+ *  • Histogram.Width:         Width of displayed histogram bars.
+ *  • MaxBarsBack:             Maximum number of bars back to calculate the indicator for (affects performance).
+ *
+ *  • Signal.Level:            CCI level to cross to create a flip of the histogram color (default: +/-100).
+ *  • Signal.onMomentum:       Whether to signal momentum bursts reaching the configured signal level.
+ *  • Signal.onMomentum.Types: Signaling methods, a combination of "sound", "alert", "email" and/or "telegram".
+ *  • Signal.Sound.Up:         Sound file for histogram changes to an assumed up trend.
+ *  • Signal.Sound.Down:       Sound file for histogram changes to an assumed down trend.
+ *
+ *  • AutoConfiguration:       If enabled all input parameters can be pre-defined in the configuration.
+ *
+ *
+ * TODO
+ * ----
+ *  - parameter stepper for Signal.Level
+ *  - display additional indicator levels at signal level != 100 (needs input option)
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
