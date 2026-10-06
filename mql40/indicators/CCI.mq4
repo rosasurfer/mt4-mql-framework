@@ -18,7 +18,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Periods                        = 20;
-extern int    Periods.Step                   = 0;                       // step size for parameter stepper via hotkey
+extern int    Periods.Step                   = 0;                       // step size for parameter stepping
 extern string AppliedPrice                   = "Open | High | Low | Close | Median | Typical* | Weighted";
 
 extern string ___a__________________________ = "=== Display settings ===";
@@ -60,8 +60,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #property indicator_level2      0
 #property indicator_level3   -100
 
-#property indicator_maximum  +180
-#property indicator_minimum  -180
+#property indicator_maximum  +200
+#property indicator_minimum  -200
 
 double cci     [];                                 // all CCI values
 double cciLong [];                                 // long colored CCI values (contains positive + negative values)
@@ -450,7 +450,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
    string stepSize      = ifString(Periods.Step, ":"+ Periods.Step, "");
-   string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
+   string sAppliedPrice = ifString(appliedPrice==PRICE_TYPICAL, "", ", "+ PriceTypeDescription(appliedPrice));
    string sSignal       = ifString(Signal.onMomentum, " signal @"+ Signal.Level, "") +"   ";
    string name          = "CCI("+ Periods + stepSize + sAppliedPrice +")"+ sSignal;
    IndicatorShortName(name);                          // subwindow chart legend
