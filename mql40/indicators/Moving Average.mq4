@@ -70,8 +70,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ta/ALMA.mqh>
 #include <rsf/win32api.mqh>
 
-#define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
-#define MODE_TREND            MovingAverage.MODE_TREND
+#define MODE_MA               MovingAverage.MODE_MA      // 0: indicator buffer ids
+#define MODE_TREND            MovingAverage.MODE_TREND   // 1
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
 #define MODE_UPTREND2         4
@@ -448,21 +448,22 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(shortName);                        // chart tooltips and context menu
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_MA,        main     );            // MA main values:       visible (background), displayed in legend and "Data" window
+   SetIndexBuffer(MODE_MA,        main     );            // MA main values:       background, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:      invisible, displayed in "Data" window
    SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:       visible
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:     visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends:  visible
    IndicatorDigits(Digits);
 
-   int draw_type = ifInt(drawType==DRAW_LINE, drawType, DRAW_NONE);
-   SetIndexStyle(MODE_MA,        draw_type, EMPTY, Draw.Width+Background.Width, Background.Color);
+   int width = Draw.Width + Background.Width;
+   int type = ifInt(drawType==DRAW_LINE && width, drawType, DRAW_NONE);
+   SetIndexStyle(MODE_MA,        type,      EMPTY, width, Background.Color);
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE        );
 
-   draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, UpTrend.Color  ); SetIndexArrow(MODE_UPTREND,   158);
-   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, DownTrend.Color); SetIndexArrow(MODE_DOWNTREND, 158);
-   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, UpTrend.Color  ); SetIndexArrow(MODE_UPTREND2,  158);
+   type = ifInt(Draw.Width, drawType, DRAW_NONE);
+   SetIndexStyle(MODE_UPTREND,   type, EMPTY, Draw.Width, UpTrend.Color  ); SetIndexArrow(MODE_UPTREND,   158);
+   SetIndexStyle(MODE_DOWNTREND, type, EMPTY, Draw.Width, DownTrend.Color); SetIndexArrow(MODE_DOWNTREND, 158);
+   SetIndexStyle(MODE_UPTREND2,  type, EMPTY, Draw.Width, UpTrend.Color  ); SetIndexArrow(MODE_UPTREND2,  158);
 
    SetIndexLabel(MODE_MA,        shortName);
    SetIndexLabel(MODE_TREND,     shortName +" trend");
