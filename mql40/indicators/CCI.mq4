@@ -286,7 +286,7 @@ bool onMomentum(int direction) {
    // compose signal messages
    string sPeriod   = PeriodDescription();
    string indicator = "CCI("+ Periods +")";
-   string eventName = "rsf."+ StdSymbol() +","+ sPeriod +"."+ indicator +".onMomentum("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string eventName = "rsf."+ StdSymbol() +","+ sPeriod +"."+ indicator +".onMomentum("+ direction +","+ Signal.Level +")."+ TimeToStr(Time[0]), propertyName = "";
    string sSigLevel = Signal.Level;
    if (Signal.Level != 0) sSigLevel = ifString(direction==MODE_LONG, "+", "-") + sSigLevel;
    string message1  = indicator +" momentum "+ ifString(direction==MODE_LONG, "up", "down") +": "+ sSigLevel +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
