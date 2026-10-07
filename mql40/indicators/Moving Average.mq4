@@ -112,7 +112,8 @@ double uptrend2 [];                                      // single-bar uptrends:
 
 int    maMethod;
 int    maAppliedPrice;
-double almaWeights[];                                    // ALMA bar weights
+double almaWeights[];                                    // ALMA bar weights (if applicable)
+int    trendMethod;
 
 string indicatorName = "";
 string legendLabel   = "";
@@ -127,13 +128,14 @@ bool   signal.onTrendChange.telegram;
 int    sound.onCross;
 int    sound.onCross.played;                             // how many times the sound has been played
 
-// trend/price crossing directions
-#define MODE_UP    MODE_UPTREND
-#define MODE_DOWN  MODE_DOWNTREND
+#define MODE_UP         MODE_UPTREND                     // trend/price crossing directions
+#define MODE_DOWN       MODE_DOWNTREND
 
-// parameter stepper directions
-#define STEP_UP    1
-#define STEP_DOWN -1
+#define TREND_SLOPE     1                                // trend calculation methods
+#define TREND_CHANNEL   2
+
+#define STEP_UP         1                                // parameter stepper directions
+#define STEP_DOWN      -1
 
 
 /**
@@ -172,6 +174,22 @@ int onInit() {
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice == -1) return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
+   // Trend.Method
+   sValue = Trend.Method;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Trend.Method", sValue);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrToLower(StrTrim(sValue));
+   if      (StrStartsWith("slope",   sValue)) { trendMethod = TREND_SLOPE;   Trend.Method = "Slope";   }
+   else if (StrStartsWith("channel", sValue)) { trendMethod = TREND_CHANNEL; Trend.Method = "Channel"; }
+   else                      return(catch("onInit(5)  invalid input parameter Trend.Method: "+ DoubleQuoteStr(Trend.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (trendMethod == TREND_CHANNEL) {
+      if (maAppliedPrice==PRICE_HIGH || maAppliedPrice==PRICE_LOW) {
+         return(catch("onInit(6)  invalid parameter combination MA.AppliedPrice/Trend.Method: trend method \"Channel\" can't be used with price types \"High/Low\"", ERR_INVALID_INPUT_PARAMETER));
+      }
+   }
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -182,13 +200,13 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                      return(catch("onInit(5)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                      return(catch("onInit(7)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)       return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)       return(catch("onInit(8)  invalid input parameter Draw.Width: "+ Draw.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Background.Width
    if (AutoConfiguration) Background.Width = GetConfigInt(indicator, "Background.Width", Background.Width);
-   if (Background.Width < 0) return(catch("onInit(7)  invalid input parameter Background.Width: "+ Background.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (Background.Width < 0) return(catch("onInit(9)  invalid input parameter Background.Width: "+ Background.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Background.Color = GetConfigColor(indicator, "Background.Color", Background.Color);
    if (AutoConfiguration) UpTrend.Color    = GetConfigColor(indicator, "UpTrend.Color",    UpTrend.Color);
@@ -200,12 +218,12 @@ int onInit() {
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)     return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)     return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
    // SaveCPU
    if (AutoConfiguration) SaveCPU = GetConfigInt(indicator, "SaveCPU", SaveCPU);
-   if (SaveCPU <  0)         return(catch("onInit(9)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
-   if (SaveCPU > 59)         return(catch("onInit(10)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
+   if (SaveCPU <  0)         return(catch("onInit(11)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
+   if (SaveCPU > 59)         return(catch("onInit(12)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
 
    // Signal.onTrendChange.*
    string signalId = "Signal.onTrendChange";
@@ -213,7 +231,7 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
       if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.onTrendChange.sound, signal.onTrendChange.alert, signal.onTrendChange.mail, signal.onTrendChange.telegram)) {
-         return(catch("onInit(11)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(13)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onTrendChange = (signal.onTrendChange.sound || signal.onTrendChange.alert || signal.onTrendChange.mail || signal.onTrendChange.telegram);
       if (Signal.onTrendChange) {
@@ -238,13 +256,13 @@ int onInit() {
    else if (StrStartsWith("off",  sValue)) { Sound.onCross = "off";                             }
    else if (StrStartsWith("up",   sValue)) { Sound.onCross = "up";   sound.onCross = MODE_UP;   }
    else if (StrStartsWith("down", sValue)) { Sound.onCross = "down"; sound.onCross = MODE_DOWN; }
-   else                             return(catch("onInit(12)  invalid input parameter Sound.onCross: "+ DoubleQuoteStr(Sound.onCross), ERR_INVALID_INPUT_PARAMETER));
+   else                             return(catch("onInit(14)  invalid input parameter Sound.onCross: "+ DoubleQuoteStr(Sound.onCross), ERR_INVALID_INPUT_PARAMETER));
    if (sound.onCross != NULL) {
       if (AutoConfiguration) Sound.onCross.File = GetConfigString(indicator, "Sound.onCross.File", Sound.onCross.File);
       if (AutoConfiguration) Sound.onCross.Repeat = GetConfigInt(indicator, "Sound.onCross.Repeat", Sound.onCross.Repeat);
-      if (Sound.onCross.Repeat < 0) return(catch("onInit(13)  invalid input parameter Sound.onCross.Repeat: "+ Sound.onCross.Repeat +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+      if (Sound.onCross.Repeat < 0) return(catch("onInit(15)  invalid input parameter Sound.onCross.Repeat: "+ Sound.onCross.Repeat +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
       if (AutoConfiguration) Sound.onCross.Pause = GetConfigInt(indicator, "Sound.onCross.Pause", Sound.onCross.Pause);
-      if (Sound.onCross.Pause < 0)  return(catch("onInit(14)  invalid input parameter Sound.onCross.Pause: "+ Sound.onCross.Pause +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+      if (Sound.onCross.Pause < 0)  return(catch("onInit(16)  invalid input parameter Sound.onCross.Pause: "+ Sound.onCross.Pause +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
       if (legendInfo == "") legendInfo = "(c)";
       else                  legendInfo = StrLeft(legendInfo, -1) +",c)";
       ShowChartLegend = 1;
@@ -266,7 +284,7 @@ int onInit() {
    if (ShowChartLegend) legendLabel = CreateChartLegend();
    SetIndicatorOptions();
 
-   return(catch("onInit(15)"));
+   return(catch("onInit(17)"));
 }
 
 
