@@ -89,9 +89,12 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
 #define MODE_UPTREND2         4
+#define MODE_UPPER_BAND       5
+#define MODE_LOWER_BAND       6
 
 #property indicator_chart_window
-#property indicator_buffers   5
+#property indicator_buffers  5
+int       terminal_buffers = 7;
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -109,6 +112,8 @@ int    maMethod;
 int    maAppliedPrice;
 double almaWeights[];                                    // ALMA bar weights (if applicable)
 int    trendMethod;
+double upperChannelBand[];                               // MA channel bands for trend method TREND_CHANNEL
+double lowerChannelBand[];                               //
 
 string indicatorName = "";
 string legendLabel   = "";
@@ -279,19 +284,23 @@ int onTick() {
       ArrayInitialize(uptrend,   EMPTY_VALUE);
       ArrayInitialize(downtrend, EMPTY_VALUE);
       ArrayInitialize(uptrend2,  EMPTY_VALUE);
+      ArrayInitialize(upperChannelBand,    0);
+      ArrayInitialize(lowerChannelBand,    0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(uptrend,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(main,             Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(trend,            Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(uptrend,          Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(downtrend,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(uptrend2,         Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(upperChannelBand, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerChannelBand, Bars, ShiftedBars, 0);
    }
 
-   // save CPU cycles if enabled (current bar updates only)
+   // save CPU cycles if enabled (current bar only)
    if (ChangedBars == 1) {
       if (!__isSuperContext && SaveCPU) {
          static datetime lastUpdate = NULL;
@@ -308,13 +317,13 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      if (maMethod == MODE_ALMA) {           // ALMA
+      if (maMethod == MODE_ALMA) {              // ALMA
          main[bar] = 0;
-         for (int i=0; i < MA.Periods; i++) {
+         for (int i=0; i < MA.Periods; i++) {   // TODO: move nested loop to MT4Expander (performance)
             main[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
          }
       }
-      else {                                 // built-in moving averages
+      else {                                    // built-in moving averages
          main[bar] = iMA(NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar);
       }
       UpdateTrend(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
@@ -482,12 +491,14 @@ bool SetIndicatorOptions(bool redraw = false) {
    string shortName     = MA.Method +"("+ MA.Periods +")";
    IndicatorShortName(shortName);                        // chart tooltips and context menu
 
-   IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_MA,        main     );            // MA main values:       background, displayed in legend and "Data" window
-   SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:      invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:       visible
-   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:     visible
-   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends:  visible
+   IndicatorBuffers(terminal_buffers);
+   SetIndexBuffer(MODE_MA,         main            );    // MA main values:       background, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,      trend           );    // trend direction:      invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND,    uptrend         );    // uptrend values:       visible
+   SetIndexBuffer(MODE_DOWNTREND,  downtrend       );    // downtrend values:     visible
+   SetIndexBuffer(MODE_UPTREND2,   uptrend2        );    // single-bar uptrends:  visible
+   SetIndexBuffer(MODE_UPPER_BAND, upperChannelBand);    // for TREND_CHANNEL:    invisible
+   SetIndexBuffer(MODE_LOWER_BAND, lowerChannelBand);    // ...
    IndicatorDigits(Digits);
 
    int width = Draw.Width + Background.Width;
