@@ -3,7 +3,7 @@ EMA(144)
 Donchian Channel(50)
 LWMA(55) Channel + Colored Bars
 ===============================
-CCI(14)
+CCI(20)
 -->
 
 <chart>
@@ -45,7 +45,7 @@ askline_color=13158600
 stops_color=17919
 
 <window>
-height=4300
+height=4400
 fixed_height=0
 
 <indicator>
@@ -194,9 +194,10 @@ ShowChartLegend=1
 </expert>
 show_data=1
 </indicator>
+</window>
 
 <window>
-height=800
+height=600
 fixed_height=0
 <indicator>
 name=Custom Indicator
@@ -205,11 +206,11 @@ name=CCI
 flags=339
 window_num=2
 <inputs>
-Periods=14
+Periods=20
 AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
 Signal.Level=170
 Signal.onMomentum=1
-Signal.onMomentum.Types=sound* | alert* | mail
+Signal.onMomentum.Types=sound* | alert* | mail | telegram
 </inputs>
 </expert>
 draw_2=2
