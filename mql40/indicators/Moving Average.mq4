@@ -50,6 +50,7 @@ extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA"
 extern int    MA.Periods                     = 100;
 extern int    MA.Periods.Step                = 0;                 // step size for parameter stepping
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string Trend.Method                   = "Slope* | Channel";
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
@@ -619,30 +620,31 @@ bool RestoreStatus() {
  */
 string InputsToStr() {
    return(StringConcatenate(
-      "MA.Method=",                      DoubleQuoteStr(MA.Method),                      ";"+ NL,
-      "MA.Periods=",                     MA.Periods,                                     ";"+ NL,
-      "MA.Periods.Step=",                MA.Periods.Step,                                ";"+ NL,
-      "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
+      "MA.Method=",                      DoubleQuoteStr(MA.Method)                      +";"+ NL,
+      "MA.Periods=",                     MA.Periods                                     +";"+ NL,
+      "MA.Periods.Step=",                MA.Periods.Step                                +";"+ NL,
+      "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice)                +";"+ NL,
+      "Trend.Method=",                   DoubleQuoteStr(Trend.Method)                   +";"+ NL,
 
-      "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
-      "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
-      "Background.Width=",               Background.Width,                               ";"+ NL,
-      "Background.Color=",               ColorToStr(Background.Color),                   ";"+ NL,
-      "UpTrend.Color=",                  ColorToStr(UpTrend.Color),                      ";"+ NL,
-      "DownTrend.Color=",                ColorToStr(DownTrend.Color),                    ";"+ NL,
+      "Draw.Type=",                      DoubleQuoteStr(Draw.Type)                      +";"+ NL,
+      "Draw.Width=",                     Draw.Width                                     +";"+ NL,
+      "Background.Width=",               Background.Width                               +";"+ NL,
+      "Background.Color=",               ColorToStr(Background.Color)                   +";"+ NL,
+      "UpTrend.Color=",                  ColorToStr(UpTrend.Color)                      +";"+ NL,
+      "DownTrend.Color=",                ColorToStr(DownTrend.Color)                    +";"+ NL,
 
-      "ShowChartLegend=",                BoolToStr(ShowChartLegend),                     ";"+ NL,
-      "MaxBarsBack=",                    MaxBarsBack,                                    ";"+ NL,
-      "SaveCPU=",                        SaveCPU,                                        ";"+ NL,
+      "ShowChartLegend=",                BoolToStr(ShowChartLegend)                     +";"+ NL,
+      "MaxBarsBack=",                    MaxBarsBack                                    +";"+ NL,
+      "SaveCPU=",                        SaveCPU                                        +";"+ NL,
 
-      "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
-      "Signal.onTrendChange.Types=",     DoubleQuoteStr(Signal.onTrendChange.Types),     ";"+ NL,
-      "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";"+ NL,
-      "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";"+ NL,
+      "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange)                +";"+ NL,
+      "Signal.onTrendChange.Types=",     DoubleQuoteStr(Signal.onTrendChange.Types)     +";"+ NL,
+      "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp)   +";"+ NL,
+      "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown) +";"+ NL,
 
-      "Sound.onCross=",                  DoubleQuoteStr(Sound.onCross),                  ";"+ NL,
-      "Sound.onCross.File=",             DoubleQuoteStr(Sound.onCross.File),             ";"+ NL,
-      "Sound.onCross.Repeat=",           Sound.onCross.Repeat,                           ";"+ NL,
-      "Sound.onCross.Pause=",            Sound.onCross.Pause,                            ";"+ NL
+      "Sound.onCross=",                  DoubleQuoteStr(Sound.onCross)                  +";"+ NL,
+      "Sound.onCross.File=",             DoubleQuoteStr(Sound.onCross.File)             +";"+ NL,
+      "Sound.onCross.Repeat=",           Sound.onCross.Repeat                           +";"+ NL,
+      "Sound.onCross.Pause=",            Sound.onCross.Pause                            +";"+ NL
    ));
 }
