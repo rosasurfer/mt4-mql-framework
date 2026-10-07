@@ -107,7 +107,8 @@ double uptrend2 [];                                      // single-bar uptrends:
 
 int    maMethod;
 int    maAppliedPrice;
-double almaWeights[];                                    // ALMA bar weights
+double almaWeights[];                                    // ALMA bar weights (if applicable)
+int    trendMethod;
 
 string indicatorName = "";
 string legendLabel   = "";
@@ -119,9 +120,13 @@ bool   signal.alert;
 bool   signal.mail;
 bool   signal.telegram;
 
+// trend calculation methods
+#define TREND_SLOPE     1
+#define TREND_CHANNEL   2
+
 // parameter stepper directions
-#define STEP_UP    1
-#define STEP_DOWN -1
+#define STEP_UP         1
+#define STEP_DOWN      -1
 
 
 /**
@@ -160,6 +165,22 @@ int onInit() {
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice == -1) return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
+   // Trend.Method
+   sValue = Trend.Method;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Trend.Method", sValue);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrToLower(StrTrim(sValue));
+   if      (StrStartsWith("slope",   sValue)) { trendMethod = TREND_SLOPE;   Trend.Method = "Slope";   }
+   else if (StrStartsWith("channel", sValue)) { trendMethod = TREND_CHANNEL; Trend.Method = "Channel"; }
+   else                      return(catch("onInit(5)  invalid input parameter Trend.Method: "+ DoubleQuoteStr(Trend.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (trendMethod == TREND_CHANNEL) {
+      if (maAppliedPrice==PRICE_HIGH || maAppliedPrice==PRICE_LOW) {
+         return(catch("onInit(6)  invalid parameter combination MA.AppliedPrice/Trend.Method: trend method \"Channel\" can't be used with price types \"High/Low\"", ERR_INVALID_INPUT_PARAMETER));
+      }
+   }
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -170,13 +191,13 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                      return(catch("onInit(5)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                      return(catch("onInit(7)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)       return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)       return(catch("onInit(8)  invalid input parameter Draw.Width: "+ Draw.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Background.Width
    if (AutoConfiguration) Background.Width = GetConfigInt(indicator, "Background.Width", Background.Width);
-   if (Background.Width < 0) return(catch("onInit(7)  invalid input parameter Background.Width: "+ Background.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (Background.Width < 0) return(catch("onInit(9)  invalid input parameter Background.Width: "+ Background.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Background.Color = GetConfigColor(indicator, "Background.Color", Background.Color);
    if (AutoConfiguration) UpTrend.Color    = GetConfigColor(indicator, "UpTrend.Color",    UpTrend.Color);
@@ -188,12 +209,12 @@ int onInit() {
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)     return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)     return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
    // SaveCPU
    if (AutoConfiguration) SaveCPU = GetConfigInt(indicator, "SaveCPU", SaveCPU);
-   if (SaveCPU <  0)         return(catch("onInit(9)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
-   if (SaveCPU > 59)         return(catch("onInit(10)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
+   if (SaveCPU <  0)         return(catch("onInit(11)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
+   if (SaveCPU > 59)         return(catch("onInit(12)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
 
    // signal configuration
    string signalId = "Signal.onTrendChange";
@@ -201,7 +222,7 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
       if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
-         return(catch("onInit(11)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(13)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.telegram);
       if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.telegram, "tgm,", ""), -1) +")";
@@ -225,7 +246,7 @@ int onInit() {
    if (ShowChartLegend) legendLabel = CreateChartLegend();
    SetIndicatorOptions();
 
-   return(catch("onInit(12)"));
+   return(catch("onInit(14)"));
 }
 
 
