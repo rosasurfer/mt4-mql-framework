@@ -48,15 +48,15 @@ int __DeinitFlags[];
 
 extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern int    MA.Periods                     = 100;
-extern int    MA.Periods.Step                = 0;                 // step size for parameter stepper via hotkey
+extern int    MA.Periods.Step                = 0;                 // step size for parameter stepping
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
+extern int    Background.Width               = 2;                 // background for Draw.Type = "Line"
+extern color  Background.Color               = DarkGray;
 extern color  UpTrend.Color                  = DeepSkyBlue;
 extern color  DownTrend.Color                = Gold;
-extern color  Background.Color               = DarkGray;          // background for Draw.Type = "Line"
-extern int    Background.Width               = 2;
 
 extern string ___a__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
@@ -528,25 +528,26 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";"+ NL,
-                            "MA.Periods=",                 MA.Periods,                                 ";"+ NL,
-                            "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
-                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";"+ NL,
+   return(StringConcatenate(
+      "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";"+ NL,
+      "MA.Periods=",                 MA.Periods,                                 ";"+ NL,
+      "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
+      "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";"+ NL,
 
-                            "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
-                            "Draw.Width=",                 Draw.Width,                                 ";"+ NL,
-                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";"+ NL,
-                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";"+ NL,
-                            "Background.Color=",           ColorToStr(Background.Color),               ";"+ NL,
-                            "Background.Width=",           Background.Width,                           ";"+ NL,
+      "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
+      "Draw.Width=",                 Draw.Width,                                 ";"+ NL,
+      "Background.Width=",           Background.Width,                           ";"+ NL,
+      "Background.Color=",           ColorToStr(Background.Color),               ";"+ NL,
+      "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";"+ NL,
+      "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";"+ NL,
 
-                            "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";"+ NL,
-                            "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
-                            "SaveCPU=",                    SaveCPU,                                    ";"+ NL,
+      "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";"+ NL,
+      "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
+      "SaveCPU=",                    SaveCPU,                                    ";"+ NL,
 
-                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
-                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
-                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
-                            "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
+      "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
+      "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
+      "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
+      "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
    );
 }
