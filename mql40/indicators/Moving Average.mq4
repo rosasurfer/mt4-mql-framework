@@ -1,31 +1,44 @@
 /**
- * A "Moving Average" indicator with support for more MA methods and additional features.
+ * A "Moving Average" indicator with additional non-standard features.
  *
  *
- * Available Moving Average methods:
- *  • SMA  = Simple Moving Average:          equal bar weighting
- *  • LWMA = Linear Weighted Moving Average: bar weighting using a linear function
- *  • EMA  = Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA = Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
- *  • ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
+ * Moving Average methods
+ * ----------------------
+ *  - SMA  = Simple Moving Average:          equal bar weighting
+ *  - LWMA = Linear Weighted Moving Average: bar weighting using a linear function
+ *  - EMA  = Exponential Moving Average:     bar weighting using an exponential function
+ *  - SMMA = Smoothed Moving Average:        bar weighting using an exponential function (@see notes)
+ *  - ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function (@see notes)
  *
  *
- * Indicator buffers for iCustom():
+ * Trend calculation methods
+ * -------------------------
+ *  - Slope:   The standard method. Trend changes when MA slope changes direction.
+ *  - Channel: Trend changes when bars cross the High/Low channel of the same MA (requires MA.AppliedPrice != High|Low).
+ *
+ *
+ * Input parameters
+ * ----------------
+ *
+ *
+ * Usage with iCustom()
+ * --------------------
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
  *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  *
  *
- * Notes:
+ * Notes
+ * -----
  *  - EMA calculation:
- *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+ *    @link https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
  *
  *  - SMMA calculation: The SMMA is in fact an EMA with a different period. It holds true: SMMA(n) = EMA(2*n-1)
- *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
+ *    @link https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
  *
  *  - ALMA calculation:
- *    @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ *    @link http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
