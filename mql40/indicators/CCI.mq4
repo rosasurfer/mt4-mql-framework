@@ -478,7 +478,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    string stepSize      = ifString(Periods.Step, ":"+ Periods.Step, "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_TYPICAL, "", ", "+ PriceTypeDescription(appliedPrice));
-   string sSignal       = ifString(Signal.onMomentum, " signal @"+ Signal.Level, "") +"   ";
+   string sSignal       = ifString(Signal.onMomentum, "  signal@"+ Signal.Level, "") +"  ";
    string name          = "CCI("+ Periods + stepSize + sAppliedPrice +")"+ sSignal;
    IndicatorShortName(name);                          // subwindow chart legend
 
