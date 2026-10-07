@@ -50,6 +50,7 @@ extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA"
 extern int    MA.Periods                     = 100;
 extern int    MA.Periods.Step                = 0;                 // step size for parameter stepping
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string Trend.Method                   = "Slope* | Channel";
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
@@ -533,6 +534,7 @@ string InputsToStr() {
       "MA.Periods=",                 MA.Periods,                                 ";"+ NL,
       "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
       "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";"+ NL,
+      "Trend.Method=",               DoubleQuoteStr(Trend.Method),               ";"+ NL,
 
       "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
       "Draw.Width=",                 Draw.Width,                                 ";"+ NL,

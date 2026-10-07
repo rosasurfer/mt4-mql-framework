@@ -20,6 +20,7 @@ double icMovingAverage(int timeframe, string maMethod, int maPeriods, string maA
                           maPeriods,                        // int    MA.Periods
                           0,                                // int    MA.Periods.Step
                           maAppliedPrice,                   // string MA.AppliedPrice
+                          "Slope",                          // string Trend.Method
 
                           "Line",                           // string Draw.Type
                           0,                                // int    Draw.Width
