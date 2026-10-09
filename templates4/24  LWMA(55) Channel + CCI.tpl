@@ -123,7 +123,7 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Channel Colored Bars
+name=Trend Bars
 flags=339
 window_num=0
 <inputs>
