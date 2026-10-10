@@ -300,10 +300,10 @@ bool ParseLines(string lines[]) {
    #define I_COMMISSION       12    // Commissions (absolute value)
 
    string mappedSymbol = ifString(StringLen(CsvSymbol), CsvSymbol, Symbol());
-   string line, cols[], sTicket, symbol, sType, sLots, sOpenTime, sCloseTime, sOpenPrice, sClosePrice, sProfit, sCommission, sFee;
+   string line, cols[], comment, sValues[], sValue, sTicket, symbol, sType, sLots, sOpenTime, sCloseTime, sOpenPrice, sClosePrice, sProfit, sCommission, sFee;
    int dataLines, allRecords, foundCols, ticket, type, lots;
    datetime openTime, closeTime;
-   double openPrice, closePrice, profit, commission, fee, totalCost, netProfit;
+   double openPrice, closePrice, profit, commission, fee, totalCost, netProfit, appliedPriceShift = PriceShift;
 
    // parse lines
    for (int i=0; i < sizeLines; i++) {
@@ -314,10 +314,24 @@ bool ParseLines(string lines[]) {
       }
       line = StrTrim(line);
       if (line == "")                    continue;      // skip empty lines
-      if (StringGetChar(line, 0) == ';') continue;      // skip comment lines
-      dataLines++;                                      // count data lines
+
+      if (StringGetChar(line, 0) == ';') {              // parse 'PriceShift' comments
+         if (Explode(StrSubstr(line, 1), "=", sValues, 2) == 2) {
+            if (StrTrim(sValues[0]) == "PriceShift") {
+               sValue = StrTrim(sValues[1]);
+               if (sValue == "-") {
+                  appliedPriceShift = PriceShift;       // reset applied PriceShift
+               }
+               else if (StrIsNumeric(sValue)) {         // assign the defined PriceShift
+                  appliedPriceShift = StrToDouble(sValue);
+               }
+            }
+         }
+         continue;
+      }
 
       // validate file header in first data line
+      dataLines++;                                      // count data lines
       if (dataLines == 1) {
          if (!StrCompareI(line, csvHeader))             return(!catch("ParseLines(2)  unsupported file format: Topstep CSV header not found", ERR_INVALID_FILE_FORMAT));
          continue;
@@ -365,14 +379,14 @@ bool ParseLines(string lines[]) {
       if (!StrIsNumeric(sOpenPrice))                    return(!catch("ParseLines(14)  unexpected format of field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
       openPrice = StrToDouble(sOpenPrice);
       if (openPrice <= 0)                               return(!catch("ParseLines(15)  invalid field \"EntryPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sOpenPrice), ERR_INVALID_FILE_FORMAT));
-      openPrice = NormalizeDouble(openPrice + PriceShift, Digits);
+      openPrice = NormalizeDouble(openPrice + appliedPriceShift, Digits);
 
       // closePrice
       sClosePrice = StrTrim(cols[I_CLOSEPRICE]);
       if (!StrIsNumeric(sClosePrice))                    return(!catch("ParseLines(16)  unexpected format of field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
       closePrice = StrToDouble(sClosePrice);
       if (closePrice <= 0)                               return(!catch("ParseLines(17)  invalid field \"ExitPrice\" in line "+ (i+1) +": "+ DoubleQuoteStr(sClosePrice), ERR_INVALID_FILE_FORMAT));
-      closePrice = NormalizeDouble(closePrice + PriceShift, Digits);
+      closePrice = NormalizeDouble(closePrice + appliedPriceShift, Digits);
 
       // profit
       sProfit = StrTrim(cols[I_PROFIT]);
