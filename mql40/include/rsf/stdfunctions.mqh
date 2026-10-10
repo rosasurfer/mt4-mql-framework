@@ -2382,25 +2382,35 @@ bool StrIsNumeric(string value) {
       catch("StrIsNumeric(1)", error);
    }
 
-   int len = StringLen(value);
+   int len = StringLen(value), chr;
    if (!len) return(false);
 
-   bool period = false;
+   bool hasDigit = false, hasPeriod = false;
 
    for (int i=0; i < len; i++) {
-      int chr = StringGetChar(value, i);
+      chr = StringGetChar(value, i);
 
       if (i == 0) {
-         if (chr == '+') continue;
-         if (chr == '-') continue;
+         if (chr == '+') {
+            if (len == 1) return(false);
+            continue;
+         }
+         if (chr == '-') {
+            if (len == 1) return(false);
+            continue;
+         }
       }
       if (chr == '.') {
-         if (period) return(false);
-         period = true;
+         if (hasPeriod) return(false);
+         hasPeriod = true;
+         if (!hasDigit && len == i+1) {
+            return(false);
+         }
          continue;
       }
       if (chr < '0') return(false);
       if (chr > '9') return(false);
+      hasDigit = true;
    }
    return(true);
 }
