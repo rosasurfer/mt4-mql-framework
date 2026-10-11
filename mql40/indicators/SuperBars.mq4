@@ -8,15 +8,15 @@
  * inputs. Additional framework config settings without manual inputs:
  *
  * [SuperBars]
- *  Legend.Corner                = {int}              ; CORNER_TOP_LEFT* | CORNER_TOP_RIGHT | CORNER_BOTTOM_LEFT | CORNER_BOTTOM_RIGHT
- *  Legend.xDistance             = {int}              ; offset in pixels
- *  Legend.yDistance             = {int}              ; offset in pixels
- *  Legend.FontName              = {string}           ; font name
- *  Legend.FontSize              = {int}              ; font size
- *  Legend.FontColor             = {color}            ; font color (web color name, integer or RGB triplet)
- *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
- *  MaxBars.H1                   = {int}              ; max. number of H1 superbars to draw (default: all available)
- *  ErrorSound                   = {string}           ; cycling sound if no higher/lower timeframe is available (default: none)
+ *  Legend.Corner               = {int}      ; CORNER_TOP_LEFT* | CORNER_TOP_RIGHT | CORNER_BOTTOM_LEFT | CORNER_BOTTOM_RIGHT
+ *  Legend.xDistance            = {int}      ; offset in pixels
+ *  Legend.yDistance            = {int}      ; offset in pixels
+ *  Legend.FontName             = {string}   ; font name
+ *  Legend.FontSize             = {int}      ; font size
+ *  Legend.FontColor            = {color}    ; font color (web color name, integer or RGB triplet)
+ *  UnchangedBars.Threshold.Pct = {double}   ; max. change of a bar in percent to be colored "unchanged"
+ *  MaxBars.H1                  = {int}      ; max. number of H1 super bars to draw (default: all available)
+ *  ErrorSound                  = {string}   ; notification sound when no higher/lower timeframe is available (default: none)
  *
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
  *
@@ -24,7 +24,6 @@
  *  - replace input "WeekendSessions.Symbols" by actual symbol properties
  *  - implement more super timeframes and rewrite configuration of max. bars
  *  - SuperBar close markers in variable period charts (e.g. range bars) are incorrect
- *  - workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
  *  - ETH/RTH separation for Frankfurt session
  */
 #include <rsf/stddefines.mqh>
@@ -61,11 +60,11 @@ extern string WeekendSessions.Symbols = "";              // comma-separated list
 #define STF_UP             1
 #define STF_DOWN          -1
 
-#define PERIOD_D1_US_RTH   1438                       // that's PERIOD_D1 - 2 (only the US RTH section of D1)
-#define PERIOD_D1_US_ETH   1439                       // that's PERIOD_D1 - 1 (D1 bars + a separate US ETH section)
+#define PERIOD_D1_US_RTH   1438                       // = PERIOD_D1 - 2 (only the US RTH section of D1)
+#define PERIOD_D1_US_ETH   1439                       // = PERIOD_D1 - 1 (D1 + a separate US ETH section)
 
 int      superTimeframe;                              // the currently active super bar period
-double   maxChangeUnchanged = 0.05;                   // max. price change in % for a SuperBar to be drawn as unchanged
+double   unchangedTreshold = 0.05;                    // max. price change in % for a super bar to be colored "unchanged"
 bool     usEthEnabled;                                // whether US ETH sessions are enabled
 bool     usRthEnabled;                                // whether US RTH sessions are enabled
 bool     weekendSessionsEnabled;                      // whether weekend sessions are enabled
@@ -142,13 +141,13 @@ int onInit() {
 
    // read additional external configuration
    double dValue; int iValue;
-   dValue          = GetConfigDouble(indicator, "UnchangedBars.MaxPriceChange");    maxChangeUnchanged = MathAbs(ifDouble(!dValue, maxChangeUnchanged, dValue));
-   iValue          = GetConfigInt   (indicator, "MaxBars.H1",       -1);            maxBarsH1          = ifInt(iValue > 0, iValue, NULL);
-   iValue          = GetConfigInt   (indicator, "Legend.Corner",    -1);            legendCorner       = ifInt(iValue >= CORNER_TOP_LEFT && iValue <= CORNER_BOTTOM_RIGHT, iValue, legendCorner);
-   iValue          = GetConfigInt   (indicator, "Legend.xDistance", -1);            legend_xDistance   = ifInt(iValue >= 0, iValue, legend_xDistance);
-   iValue          = GetConfigInt   (indicator, "Legend.yDistance", -1);            legend_yDistance   = ifInt(iValue >= 0, iValue, legend_yDistance);
+   dValue          = GetConfigDouble(indicator, "UnchangedBars.Threshold.Pct");     unchangedTreshold = MathAbs(ifDouble(!dValue, unchangedTreshold, dValue));
+   iValue          = GetConfigInt   (indicator, "MaxBars.H1",       -1);            maxBarsH1         = ifInt(iValue > 0, iValue, NULL);
+   iValue          = GetConfigInt   (indicator, "Legend.Corner",    -1);            legendCorner      = ifInt(iValue >= CORNER_TOP_LEFT && iValue <= CORNER_BOTTOM_RIGHT, iValue, legendCorner);
+   iValue          = GetConfigInt   (indicator, "Legend.xDistance", -1);            legend_xDistance  = ifInt(iValue >= 0, iValue, legend_xDistance);
+   iValue          = GetConfigInt   (indicator, "Legend.yDistance", -1);            legend_yDistance  = ifInt(iValue >= 0, iValue, legend_yDistance);
    legendFontName  = GetConfigString(indicator, "Legend.FontName", legendFontName);
-   iValue          = GetConfigInt   (indicator, "Legend.FontSize");                 legendFontSize     = ifInt(iValue > 0, iValue, legendFontSize);
+   iValue          = GetConfigInt   (indicator, "Legend.FontSize");                 legendFontSize    = ifInt(iValue > 0, iValue, legendFontSize);
    legendFontColor = GetConfigColor (indicator, "Legend.FontColor", legendFontColor);
    errorSound      = GetConfigString(indicator, "ErrorSound", errorSound);
 
@@ -506,7 +505,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
    else                         openPrice = Open [openBar];
    double ratio = openPrice/Close[closeBar]; if (ratio < 1) ratio = 1/ratio;
    ratio = 100 * (ratio-1);
-   if (ratio > maxChangeUnchanged) {                                 // a smaller change is considered "unchanged"
+   if (ratio > unchangedTreshold) {                                  // a smaller change is colored "unchanged"
       if      (openPrice < Close[closeBar]) barColor = UpBars.Color;
       else if (openPrice > Close[closeBar]) barColor = DownBars.Color;
    }
