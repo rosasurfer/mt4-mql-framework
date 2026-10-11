@@ -29,6 +29,8 @@ extern string Signal.SoundFile               = "Inside Bar.wav";
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
+#property indicator_buffers 1
+#property indicator_color1  CLR_NONE
 
 #define TIME      0                             // rates array indexes
 #define OPEN      1
@@ -88,6 +90,9 @@ int onInit() {
    string text = WindowExpertName() +": "+ Timeframe + legendInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);         // status display
 
+   // indicator management
+   SetIndicatorOptions();
+
    return(catch("onInit(4)"));
 }
 
@@ -98,6 +103,11 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   // reset indicator options before first usage
+   if (!ValidBars) {
+      SetIndicatorOptions();
+   }
+
    double rates[][6];
    int changedBars;
 
@@ -759,6 +769,26 @@ string CreateStatusLabel() {
    if (!catch("CreateStatusLabel(1)"))
       return(label);
    return("");
+}
+
+
+/**
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
+ */
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
+
+   // the indicator dialog always displays at least one buffer, colored black
+   IndicatorBuffers(indicator_buffers);
+   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+   SetIndexLabel(0, NULL);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
