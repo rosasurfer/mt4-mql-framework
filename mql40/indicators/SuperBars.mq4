@@ -38,9 +38,9 @@ extern color  DownBars.Color          = Pink;            // bearish bars
 extern color  UnchangedBars.Color     = Lavender;        // unchanged bars
 extern bool   FillBars                = true;            //
 extern color  CloseMarker.Color       = Gray;            // bar close marker
-extern color  US.ETH.Color            = LemonChiffon;    // ETH sessions
-extern string US.ETH.Symbols          = "";              // comma-separated list of symbols with US ETH sessions ("*": all symbols)
 extern string US.RTH.Symbols          = "";              // comma-separated list of symbols with US RTH sessions ("*": all symbols)
+extern string US.ETH.Symbols          = "";              // comma-separated list of symbols with US ETH sessions ("*": all symbols)
+extern color  US.ETH.Color            = LemonChiffon;    // ETH sessions
 extern string WeekendSessions.Symbols = "";              // comma-separated list of symbols with weekend sessions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,25 +121,12 @@ int onInit() {
       CloseMarker.Color   = GetConfigColor(indicator, "CloseMarker.Color",   CloseMarker.Color);
       US.ETH.Color        = GetConfigColor(indicator, "US.ETH.Color",        US.ETH.Color);
    }
-   // US.ETH.Symbols
-   if (AutoConfiguration) US.ETH.Symbols = GetConfigString(indicator, "US.ETH.Symbols", US.ETH.Symbols);
-   usEthEnabled = false;
-   string sValues[], sValue = StrToLower(US.ETH.Symbols), symbol = StrToLower(Symbol()), stdSymbol = StrToLower(StdSymbol());
-   int size = Explode(sValue, ",", sValues, NULL);
-   for (int i=0; i < size; i++) {
-      sValues[i] = StrTrim(sValues[i]);
-      if (sValues[i] == "*") {
-         usEthEnabled = true;
-         break;
-      }
-   }
-   if (!usEthEnabled) usEthEnabled = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
    // US.RTH.Symbols
    if (AutoConfiguration) US.RTH.Symbols = GetConfigString(indicator, "US.RTH.Symbols", US.RTH.Symbols);
    usRthEnabled = false;
-   sValue = StrToLower(US.RTH.Symbols);
-   size = Explode(sValue, ",", sValues, NULL);
-   for (i=0; i < size; i++) {
+   string sValues[], sValue = StrToLower(US.RTH.Symbols), symbol = StrToLower(Symbol()), stdSymbol = StrToLower(StdSymbol());
+   int size = Explode(sValue, ",", sValues, NULL);
+   for (int i=0; i < size; i++) {
       sValues[i] = StrTrim(sValues[i]);
       if (sValues[i] == "*") {
          usRthEnabled = true;
@@ -147,6 +134,19 @@ int onInit() {
       }
    }
    if (!usRthEnabled) usRthEnabled = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
+   // US.ETH.Symbols
+   if (AutoConfiguration) US.ETH.Symbols = GetConfigString(indicator, "US.ETH.Symbols", US.ETH.Symbols);
+   usEthEnabled = false;
+   sValue = StrToLower(US.ETH.Symbols);
+   size = Explode(sValue, ",", sValues, NULL);
+   for (i=0; i < size; i++) {
+      sValues[i] = StrTrim(sValues[i]);
+      if (sValues[i] == "*") {
+         usEthEnabled = true;
+         break;
+      }
+   }
+   if (!usEthEnabled) usEthEnabled = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
    // WeekendSessions.Symbols
    if (AutoConfiguration) WeekendSessions.Symbols = GetConfigString(indicator, "WeekendSessions.Symbols", WeekendSessions.Symbols);
    sValue = StrToLower(WeekendSessions.Symbols);
@@ -917,9 +917,9 @@ string InputsToStr() {
       "DownBars.Color=",          ColorToStr(DownBars.Color),              ";", NL,
       "UnchangedBars.Color=",     ColorToStr(UnchangedBars.Color),         ";", NL,
       "CloseMarker.Color=",       ColorToStr(CloseMarker.Color),           ";", NL,
-      "US.ETH.Color=",            ColorToStr(US.ETH.Color),                ";", NL,
-      "US.ETH.Symbols=",          DoubleQuoteStr(US.ETH.Symbols),          ";", NL,
       "US.RTH.Symbols=",          DoubleQuoteStr(US.RTH.Symbols),          ";", NL,
+      "US.ETH.Symbols=",          DoubleQuoteStr(US.ETH.Symbols),          ";", NL,
+      "US.ETH.Color=",            ColorToStr(US.ETH.Color),                ";", NL,
       "WeekendSessions.Symbols=", DoubleQuoteStr(WeekendSessions.Symbols), ";", NL
    ));
 
