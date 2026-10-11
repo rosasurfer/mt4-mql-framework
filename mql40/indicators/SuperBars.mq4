@@ -4,8 +4,8 @@
  * Draws rectangles of higher timeframe bars and/or trading sessions in the chart. The active timeframe/session can be changed
  * by executing the scripts "SuperBars.TimeframeUp" and "SuperBars.TimeframeDown".
  *
- * With input parameter "AutoConfiguration" enabled (default) inputs found in the framework configuration override manual
- * inputs. Additional framework config settings without manual inputs:
+ * With input parameter "AutoConfiguration" enabled inputs found in the framework configuration override manual inputs.
+ * Additional framewrk configuration settings without manual inputs:
  *
  * [SuperBars]
  *  Legend.Corner               = {int}      ; CORNER_TOP_LEFT* | CORNER_TOP_RIGHT | CORNER_BOTTOM_LEFT | CORNER_BOTTOM_RIGHT
@@ -19,6 +19,7 @@
  *  ErrorSound                  = {string}   ; notification sound when no higher/lower timeframe is available (default: none)
  *
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
+ *
  *
  * TODO:
  *  - replace input "WeekendSessions.Symbols" by actual symbol properties
@@ -38,8 +39,8 @@ extern color  UnchangedBars.Color     = Lavender;        // unchanged bars
 extern bool   FillBars                = true;            //
 extern color  CloseMarker.Color       = Gray;            // bar close marker
 extern color  US.ETH.Color            = LemonChiffon;    // ETH sessions
-extern string US.ETH.Symbols          = "";              // comma-separated list of symbols with US ETH sessions (supports "*")
-extern string US.RTH.Symbols          = "";              // comma-separated list of symbols with US RTH sessions (supports "*")
+extern string US.ETH.Symbols          = "";              // comma-separated list of symbols with US ETH sessions ("*": all symbols)
+extern string US.RTH.Symbols          = "";              // comma-separated list of symbols with US RTH sessions ("*": all symbols)
 extern string WeekendSessions.Symbols = "";              // comma-separated list of symbols with weekend sessions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,31 +56,47 @@ extern string WeekendSessions.Symbols = "";              // comma-separated list
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/win32api.mqh>
 
+#define BUFFER_HIDDEN_BODY_A  0           // indicator buffer ids
+#define BUFFER_HIDDEN_BODY_B  1
+#define BUFFER_HIDDEN_WICK_A  2
+#define BUFFER_HIDDEN_WICK_B  3
+
 #property indicator_chart_window
+#property indicator_buffers 4
 
-#define STF_UP             1
-#define STF_DOWN          -1
+#property indicator_color1  CLR_NONE
+#property indicator_color2  CLR_NONE
+#property indicator_color3  CLR_NONE
+#property indicator_color4  CLR_NONE
 
-#define PERIOD_D1_US_RTH   1438                       // = PERIOD_D1 - 2 (only the US RTH section of D1)
-#define PERIOD_D1_US_ETH   1439                       // = PERIOD_D1 - 1 (D1 + a separate US ETH section)
+double   hiddenBodyA[];                   // indicator buffers
+double   hiddenBodyB[];
+double   hiddenWickA[];
+double   hiddenWickB[];
 
-int      superTimeframe;                              // the currently active super bar period
-double   unchangedTreshold = 0.05;                    // max. price change in % for a super bar to be colored "unchanged"
-bool     usEthEnabled;                                // whether US ETH sessions are enabled
-bool     usRthEnabled;                                // whether US RTH sessions are enabled
-bool     weekendSessionsEnabled;                      // whether weekend sessions are enabled
-datetime serverTime;                                  // most recent server time
-int      maxBarsH1;                                   // max. number of H1 superbars to draw (performance)
+int      superTimeframe;                  // the currently active super bar period
+double   unchangedTreshold = 0.05;        // max. price change in % for a super bar to be colored "unchanged"
+bool     usEthEnabled;                    // whether US ETH sessions are enabled
+bool     usRthEnabled;                    // whether US RTH sessions are enabled
+bool     weekendSessionsEnabled;          // whether weekend sessions are enabled
+datetime serverTime;                      // most recent server time
+int      maxBarsH1;                       // max. number of H1 super bars to draw (performance)
 
 string   legendLabel      = "";
 int      legendCorner     = CORNER_TOP_LEFT;
 int      legend_xDistance = 300;
 int      legend_yDistance = 3;
-string   legendFontName   = "";                       // default: empty = menu font ("MS Sans Serif")
-int      legendFontSize   = 8;                        // "MS Sans Serif", size 8 corresponds matches the menu font/size
+string   legendFontName   = "";           // empty: OS menu font/size => "MS Sans Serif",8
+int      legendFontSize   = 8;            //
 color    legendFontColor  = Black;
 
-string   errorSound = "";                             // sound played when timeframe cycling is at min/max (default: none)
+string   errorSound = "";                 // sound when timeframe cycling hits min/max (default: none)
+
+#define PERIOD_D1_US_RTH 1438             // PERIOD_D1 - 2 (only the US RTH session is drawn)
+#define PERIOD_D1_US_ETH 1439             // PERIOD_D1 - 1 (D1 + a separate US ETH session are drawn)
+
+#define STF_UP    1                       // super timeframe cycling directions
+#define STF_DOWN -1                       //
 
 
 /**
@@ -151,17 +168,16 @@ int onInit() {
    legendFontColor = GetConfigColor (indicator, "Legend.FontColor", legendFontColor);
    errorSound      = GetConfigString(indicator, "ErrorSound", errorSound);
 
-   // display configuration, names, labels
-   SetIndexLabel(0, NULL);                               // no entries in "Data" window
-   legendLabel = CreateStatusLabel();
-
    // reset the command handler
    if (__isChart) GetChartCommand("", sValues);
-
-   // restore a stored runtime status
-   if (!RestoreStatus()) return(last_error);
+   RestoreStatus();
 
    ValidateSuperTimeframe();
+
+   // buffer management and display options
+   SetIndicatorOptions();
+   legendLabel = CreateStatusLabel();
+
    return(catch("onInit(1)"));
 }
 
@@ -190,9 +206,26 @@ int onTick() {
    serverTime = TimeServer("onTick(1)", true);
    if (!serverTime) return(last_error);
 
-   if (HandleCommands()) {                               // process incoming commands
-      UpdateSuperBars();                                 // update superbars
+   if (!HandleCommands()) return(last_error);            // process incoming commands
+
+   // reset buffers before performing a full recalculation
+   if (!ValidBars) {
+      ArrayInitialize(hiddenBodyA, 0);
+      ArrayInitialize(hiddenBodyB, 0);
+      ArrayInitialize(hiddenWickA, 0);
+      ArrayInitialize(hiddenWickB, 0);
+      SetIndicatorOptions();
    }
+
+   // synchronize buffers with a shifted offline chart
+   if (ShiftedBars > 0) {
+      ShiftDoubleIndicatorBuffer(hiddenBodyA, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(hiddenBodyB, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(hiddenWickA, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(hiddenWickB, Bars, ShiftedBars, 0);
+   }
+
+   UpdateSuperBars();                                 // update superbars
    return(last_error);
 }
 
@@ -837,6 +870,39 @@ bool RestoreStatus() {
    if (result != 0) superTimeframe = result;
 
    return(!catch("RestoreStatus(1)"));
+}
+
+
+/**
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
+ */
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
+
+   IndicatorBuffers(indicator_buffers);
+   SetIndexBuffer(BUFFER_HIDDEN_BODY_A, hiddenBodyA); SetIndexEmptyValue(BUFFER_HIDDEN_BODY_A, 0);
+   SetIndexBuffer(BUFFER_HIDDEN_BODY_B, hiddenBodyB); SetIndexEmptyValue(BUFFER_HIDDEN_BODY_B, 0);
+   SetIndexBuffer(BUFFER_HIDDEN_WICK_A, hiddenWickA); SetIndexEmptyValue(BUFFER_HIDDEN_WICK_A, 0);
+   SetIndexBuffer(BUFFER_HIDDEN_WICK_B, hiddenWickB); SetIndexEmptyValue(BUFFER_HIDDEN_WICK_B, 0);
+   IndicatorDigits(Digits);
+
+   // in histograms the larger of both values determines the displayed color
+   SetIndexStyle(BUFFER_HIDDEN_BODY_A, DRAW_HISTOGRAM, EMPTY, 1, CLR_NONE);
+   SetIndexStyle(BUFFER_HIDDEN_BODY_B, DRAW_HISTOGRAM, EMPTY, 1, CLR_NONE);
+   SetIndexStyle(BUFFER_HIDDEN_WICK_A, DRAW_HISTOGRAM, EMPTY, 1, CLR_NONE);
+   SetIndexStyle(BUFFER_HIDDEN_WICK_B, DRAW_HISTOGRAM, EMPTY, 1, CLR_NONE);
+
+   SetIndexLabel(BUFFER_HIDDEN_BODY_A, NULL);
+   SetIndexLabel(BUFFER_HIDDEN_BODY_B, NULL);
+   SetIndexLabel(BUFFER_HIDDEN_WICK_A, NULL);
+   SetIndexLabel(BUFFER_HIDDEN_WICK_B, NULL);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
