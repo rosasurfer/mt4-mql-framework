@@ -36,8 +36,11 @@ double icMovingAverage(int timeframe, string maMethod, int maPeriods, string maA
                           "",                               // string __________________________
                           false,                            // bool   Signal.onTrendChange
                           "",                               // string Signal.onTrendChange.Types
+                          false,                            // bool   Signal.onCross
+                          "",                               // string Signal.onCross.Types
                           "",                               // string Signal.Sound.Up
                           "",                               // string Signal.Sound.Down
+                          "",                               // string Signal.Sound.Cross
 
                           "",                               // string __________________________
                           false,                            // bool   AutoConfiguration
