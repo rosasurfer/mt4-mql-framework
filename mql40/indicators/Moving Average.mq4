@@ -66,8 +66,11 @@ extern int    SaveCPU                        = 0;                 // update curr
 extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
 extern string Signal.onTrendChange.Types     = "sound* | alert | mail | telegram";
+extern bool   Signal.onCross                 = false;
+extern string Signal.onCross.Types           = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
+extern string Signal.Sound.Cross             = "Signal Cross.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -113,10 +116,15 @@ string legendLabel   = "";
 string legendInfo    = "";                               // additional chart legend info
 int    drawType;
 
-bool   signal.sound;
-bool   signal.alert;
-bool   signal.mail;
-bool   signal.telegram;
+bool   signal.onTrendChange.sound;
+bool   signal.onTrendChange.alert;
+bool   signal.onTrendChange.mail;
+bool   signal.onTrendChange.telegram;
+
+bool   signal.onCross.sound;
+bool   signal.onCross.alert;
+bool   signal.onCross.mail;
+bool   signal.onCross.telegram;
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -199,15 +207,26 @@ int onInit() {
    legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
-      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.onTrendChange.sound, signal.onTrendChange.alert, signal.onTrendChange.mail, signal.onTrendChange.telegram)) {
          return(catch("onInit(11)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.telegram);
-      if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.telegram, "tgm,", ""), -1) +")";
+      Signal.onTrendChange = (signal.onTrendChange.sound || signal.onTrendChange.alert || signal.onTrendChange.mail || signal.onTrendChange.telegram);
+      if (Signal.onTrendChange) legendInfo = StrLeft(ifString(signal.onTrendChange.sound, "sound,", "") + ifString(signal.onTrendChange.alert, "alert,", "") + ifString(signal.onTrendChange.mail, "mail,", "") + ifString(signal.onTrendChange.telegram, "tgm,", ""), -1);
    }
+   signalId = "Signal.onCross";
+   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
+   if (Signal.onCross) {
+      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.onCross.sound, signal.onCross.alert, signal.onCross.mail, signal.onCross.telegram)) {
+         return(catch("onInit(11)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
+      }
+      Signal.onCross = (signal.onCross.sound || signal.onCross.alert || signal.onCross.mail || signal.onCross.telegram);
+      if (Signal.onCross) legendInfo = "c";
+   }
+   if (Signal.onTrendChange || Signal.onCross) legendInfo = "("+ legendInfo +")";
    // Signal.Sound.*
-   if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
-   if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
+   if (AutoConfiguration) Signal.Sound.Up    = GetConfigString(indicator, "Signal.Sound.Up",    Signal.Sound.Up);
+   if (AutoConfiguration) Signal.Sound.Down  = GetConfigString(indicator, "Signal.Sound.Down",  Signal.Sound.Down);
+   if (AutoConfiguration) Signal.Sound.Cross = GetConfigString(indicator, "Signal.Sound.Cross", Signal.Sound.Cross);
 
    // reset an active command handler
    if (__isChart && MA.Periods.Step) {
@@ -307,6 +326,10 @@ int onTick() {
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
+
+      // signal price crossings
+      if (Signal.onCross) {
+      }
    }
    return(last_error);
 }
@@ -345,7 +368,7 @@ bool onTrendChange(int direction) {
    }
 
    // sound: once per system
-   if (signal.sound) {
+   if (signal.onTrendChange.sound) {
       eventAction = true;
       if (!__isTesting) {
          propertyName = eventName +"|sound";
@@ -356,7 +379,7 @@ bool onTrendChange(int direction) {
    }
 
    // alert: once per terminal
-   if (signal.alert) {
+   if (signal.onTrendChange.alert) {
       eventAction = true;
       if (!__isTesting) {
          propertyName = eventName +"|alert";
@@ -367,7 +390,7 @@ bool onTrendChange(int direction) {
    }
 
    // mail: once per system
-   if (signal.mail) {
+   if (signal.onTrendChange.mail) {
       eventAction = true;
       if (!__isTesting) {
          propertyName = eventName +"|mail";
@@ -378,7 +401,7 @@ bool onTrendChange(int direction) {
    }
 
    // telegram: once per system
-   if (signal.telegram) {
+   if (signal.onTrendChange.telegram) {
       eventAction = true;
       if (!__isTesting) {
          propertyName = eventName +"|telegram";
@@ -528,25 +551,29 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";"+ NL,
-                            "MA.Periods=",                 MA.Periods,                                 ";"+ NL,
-                            "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
-                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";"+ NL,
+   return(StringConcatenate(
+      "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";"+ NL,
+      "MA.Periods=",                 MA.Periods,                                 ";"+ NL,
+      "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
+      "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";"+ NL,
 
-                            "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
-                            "Draw.Width=",                 Draw.Width,                                 ";"+ NL,
-                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";"+ NL,
-                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";"+ NL,
-                            "Background.Color=",           ColorToStr(Background.Color),               ";"+ NL,
-                            "Background.Width=",           Background.Width,                           ";"+ NL,
+      "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
+      "Draw.Width=",                 Draw.Width,                                 ";"+ NL,
+      "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";"+ NL,
+      "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";"+ NL,
+      "Background.Color=",           ColorToStr(Background.Color),               ";"+ NL,
+      "Background.Width=",           Background.Width,                           ";"+ NL,
 
-                            "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";"+ NL,
-                            "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
-                            "SaveCPU=",                    SaveCPU,                                    ";"+ NL,
+      "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";"+ NL,
+      "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
+      "SaveCPU=",                    SaveCPU,                                    ";"+ NL,
 
-                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
-                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
-                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
-                            "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
-   );
+      "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
+      "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
+      "Signal.onCross=",             BoolToStr(Signal.onCross),                  ";"+ NL,
+      "Signal.onCross.Types=",       DoubleQuoteStr(Signal.onCross.Types),       ";"+ NL,
+      "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
+      "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";"+ NL,
+      "Signal.Sound.Cross=",         DoubleQuoteStr(Signal.Sound.Cross),         ";"+ NL
+   ));
 }
