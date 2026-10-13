@@ -405,7 +405,7 @@ bool ValidateSuperTimeframe() {
 bool UpdateSuperBars() {
    // on change of the super timeframe delete super bars of the previously active timeframe
    static int lastSuperTimeframe;
-   bool isTimeframeChange = (superTimeframe != lastSuperTimeframe);  // for simplicity interpret the first comparison (lastSuperTimeframe==0) as a change, too
+   bool isTimeframeChange = (superTimeframe != lastSuperTimeframe);  // for simplicity interpret the first comparison (lastSuperTimeframe = 0) as a change, too
 
    if (isTimeframeChange) {
       if (lastSuperTimeframe >=PERIOD_M1 && lastSuperTimeframe <= PERIOD_Q1) {
@@ -507,6 +507,10 @@ bool UpdateSuperBars() {
       }                                                              // The super session covering the last chart bar is rarely complete, check anyway with (..., exact=TRUE).
       else {
          i--;                                                        // no bars available for this super session
+      }
+
+      if (superTimeframe == PERIOD_D1_US_RTH) {
+         // TODO: hide bars from openTimeFxt/D1 to cmeOpenTime
       }
       if (openBar >= changedBars-1) break;                           // only update the range of var changedBars
    }
@@ -891,10 +895,10 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorDigits(Digits);
 
    // in histograms the larger of both values determines the displayed color
-   SetIndexStyle(BUFFER_HIDDEN_BODY_A, DRAW_HISTOGRAM, EMPTY, 1, CLR_NONE);
-   SetIndexStyle(BUFFER_HIDDEN_BODY_B, DRAW_HISTOGRAM, EMPTY, 1, CLR_NONE);
-   SetIndexStyle(BUFFER_HIDDEN_WICK_A, DRAW_HISTOGRAM, EMPTY, 1, CLR_NONE);
-   SetIndexStyle(BUFFER_HIDDEN_WICK_B, DRAW_HISTOGRAM, EMPTY, 1, CLR_NONE);
+   SetIndexStyle(BUFFER_HIDDEN_BODY_A, DRAW_HISTOGRAM, EMPTY, 2, Red);
+   SetIndexStyle(BUFFER_HIDDEN_BODY_B, DRAW_HISTOGRAM, EMPTY, 2, Red);
+   SetIndexStyle(BUFFER_HIDDEN_WICK_A, DRAW_HISTOGRAM, EMPTY, 2, Red);
+   SetIndexStyle(BUFFER_HIDDEN_WICK_B, DRAW_HISTOGRAM, EMPTY, 2, Red);
 
    SetIndexLabel(BUFFER_HIDDEN_BODY_A, NULL);
    SetIndexLabel(BUFFER_HIDDEN_BODY_B, NULL);
