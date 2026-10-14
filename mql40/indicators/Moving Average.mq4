@@ -223,6 +223,10 @@ int onInit() {
       if (Signal.onCross) legendInfo = "c";
    }
    if (Signal.onTrendChange || Signal.onCross) legendInfo = "("+ legendInfo +")";
+   if (Signal.onCross) {
+      ShowChartLegend = 1;
+      SaveCPU = 0;
+   }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up    = GetConfigString(indicator, "Signal.Sound.Up",    Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down  = GetConfigString(indicator, "Signal.Sound.Down",  Signal.Sound.Down);
@@ -329,6 +333,14 @@ int onTick() {
 
       // signal price crossings
       if (Signal.onCross) {
+         static double lastBid = 0;
+         if (ChangedBars > 2) lastBid = 0;
+
+         if (lastBid && Sign(lastBid-main[0]) != Sign(_Bid-main[0])) {
+            if (_Bid > main[0]) onCross(MODE_UPTREND);
+            else                onCross(MODE_DOWNTREND);
+         }
+         lastBid = _Bid;
       }
    }
    return(last_error);
@@ -347,11 +359,11 @@ bool onTrendChange(int direction) {
 
    // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
-   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ MA.Method +"("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +").onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string eventName = "rsf."+ StdSymbol() +","+ sPeriod +"."+ MA.Method +"("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +").onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = indicatorName +" turned "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    string message2  = Symbol() +","+ sPeriod +": "+ message1;
    string localTime = TimeToStr(TimeLocalEx("onTrendChange(2)"), TIME_MINUTES|TIME_SECONDS);
-   string accountAlias = GetAccountAlias();
+   string alias     = GetAccountAlias();
 
    int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
@@ -397,7 +409,7 @@ bool onTrendChange(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ accountAlias +")");
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ alias +")");
    }
 
    // telegram: once per system
@@ -408,9 +420,88 @@ bool onTrendChange(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ alias +")");
    }
    return(!catch("onTrendChange(4)"));
+}
+
+
+/**
+ * Event handler for price crossings.
+ *
+ * @param  int direction - direction
+ *
+ * @return bool - success status
+ */
+bool onCross(int direction) {
+   if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   // skip the signal if it was already handled elsewhere
+   string sPeriod   = PeriodDescription();
+   string eventName = "rsf."+ StdSymbol() +","+ sPeriod +"."+ MA.Method +"("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +").onCross("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1  = "price crossed "+ indicatorName +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message2  = Symbol() +","+ sPeriod +": "+ message1;
+   string localTime = TimeToStr(TimeLocalEx("onCross(2)"), TIME_MINUTES|TIME_SECONDS);
+   string alias     = GetAccountAlias();
+
+   int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
+   bool eventAction;
+
+   // log: once per terminal
+   if (IsLogInfo()) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|log";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) logInfo("onCross(3)  "+ message1);
+   }
+
+   // sound: once per system
+   if (signal.onCross.sound) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|sound";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) PlaySoundEx(Signal.Sound.Cross);
+   }
+
+   // alert: once per terminal
+   if (signal.onCross.alert) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|alert";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) Alert(message2);
+   }
+
+   // mail: once per system
+   if (signal.onCross.mail) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|mail";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ alias +")");
+   }
+
+   // telegram: once per system
+   if (signal.onCross.telegram) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|telegram";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ alias +")");
+   }
+   return(!catch("onCross(4)"));
 }
 
 
