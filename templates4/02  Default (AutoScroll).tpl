@@ -88,7 +88,6 @@ Timeframe=D1
 NumberOfInsideBars=3
 </inputs>
 </expert>
-period_flags=31
 show_data=0
 </indicator>
 
