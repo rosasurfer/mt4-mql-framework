@@ -1345,7 +1345,13 @@ bool UpdatePositions() {
          sCurrentPosition = StringConcatenate(sCurrentPosition, "Position:    ", sCurrentUnits, sCurrentLeverage, NumberToStr(_totalPosition, "+,'.+"), " lot");
       }
    }
-   ObjectSet    (label.totalPosition, OBJPROP_YDISTANCE, ifInt(position.unitsize.corner == CORNER_BOTTOM_RIGHT, position.unitsize.yLine2, position.unitsize.yLine1));
+   int line = position.unitsize.yLine1;
+   if (position.unitsize.corner == CORNER_BOTTOM_RIGHT) {
+      if (ShowUnitSize || ShowRiskParameters) {
+         line = position.unitsize.yLine2;
+      }
+   }
+   ObjectSet    (label.totalPosition, OBJPROP_YDISTANCE, line);
    ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();                                             // on ObjectDrag or opened "Properties" dialog
@@ -1465,8 +1471,9 @@ bool UpdatePositions() {
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: {Abs|Percent}[   {MAE/MFE}]   {Comment}"
    string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfit="", sProfitAbs="", sProfitPct="", sProfitMin="", sProfitMax="", sProfitMinMax="", sMaxRisk="", sComment="", markerText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
    color fontColor;
-   int configLine, line, vLine;
+   int configLine, vLine;
    bool hiddenLine;
+   line = 0;
 
    // update rows with regular custom positions
    if (mode.intern) {
@@ -1493,9 +1500,12 @@ bool UpdatePositions() {
 
             if (positions.showAbsProfits) {
                sProfitAbs = NumberToStr(positions.data[i][I_PROFIT], ",'.2");
-               if (positions.data[i][I_ADJUSTED_PROFIT] != NULL) sProfitAbs = StringConcatenate(sProfitAbs, " (", NumberToStr(positions.data[i][I_ADJUSTED_PROFIT], "+,'.2"), ")");
+               sProfitPct = " ";
             }
-            sProfitPct    = StringConcatenate(DoubleToStr(positions.data[i][I_PROFIT_PCT], 2), "%");
+            else {
+               sProfitAbs = " ";
+               sProfitPct = StringConcatenate(DoubleToStr(positions.data[i][I_PROFIT_PCT], 2), "%");
+            }
             sProfitMin    = " ";
             sProfitMax    = " ";
             sProfitMinMax = " ";
