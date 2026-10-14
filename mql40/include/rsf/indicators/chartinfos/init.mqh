@@ -27,6 +27,7 @@ int onInit() {
    if (AutoConfiguration) {
       string indicator = WindowExpertName();
       ShowPrice             = GetConfigBool(indicator, "ShowPrice",             ShowPrice);
+      ShowRiskParameters    = GetConfigBool(indicator, "ShowRiskParameters",    ShowRiskParameters);
       ShowUnitSize          = GetConfigBool(indicator, "ShowUnitSize",          ShowUnitSize);
       ShowStopoutLevel      = GetConfigBool(indicator, "ShowStopoutLevel",      ShowStopoutLevel);
       TrackOrders           = GetConfigBool(indicator, "TrackOrders",           TrackOrders);

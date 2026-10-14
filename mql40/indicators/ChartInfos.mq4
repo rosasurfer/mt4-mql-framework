@@ -32,6 +32,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern bool ShowPrice             = true;          // whether to display the current price
+extern bool ShowRiskParameters    = true;          // whether to display the unit size parameters
 extern bool ShowUnitSize          = true;          // whether to display the current unit size
 extern bool ShowStopoutLevel      = true;          // whether to display the account's current stopout level
 
@@ -1264,22 +1265,23 @@ bool UpdateUnitSize() {
    string text = " ";
 
    if (mode.intern) {
-      if (mm.cfgRiskRange != NULL) {
-         double range = mm.cfgRiskRange;
-         string sRiskRange = "";
-         if (mm.cfgRiskRangeIsADR) {
-            if (Close[0] > 300 && range >= 3) range = MathRound(range);
-            else                              range = NormalizeDouble(range, PipDigits);
-            sRiskRange = "ADR=";
+      if (ShowRiskParameters) {
+         if (mm.cfgRiskRange != NULL) {
+            double range = mm.cfgRiskRange;
+            string sRiskRange = "";
+            if (mm.cfgRiskRangeIsADR) {
+               if (Close[0] > 300 && range >= 3) range = MathRound(range);
+               else                              range = NormalizeDouble(range, PipDigits);
+               sRiskRange = "ADR=";
+            }
+            if (Close[0] > 300 && range >= 3) sRiskRange = StringConcatenate(sRiskRange, NumberToStr(range, ",'.2+"));
+            else                              sRiskRange = StringConcatenate(sRiskRange, NumberToStr(NormalizeDouble(range/Pip, 1), ".+"), " pip");
+            text = sRiskRange;
          }
-         if (Close[0] > 300 && range >= 3) sRiskRange = StringConcatenate(sRiskRange, NumberToStr(range, ",'.2+"));
-         else                              sRiskRange = StringConcatenate(sRiskRange, NumberToStr(NormalizeDouble(range/Pip, 1), ".+"), " pip");
-         text = sRiskRange;
+         if (mm.usesLeverage) text = StringConcatenate(text, "     L", DoubleToStr(mm.leveragePerUnit, 1));
+         else                 text = StringConcatenate(text, "     R", NumberToStr(NormalizeDouble(mm.cfgRiskPercent, 1), ".+"), "%");
       }
-
-      if (mm.usesLeverage) text = StringConcatenate(text, "     L", DoubleToStr(mm.leveragePerUnit, 1));
-      else                 text = StringConcatenate(text, "     R", NumberToStr(NormalizeDouble(mm.cfgRiskPercent, 1), ".+"), "%");
-      if (ShowUnitSize)    text = StringConcatenate(text, "     ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
+      if (ShowUnitSize)       text = StringConcatenate(text, "     ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
    }
 
    bool noPosition = !isPosition && !isVirtualPosition;
@@ -5497,15 +5499,16 @@ string ConfigTermTypeToStr(int type) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ShowPrice=",             BoolToStr(ShowPrice),             ";", NL,
-                            "ShowUnitSize=",          BoolToStr(ShowUnitSize),          ";", NL,
-                            "ShowStopoutLevel=",      BoolToStr(ShowStopoutLevel),      ";", NL,
-                            "TrackOrders=",           BoolToStr(TrackOrders),           ";", NL,
-                            "CustomPositions.Sound=", BoolToStr(CustomPositions.Sound), ";")
+   return(StringConcatenate(
+      "ShowPrice=",             BoolToStr(ShowPrice),             ";", NL,
+      "ShowRiskParameters=",    BoolToStr(ShowRiskParameters),    ";", NL,
+      "ShowUnitSize=",          BoolToStr(ShowUnitSize),          ";", NL,
+      "ShowStopoutLevel=",      BoolToStr(ShowStopoutLevel),      ";", NL,
+      "TrackOrders=",           BoolToStr(TrackOrders),           ";", NL,
+      "CustomPositions.Sound=", BoolToStr(CustomPositions.Sound), ";", NL
+   ));
 
-   );
-
-   // dummy call to prevent compiler warnings
+   // prevent compiler warnings
    ConfigTermTypeToStr(NULL);
 }
 
