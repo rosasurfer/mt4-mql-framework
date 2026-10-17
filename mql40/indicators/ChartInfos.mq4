@@ -118,7 +118,7 @@ double  config.terms[][6];                         // @see CustomPositions.ReadC
 #define TERM_PROFIT_MARKER             15          //
 #define TERM_LOSS_MARKER               16          //
 
-// data of configured custom positions: size(config.sData) == size(config.dData) == number-of-configured-custom-positions
+// data of configured custom positions: size(config.sData) == size(config.dData) = number-of-configured-custom-positions
 string  config.sData[][2];                         // @see indexes of config.sData[]
 double  config.dData[][7];                         // @see indexes of config.dData[]
 
@@ -134,6 +134,8 @@ double  config.dData[][7];                         // @see indexes of config.dDa
 #define ID_MARK_MFE                     4          // whether to mark MFE levels
 #define ID_PROFIT_MFE                   5          // current MFE maximum in money
 #define ID_PROFIT_MAE                   6          // current MAE minimum in money
+
+double  config.tickValueMultiplier = 1;            //
 
 // resulting custom position entries (stats rows)
 double  positions.data[][23];                      // @see indexes of positions.data[]
@@ -1387,10 +1389,10 @@ bool UpdatePositions() {
       if (positions.showMfae) {
          //           Type:  Lots  BE:  BePrice  Profit:  Pct    MFE/MAE   Comment
          // offsets = {9,    46,   83,  28,      68,      39,    61,       90};
-         ArrayPushInt(offsets, 90);                                                 // add column for MFE/MAE
+         ArrayPushInt(offsets, 90);                                        // add column for MFE/MAE
          commentCol++;
          if (positions.showAbsProfits) {
-            offsets[commentCol] += 30;                                              // shift Comment column a little
+            offsets[commentCol] += 30;                                     // shift Comment column a little
          }
       }
       ArrayResize(xOffset, 0);
@@ -1892,8 +1894,9 @@ bool UpdateStopoutLevel() {
       for (int n, i=0; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                 // FALSE: an open order was closed/deleted in another thread
          if (OrderType() > OP_SELL) {
-            if (!isPendings) /*&&*/ if (OrderSymbol()==Symbol())
+            if (!isPendings) /*&&*/ if (OrderSymbol()==Symbol()) {
                isPendings = true;
+            }
             continue;
          }
 
@@ -1982,7 +1985,7 @@ bool UpdateStopoutLevel() {
    }
    SetLastError(prevError);
 
-   // extract individual tickets/partial positions from all open positions and store it in positions.data[]
+   // extract custom positions from all open positions and store them in positions.data[]
    int    line, termType, termsSize = ArrayRange(config.terms, 0);
    double termValue1, termValue2, termValue3, termResult1, termResult2;
    int    filter, filterCondition, filterValue;
@@ -2075,8 +2078,9 @@ bool UpdateStopoutLevel() {
          continue;
       }
 
-      // extract individual tickets/partial positions
+      // extract custom position
       if (!ExtractPosition(termType, termValue1, termValue2, termValue3, termResult1, termResult2,
+                           config.tickValueMultiplier,
                            filter, filterCondition, filterValue,
                            allLongPositions,   allShortPositions,   allTotalPositions,   tickets, magicNumbers, types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
                            customLongPosition, customShortPosition, customTotalPosition, customTickets,         customTypes, customLots,      customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity,
@@ -2484,9 +2488,14 @@ bool CustomPositions.ReadConfig() {
    if (!minLotSize || !lotStep) return(false);                       // if MarketInfo() data is not yet available
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(4)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
-   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (file == "") return(false);
-   string section  = "CustomPositions";
-   int    keysSize = GetIniKeys(file, section, keys);
+   string section = "CustomPositions.Config", key = symbol +".TickValue.Multiplier";
+   dValue = GetConfigDouble(section, key, 1);
+   if (dValue <= 0)             return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ key +"=\""+ dValue +"\" (must be > 0)", ERR_INVALID_CONFIG_VALUE));
+   config.tickValueMultiplier = dValue;
+
+   string file = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (file == "") return(false);
+   section = "CustomPositions";
+   int keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {
       if (StrStartsWithI(keys[i], symbol) || StrStartsWithI(keys[i], stdSymbol)) {
@@ -2538,7 +2547,7 @@ bool CustomPositions.ReadConfig() {
                if (values[n] == "") continue;                        // empty string
 
                if (StrStartsWith(values[n], "BEM")) {                // flag: display BE marker
-                  if (values[n] != "BEM")                            return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (values[n] != "BEM")                            return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isBemEnabled = true;
                   continue;
                }
@@ -2546,16 +2555,16 @@ bool CustomPositions.ReadConfig() {
                   sValue = values[n];
                   if (sValue != "MFE") {
                      sValue = StrSubstr(sValue, 3);
-                     if (!StrStartsWith(sValue, "-"))                return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (!StrStartsWith(sValue, "-"))                return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      sValue = StrSubstr(sValue, 1);
                      len = StringLen(sValue);
-                     if (len > 2)                                    return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (len > 2)                                    return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      while (len > 0) {
                         len--;
                         switch (StringGetChar(sValue, len)) {
                            case 'M': markMfe = true;      break;     // flag: mark MFE level
                            case 'S': isMfaeSignal = true; break;     // flag: signal new MFE/MAE
-                           default:                                  return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                           default:                                  return(!catch("CustomPositions.ReadConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                         }
                      }
                   }
@@ -2565,7 +2574,7 @@ bool CustomPositions.ReadConfig() {
 
                if (StrStartsWith(values[n], "#")) {                  // ticket: #123456
                   sValue = StrTrim(StrSubstr(values[n], 1));
-                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType    = TERM_TICKET;
                   termValue1  = StrToInteger(sValue);
                   termValue2  = EMPTY;                               // all remaining lots
@@ -2577,13 +2586,13 @@ bool CustomPositions.ReadConfig() {
                else if (StrContains(values[n], "#")) {               // partial ticket: 0.1#123456
                   pos = StringFind(values[n], "#");
                   sValue = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_TICKET;
                   termValue2 = StrToDouble(sValue);
-                  if (termValue2 && LT(termValue2, minLotSize))      return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue2, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue2 && LT(termValue2, minLotSize))      return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue2, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(values[n], pos+1));
-                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1  = StrToInteger(sValue);
                   termValue3  = NULL;
                   termResult1 = NULL;
@@ -2602,15 +2611,15 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "E=")) {            // equity value: E=123.56
                   sValue = StrTrimLeft(StrSubstr(values[n], 2));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in equity term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in equity term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_EQUITY;
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 <= 0)                               return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in equity term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 <= 0)                               return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in equity term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
                   termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (hasEquityValue)                                return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple equity terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (hasEquityValue)                                return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple equity terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   hasEquityValue = true;
                }
 
@@ -2624,15 +2633,15 @@ bool CustomPositions.ReadConfig() {
                      termValue1 = 0;
                      sValue = StrTrim(StrSubstr(sValue, 2));
                   }
-                  else                                               return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in EAM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-integer value in EAM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  else                                               return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in EAM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-integer value in EAM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_FILTER_MAGIC;
                   termValue2 = StrToInteger(sValue);
-                  if (!termValue2)                                   return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal magic number in EAM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!termValue2)                                   return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal magic number in EAM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isFilteredPosition = true;
                   filterType   = termType;
                   filterValue1 = termValue1;
@@ -2649,15 +2658,15 @@ bool CustomPositions.ReadConfig() {
                      termValue1 = 0;
                      sValue = StrTrim(StrSubstr(sValue, 2));
                   }
-                  else                                               return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in EAS term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-integer value in EAS term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  else                                               return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in EAS term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-integer value in EAS term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_FILTER_SID;
                   termValue2 = StrToInteger(sValue);
-                  if (termValue2 < 101 || termValue2 > 1023)         return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal strategy id in EAS term \""+ values[n] +"\", must be from 101-1023) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue2 < 101 || termValue2 > 1023)         return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal strategy id in EAS term \""+ values[n] +"\", must be from 101-1023) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isFilteredPosition = true;
                   filterType   = termType;
                   filterValue1 = termValue1;
@@ -2666,16 +2675,16 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "EA")) {            // EA positions: EA=[01]
                   sValue = StrTrimLeft(StrSubstr(values[n], 2));
-                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in EA term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in EA term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(sValue, 1));
-                  if (sValue!="0" && sValue!="1")                    return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in EA term \""+ values[n] +"\", must be 0 or 1) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (sValue!="0" && sValue!="1")                    return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in EA term \""+ values[n] +"\", must be 0 or 1) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType    = TERM_FILTER_EA;
                   termValue1  = StrToInteger(sValue);
                   termValue2  = NULL;
                   termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isFilteredPosition = true;
                   filterType   = termType;
                   filterValue1 = termValue1;
@@ -2690,26 +2699,26 @@ bool CustomPositions.ReadConfig() {
                      sValue = StrTrim(StrSubstr(sValue, 1));
                      isPercent = StrEndsWith(sValue, "%");
                      if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      dValue = StrToDouble(sValue);
                      termValue1 = NULL;
                      termValue2 = dValue;
-                     if (isPercent && termValue2 <= -100)            return(!catch("CustomPositions.ReadConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (isPercent && termValue2 <= -100)            return(!catch("CustomPositions.ReadConfig(30)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      termValue3 = isPercent;
                   }
                   else if (StrStartsWith(sValue, "@")) {
                      sValue = StrTrim(StrSubstr(sValue, 1));
-                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(30)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(31)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      dValue = StrToDouble(sValue);
                      termValue1 = NormalizeDouble(dValue, Digits);
-                     if (termValue1 <= 0)                            return(!catch("CustomPositions.ReadConfig(31)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (termValue1 <= 0)                            return(!catch("CustomPositions.ReadConfig(32)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      termValue2 = NULL;
                      termValue3 = NULL;
                   }
-                  else                                               return(!catch("CustomPositions.ReadConfig(32)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  else                                               return(!catch("CustomPositions.ReadConfig(33)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (hasProfitMarker)                               return(!catch("CustomPositions.ReadConfig(33)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple PM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (hasProfitMarker)                               return(!catch("CustomPositions.ReadConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple PM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   hasProfitMarker = true;
                }
 
@@ -2721,31 +2730,31 @@ bool CustomPositions.ReadConfig() {
                      sValue = StrTrim(StrSubstr(sValue, 1));
                      isPercent = StrEndsWith(sValue, "%");
                      if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(35)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      dValue = StrToDouble(sValue);
                      termValue1 = NULL;
                      termValue2 = dValue;
-                     if (isPercent && termValue2 <= -100)            return(!catch("CustomPositions.ReadConfig(35)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (isPercent && termValue2 <= -100)            return(!catch("CustomPositions.ReadConfig(36)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      termValue3 = isPercent;
                   }
                   else if (StrStartsWith(sValue, "@")) {
                      sValue = StrTrim(StrSubstr(sValue, 1));
-                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(36)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (!StrIsNumeric(sValue))                      return(!catch("CustomPositions.ReadConfig(37)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      dValue = StrToDouble(sValue);
                      termValue1 = NormalizeDouble(dValue, Digits);
-                     if (termValue1 <= 0)                            return(!catch("CustomPositions.ReadConfig(37)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (termValue1 <= 0)                            return(!catch("CustomPositions.ReadConfig(38)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      termValue2 = NULL;
                      termValue3 = NULL;
                   }
-                  else                                               return(!catch("CustomPositions.ReadConfig(38)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  else                                               return(!catch("CustomPositions.ReadConfig(39)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (hasLossMarker)                                 return(!catch("CustomPositions.ReadConfig(39)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple LM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (hasLossMarker)                                 return(!catch("CustomPositions.ReadConfig(40)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple LM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   hasLossMarker = true;
                }
 
                else if (StrStartsWith(values[n], "L")) {             // alle verbleibenden Long-Positionen
-                  if (values[n] != "L")                              return(!catch("CustomPositions.ReadConfig(40)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (values[n] != "L")                              return(!catch("CustomPositions.ReadConfig(41)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType    = TERM_OPEN_LONG;
                   termValue1  = EMPTY;
                   termValue2  = NULL;
@@ -2755,7 +2764,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "S")) {             // alle verbleibenden Short-Positionen
-                  if (values[n] != "S")                              return(!catch("CustomPositions.ReadConfig(41)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (values[n] != "S")                              return(!catch("CustomPositions.ReadConfig(42)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType    = TERM_OPEN_SHORT;
                   termValue1  = EMPTY;
                   termValue2  = NULL;
@@ -2786,10 +2795,10 @@ bool CustomPositions.ReadConfig() {
                else if (StrEndsWith(values[n], "L")) {               // virtuelle Longposition zum aktuellen Preis
                   termType = TERM_OPEN_LONG;
                   sValue   = StrTrim(StrLeft(values[n], -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(42)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(43)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(43)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(44)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(44)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(45)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
                   termValue3  = NULL;
                   termResult1 = NULL;
@@ -2799,10 +2808,10 @@ bool CustomPositions.ReadConfig() {
                else if (StrEndsWith(values[n], "S")) {               // virtuelle Shortposition zum aktuellen Preis
                   termType = TERM_OPEN_SHORT;
                   sValue   = StrTrim(StrLeft(values[n], -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(45)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(46)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(46)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(47)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(47)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(48)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
                   termValue3  = NULL;
                   termResult1 = NULL;
@@ -2813,16 +2822,16 @@ bool CustomPositions.ReadConfig() {
                   termType = TERM_OPEN_LONG;
                   pos = StringFind(values[n], "L");
                   sValue = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(48)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(49)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(49)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(50)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(50)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(51)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(values[n], pos+1));
                   if (StrStartsWith(sValue, "@"))
                      sValue = StrTrim(StrSubstr(sValue, 1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(51)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(52)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(sValue);
-                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(52)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(53)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
@@ -2832,21 +2841,21 @@ bool CustomPositions.ReadConfig() {
                   termType = TERM_OPEN_SHORT;
                   pos = StringFind(values[n], "S");
                   sValue = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(53)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(54)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(54)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(55)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(55)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(56)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(values[n], pos+1));
                   if (StrStartsWith(sValue, "@"))
                      sValue = StrTrim(StrSubstr(sValue, 1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(56)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(57)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(sValue);
-                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(57)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(58)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue3  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
-               else                                                  return(!catch("CustomPositions.ReadConfig(58)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+               else                                                  return(!catch("CustomPositions.ReadConfig(59)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
 
                // Die Konfiguration virtueller Positionen muß mit einem virtuellen Term beginnen, damit die realen Lots nicht um die virtuellen Lots reduziert werden.
                if ((termType==TERM_OPEN_LONG || termType==TERM_OPEN_SHORT) && termValue1!=EMPTY) {
@@ -2953,7 +2962,7 @@ bool CustomPositions.ReadConfig() {
    ArrayResize(config.terms, 0); if (ArraySize(confTerms) > 0) ArrayCopy(config.terms, confTerms);
    ArrayResize(config.dData, 0); if (ArraySize(confdData) > 0) ArrayCopy(config.dData, confdData);
    ArrayResize(config.sData, 0); if (ArraySize(confsData) > 0) ArrayCopy(config.sData, confsData);
-   return(!catch("CustomPositions.ReadConfig(59)"));
+   return(!catch("CustomPositions.ReadConfig(60)"));
 }
 
 
@@ -3511,15 +3520,17 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
 
 /**
- * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer
- * CustomPosition {customVars} hinzu.
+ * Extrahiert aus dem Bestand der übergebenen Terminalpositionen {fromVars} eine Teilposition {termVars} und fügt sie dem
+ * Bestand der übergebenen CustomPosition {customVars} hinzu.
  *
  * @param  _In_    int      termType
  * @param  _In_    double   termValue1
  * @param  _In_    double   termValue2
- * @param  _In_    double   termValue3      - unused
+ * @param  _In_    double   termValue3 - unused
  * @param  _InOut_ double   termResult1
  * @param  _InOut_ double   termResult2
+ *
+ * @param  _In_    double   tickValueMultiplier
  *
  * @param  _InOut_ int      filter          - filter of the custom position: TERM_FILTER_EA|TERM_FILTER_MAGIC|TERM_FILTER_SID
  * @param  _InOut_ int      filterCondition - operator: 1=include, 0=exclude
@@ -3566,6 +3577,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * @return bool - success status
  */
 bool ExtractPosition(int termType, double termValue1, double termValue2, double termValue3, double &termResult1, double &termResult2,
+                     double tickValueMultiplier,
                      int &filter, int &filterCondition, int &filterValue,
                      double &fromLongPosition,   double &fromShortPosition,   double &fromTotalPosition,   int &fromTickets[], int fromMagicNumbers[], int fromTypes[],    double &fromLots[], datetime fromOpenTimes[], double fromOpenPrices[],    double &fromCommissions[],   double &fromSwaps[],   double &fromProfits[],
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[],                       int &customTypes[], double &customLots[],                         double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &closedProfit, double &adjustedProfit, double &customEquity,
@@ -3603,9 +3615,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   ArrayPushInt   (customTypes,       fromTypes      [i]);
                   ArrayPushDouble(customLots,        fromLots       [i]);
                   ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]);
-                  ArrayPushDouble(customCommissions, fromCommissions[i]);
-                  ArrayPushDouble(customSwaps,       fromSwaps      [i]);
-                  ArrayPushDouble(customProfits,     fromProfits    [i]);
+                  ArrayPushDouble(customCommissions, NormalizeDouble(fromCommissions[i] * tickValueMultiplier, 2));
+                  ArrayPushDouble(customSwaps,       NormalizeDouble(fromSwaps      [i] * tickValueMultiplier, 2));
+                  ArrayPushDouble(customProfits,     NormalizeDouble(fromProfits    [i] * tickValueMultiplier, 2));
                   if (!isVirtual) {
                      fromLongPosition  = NormalizeDouble(fromLongPosition - fromLots[i],       2);
                      fromTotalPosition = NormalizeDouble(fromLongPosition - fromShortPosition, 2);
@@ -3625,9 +3637,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             ArrayPushInt   (customTypes,       OP_BUY                                     );
             ArrayPushDouble(customLots,        lotsize                                    );
             ArrayPushDouble(customOpenPrices,  openPrice                                  );
-            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize), 2));
-            ArrayPushDouble(customSwaps,       0                                          );
-            ArrayPushDouble(customProfits,     (Bid-openPrice)/Pip * PipValue(lotsize, true));  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize) * tickValueMultiplier, 2));
+            ArrayPushDouble(customSwaps,       0                                          );    // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+            ArrayPushDouble(customProfits,     NormalizeDouble((Bid-openPrice)/Pip * PipValue(lotsize, true) * tickValueMultiplier, 2));
             customLongPosition  = NormalizeDouble(customLongPosition + lotsize,             3);
             customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
          }
@@ -3653,9 +3665,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   ArrayPushInt   (customTypes,       fromTypes      [i]);
                   ArrayPushDouble(customLots,        fromLots       [i]);
                   ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]);
-                  ArrayPushDouble(customCommissions, fromCommissions[i]);
-                  ArrayPushDouble(customSwaps,       fromSwaps      [i]);
-                  ArrayPushDouble(customProfits,     fromProfits    [i]);
+                  ArrayPushDouble(customCommissions, NormalizeDouble(fromCommissions[i] * tickValueMultiplier, 2));
+                  ArrayPushDouble(customSwaps,       NormalizeDouble(fromSwaps      [i] * tickValueMultiplier, 2));
+                  ArrayPushDouble(customProfits,     NormalizeDouble(fromProfits    [i] * tickValueMultiplier, 2));
                   if (!isVirtual) {
                      fromShortPosition = NormalizeDouble(fromShortPosition - fromLots[i],      2);
                      fromTotalPosition = NormalizeDouble(fromLongPosition - fromShortPosition, 2);
@@ -3675,9 +3687,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             ArrayPushInt   (customTypes,       OP_SELL                                    );
             ArrayPushDouble(customLots,        lotsize                                    );
             ArrayPushDouble(customOpenPrices,  openPrice                                  );
-            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize), 2));
-            ArrayPushDouble(customSwaps,       0                                          );
-            ArrayPushDouble(customProfits,     (openPrice-Ask)/Pip * PipValue(lotsize, true));  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize) * tickValueMultiplier, 2));
+            ArrayPushDouble(customSwaps,       0                                          );    // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+            ArrayPushDouble(customProfits,     NormalizeDouble((openPrice-Ask)/Pip * PipValue(lotsize, true) * tickValueMultiplier, 2));
             customShortPosition = NormalizeDouble(customShortPosition + lotsize,            3);
             customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
          }
@@ -3704,9 +3716,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             ArrayPushInt   (customTypes,       fromTypes      [i]);
             ArrayPushDouble(customLots,        fromLots       [i]);
             ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]);
-            ArrayPushDouble(customCommissions, fromCommissions[i]);
-            ArrayPushDouble(customSwaps,       fromSwaps      [i]);
-            ArrayPushDouble(customProfits,     fromProfits    [i]);
+            ArrayPushDouble(customCommissions, NormalizeDouble(fromCommissions[i] * tickValueMultiplier, 2));
+            ArrayPushDouble(customSwaps,       NormalizeDouble(fromSwaps      [i] * tickValueMultiplier, 2));
+            ArrayPushDouble(customProfits,     NormalizeDouble(fromProfits    [i] * tickValueMultiplier, 2));
             if (!isVirtual) {
                if (fromTypes[i] == OP_BUY) fromLongPosition  = NormalizeDouble(fromLongPosition  - fromLots[i], 2);
                else                        fromShortPosition = NormalizeDouble(fromShortPosition - fromLots[i], 2);
@@ -3727,7 +3739,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       double lastProfit = termResult1;    // default: EMPTY_VALUE
       int    lastOrders = termResult2;    // default: EMPTY_VALUE                // number of tickets in history: on change the cached PnL is invalid/must be re-calculated
 
-      int orders=OrdersHistoryTotal(), _orders=orders;
+      int orders = OrdersHistoryTotal(), _orders = orders;
       if (orders != lastOrders) {
 
          // read sort keys of closed tickets and order tickets by time {0:CloseTime, 1:OpenTime, 2:Ticket}
@@ -3797,6 +3809,12 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             hst.magicNumbers[i] = OrderMagicNumber();
             hst.comments    [i] = OrderComment();
             hst.discarded   [i] = false;
+
+            if (OrderSymbol() == Symbol()) {
+               hst.commissions[i] = NormalizeDouble(hst.commissions[i] * tickValueMultiplier, 2);
+               hst.swaps      [i] = NormalizeDouble(hst.swaps      [i] * tickValueMultiplier, 2);
+               hst.profits    [i] = NormalizeDouble(hst.profits    [i] * tickValueMultiplier, 2);
+            }
          }
 
          // adjust hedges: link all trade data to the 1st ticket (open), discard the 2nd ticket (close)
@@ -3906,9 +3924,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                ArrayPushInt   (customTypes,       fromTypes      [i]);
                ArrayPushDouble(customLots,        fromLots       [i]);
                ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]);
-               ArrayPushDouble(customCommissions, fromCommissions[i]);
-               ArrayPushDouble(customSwaps,       fromSwaps      [i]);
-               ArrayPushDouble(customProfits,     fromProfits    [i]);
+               ArrayPushDouble(customCommissions, NormalizeDouble(fromCommissions[i] * tickValueMultiplier, 2));
+               ArrayPushDouble(customSwaps,       NormalizeDouble(fromSwaps      [i] * tickValueMultiplier, 2));
+               ArrayPushDouble(customProfits,     NormalizeDouble(fromProfits    [i] * tickValueMultiplier, 2));
                if (!isVirtual) {
                   if (fromTypes[i] == OP_BUY) fromLongPosition  = NormalizeDouble(fromLongPosition  - fromLots[i], 2);
                   else                        fromShortPosition = NormalizeDouble(fromShortPosition - fromLots[i], 2);
@@ -3930,6 +3948,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                if (EQ(lotsize, fromLots[i])) {
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(TERM_TICKET, ticket, EMPTY, NULL, termResult1, termResult2,
+                                       tickValueMultiplier,
                                        filter, filterCondition, filterValue,
                                        fromLongPosition,   fromShortPosition,   fromTotalPosition,   fromTickets, fromMagicNumbers, fromTypes,   fromLots, fromOpenTimes, fromOpenPrices,   fromCommissions,   fromSwaps,   fromProfits,
                                        customLongPosition, customShortPosition, customTotalPosition, customTickets,                 customTypes, customLots,              customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity,
@@ -3943,11 +3962,11 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   double factor = lotsize/fromLots[i];
                   ArrayPushInt   (customTickets,     fromTickets    [i]         );
                   ArrayPushInt   (customTypes,       fromTypes      [i]         );
-                  ArrayPushDouble(customLots,        lotsize                    ); if (!isVirtual) fromLots       [i]  = NormalizeDouble(fromLots[i]-lotsize, 2); // reduzieren
+                  ArrayPushDouble(customLots,        lotsize                    ); if (!isVirtual) fromLots[i] = NormalizeDouble(fromLots[i]-lotsize, 2); // reduzieren
                   ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]         );
-                  ArrayPushDouble(customSwaps,       fromSwaps      [i]         ); if (!isVirtual) fromSwaps      [i]  = NULL;                                    // komplett
-                  ArrayPushDouble(customCommissions, fromCommissions[i] * factor); if (!isVirtual) fromCommissions[i] *= (1-factor);                              // anteilig
-                  ArrayPushDouble(customProfits,     fromProfits    [i] * factor); if (!isVirtual) fromProfits    [i] *= (1-factor);                              // anteilig
+                  ArrayPushDouble(customSwaps,       fromSwaps      [i] * tickValueMultiplier         ); if (!isVirtual) fromSwaps      [i]  = NULL;                                    // komplett
+                  ArrayPushDouble(customCommissions, fromCommissions[i] * tickValueMultiplier * factor); if (!isVirtual) fromCommissions[i] *= (1-factor);                              // anteilig
+                  ArrayPushDouble(customProfits,     fromProfits    [i] * tickValueMultiplier * factor); if (!isVirtual) fromProfits    [i] *= (1-factor);                              // anteilig
                   if (!isVirtual) {
                      if (fromTypes[i] == OP_BUY) fromLongPosition  = NormalizeDouble(fromLongPosition  - lotsize, 2);
                      else                        fromShortPosition = NormalizeDouble(fromShortPosition - lotsize, 2);
@@ -4062,7 +4081,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    }
    skipped = false;
 
-   if (closedProfit == EMPTY_VALUE) closedProfit = 0;                      // 0.00 ist gültiger PL
+   if (closedProfit == EMPTY_VALUE) closedProfit = 0;                      // 0.00 ist gültiger PnL
 
    equity = customEquity;
    if (!equity) {
@@ -4145,7 +4164,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       if (remainingShort != 0) return(!catch("StoreCustomPosition(2)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
 
       // BE-Distance und Profit berechnen
-      pipValue = PipValue(hedgedLots, true);                                  // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
+      pipValue = PipValue(hedgedLots, true) * config.tickValueMultiplier;     // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
          pipDistance  = (closePrice-openPrice)/hedgedLots/Pip + (swap+commission)/pipValue;
          hedgedProfit = pipDistance * pipValue;
@@ -4273,7 +4292,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.data[n][I_LOSS_MARKER_PCT   ] = NULL;
       positions.data[n][I_LOSS_MARKER_AS_PCT] = NULL;
 
-      pipValue = PipValue(totalPosition, true);                               // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
+      pipValue = PipValue(totalPosition, true) * config.tickValueMultiplier;     // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
          // re-calculate BE level
          positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit)/pipValue*Pip, 8);
@@ -4419,7 +4438,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.data[n][I_LOSS_MARKER_PCT   ] = NULL;
       positions.data[n][I_LOSS_MARKER_AS_PCT] = NULL;
 
-      pipValue = PipValue(-totalPosition, true);                              // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
+      pipValue = PipValue(-totalPosition, true) * config.tickValueMultiplier;       // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
          // re-calculate BE level
          positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble((totalProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, 8);
