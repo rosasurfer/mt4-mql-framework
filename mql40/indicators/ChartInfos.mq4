@@ -4072,7 +4072,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    double totalProfit;                                                     // effective sum of: openProfit + closedProfit + adjustedProfit
    double openProfitTerminal;                                              // open profit as seen by the terminal (not optimized for hedged positions)
    double totalProfitTerminal;                                             // total profit as seen by the terminal (not optimized for hedged positions)
-   double equity, equity100Pct;                                            // current equity value of the position and 100% base value for calculation of MFE/MAE
+   double equity, subtractedProfit, equity100Pct;                          // current equity value of the position and 100% base value for calculation of MFE/MAE
    double mfePrice, maePrice;
    bool   isNewMfe, isNewMae, markMfe;
    int    ticketsSize = ArraySize(tickets);
@@ -4183,7 +4183,15 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;     openProfit          = hedgedProfit;
          positions.data[n][I_PIP_DISTANCE    ] = pipDistance;    totalProfit         = openProfit + closedProfit + adjustedProfit;
          positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitTerminal = openProfitTerminal + closedProfit + adjustedProfit;
-         positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct        = equity - ifDouble(!customEquity && equity > totalProfitTerminal, totalProfitTerminal, 0);
+         positions.data[n][I_PROFIT          ] = totalProfit;
+            subtractedProfit = 0;
+            if (!customEquity) {
+               subtractedProfit = totalProfitTerminal/config.tickValueMultiplier;
+               if (subtractedProfit >= equity) {
+                  subtractedProfit = 0;
+               }
+            }
+            equity100Pct = equity - subtractedProfit;
          positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
          totalProfit = NormalizeDouble(totalProfit, 2);
 
@@ -4260,7 +4268,15 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;     openProfit          = hedgedProfit + floatingProfit + swap + commission;
       positions.data[n][I_BREAKEVEN_PRICE ] = NULL;           totalProfit         = openProfit + closedProfit + adjustedProfit;
       positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitTerminal = openProfitTerminal + closedProfit + adjustedProfit;
-      positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct        = equity - ifDouble(!customEquity && equity > totalProfitTerminal, totalProfitTerminal, 0);
+      positions.data[n][I_PROFIT          ] = totalProfit;
+         subtractedProfit = 0;
+         if (!customEquity) {
+            subtractedProfit = totalProfitTerminal/config.tickValueMultiplier;
+            if (subtractedProfit >= equity) {
+               subtractedProfit = 0;
+            }
+         }
+         equity100Pct = equity - subtractedProfit;
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
       totalProfit = NormalizeDouble(totalProfit, 2);
 
@@ -4406,7 +4422,15 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;     openProfit          = hedgedProfit + floatingProfit + swap + commission;
       positions.data[n][I_BREAKEVEN_PRICE ] = NULL;           totalProfit         = openProfit + closedProfit + adjustedProfit;
       positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitTerminal = openProfitTerminal + closedProfit + adjustedProfit;
-      positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct        = equity - ifDouble(!customEquity && equity > totalProfitTerminal, totalProfitTerminal, 0);
+      positions.data[n][I_PROFIT          ] = totalProfit;
+         subtractedProfit = 0;
+         if (!customEquity) {
+            subtractedProfit = totalProfitTerminal/config.tickValueMultiplier;
+            if (subtractedProfit >= equity) {
+               subtractedProfit = 0;
+            }
+         }
+         equity100Pct = equity - subtractedProfit;
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
       totalProfit = NormalizeDouble(totalProfit, 2);
 
@@ -4510,8 +4534,16 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    positions.data[n][I_DIRECTIONAL_LOTS] = NULL;
    positions.data[n][I_HEDGED_LOTS     ] = NULL;
    positions.data[n][I_BREAKEVEN_PRICE ] = NULL;
-   positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfit  = closedProfit + adjustedProfit;
-   positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct = equity - ifDouble(!customEquity && equity > totalProfit, totalProfit, 0);
+   positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfit = closedProfit + adjustedProfit;
+   positions.data[n][I_PROFIT          ] = totalProfit;
+      subtractedProfit = 0;
+      if (!customEquity) {
+         subtractedProfit = totalProfit/config.tickValueMultiplier;
+         if (subtractedProfit >= equity) {
+            subtractedProfit = 0;
+         }
+      }
+      equity100Pct = equity - subtractedProfit;
    positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
    totalProfit = NormalizeDouble(totalProfit, 2);
 
