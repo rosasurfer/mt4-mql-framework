@@ -1985,6 +1985,15 @@ bool UpdateStopoutLevel() {
    }
    SetLastError(prevError);
 
+   // apply a configured tick-value multiplier
+   if (config.tickValueMultiplier != 1) {
+      for (i=0; i < openPositions; i++) {
+         commissions[i] *= config.tickValueMultiplier;
+         swaps      [i] *= config.tickValueMultiplier;
+         profits    [i] *= config.tickValueMultiplier;
+      }
+   }
+
    // extract custom positions from all open positions and store them in positions.data[]
    int    line, termType, termsSize = ArrayRange(config.terms, 0);
    double termValue1, termValue2, termValue3, termResult1, termResult2;
@@ -2080,7 +2089,6 @@ bool UpdateStopoutLevel() {
 
       // extract custom position
       if (!ExtractPosition(termType, termValue1, termValue2, termValue3, termResult1, termResult2,
-                           config.tickValueMultiplier,
                            filter, filterCondition, filterValue,
                            allLongPositions,   allShortPositions,   allTotalPositions,   tickets, magicNumbers, types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
                            customLongPosition, customShortPosition, customTotalPosition, customTickets,         customTypes, customLots,      customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity,
@@ -3530,8 +3538,6 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * @param  _InOut_ double   termResult1
  * @param  _InOut_ double   termResult2
  *
- * @param  _In_    double   tickValueMultiplier
- *
  * @param  _InOut_ int      filter          - filter of the custom position: TERM_FILTER_EA|TERM_FILTER_MAGIC|TERM_FILTER_SID
  * @param  _InOut_ int      filterCondition - operator: 1=include, 0=exclude
  * @param  _InOut_ int      filterValue     - magic number or strategy SID
@@ -3577,7 +3583,6 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * @return bool - success status
  */
 bool ExtractPosition(int termType, double termValue1, double termValue2, double termValue3, double &termResult1, double &termResult2,
-                     double tickValueMultiplier,
                      int &filter, int &filterCondition, int &filterValue,
                      double &fromLongPosition,   double &fromShortPosition,   double &fromTotalPosition,   int &fromTickets[], int fromMagicNumbers[], int fromTypes[],    double &fromLots[], datetime fromOpenTimes[], double fromOpenPrices[],    double &fromCommissions[],   double &fromSwaps[],   double &fromProfits[],
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[],                       int &customTypes[], double &customLots[],                         double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &closedProfit, double &adjustedProfit, double &customEquity,
@@ -3615,9 +3620,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   ArrayPushInt   (customTypes,       fromTypes      [i]);
                   ArrayPushDouble(customLots,        fromLots       [i]);
                   ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]);
-                  ArrayPushDouble(customCommissions, NormalizeDouble(fromCommissions[i] * tickValueMultiplier, 2));
-                  ArrayPushDouble(customSwaps,       NormalizeDouble(fromSwaps      [i] * tickValueMultiplier, 2));
-                  ArrayPushDouble(customProfits,     NormalizeDouble(fromProfits    [i] * tickValueMultiplier, 2));
+                  ArrayPushDouble(customCommissions, fromCommissions[i]);
+                  ArrayPushDouble(customSwaps,       fromSwaps      [i]);
+                  ArrayPushDouble(customProfits,     fromProfits    [i]);
                   if (!isVirtual) {
                      fromLongPosition  = NormalizeDouble(fromLongPosition - fromLots[i],       2);
                      fromTotalPosition = NormalizeDouble(fromLongPosition - fromShortPosition, 2);
@@ -3637,9 +3642,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             ArrayPushInt   (customTypes,       OP_BUY                                     );
             ArrayPushDouble(customLots,        lotsize                                    );
             ArrayPushDouble(customOpenPrices,  openPrice                                  );
-            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize) * tickValueMultiplier, 2));
+            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize) * config.tickValueMultiplier, 2));
             ArrayPushDouble(customSwaps,       0                                          );    // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-            ArrayPushDouble(customProfits,     NormalizeDouble((Bid-openPrice)/Pip * PipValue(lotsize, true) * tickValueMultiplier, 2));
+            ArrayPushDouble(customProfits,     NormalizeDouble((Bid-openPrice)/Pip * PipValue(lotsize, true) * config.tickValueMultiplier, 2));
             customLongPosition  = NormalizeDouble(customLongPosition + lotsize,             3);
             customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
          }
@@ -3665,9 +3670,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   ArrayPushInt   (customTypes,       fromTypes      [i]);
                   ArrayPushDouble(customLots,        fromLots       [i]);
                   ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]);
-                  ArrayPushDouble(customCommissions, NormalizeDouble(fromCommissions[i] * tickValueMultiplier, 2));
-                  ArrayPushDouble(customSwaps,       NormalizeDouble(fromSwaps      [i] * tickValueMultiplier, 2));
-                  ArrayPushDouble(customProfits,     NormalizeDouble(fromProfits    [i] * tickValueMultiplier, 2));
+                  ArrayPushDouble(customCommissions, fromCommissions[i]);
+                  ArrayPushDouble(customSwaps,       fromSwaps      [i]);
+                  ArrayPushDouble(customProfits,     fromProfits    [i]);
                   if (!isVirtual) {
                      fromShortPosition = NormalizeDouble(fromShortPosition - fromLots[i],      2);
                      fromTotalPosition = NormalizeDouble(fromLongPosition - fromShortPosition, 2);
@@ -3687,9 +3692,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             ArrayPushInt   (customTypes,       OP_SELL                                    );
             ArrayPushDouble(customLots,        lotsize                                    );
             ArrayPushDouble(customOpenPrices,  openPrice                                  );
-            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize) * tickValueMultiplier, 2));
+            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize) * config.tickValueMultiplier, 2));
             ArrayPushDouble(customSwaps,       0                                          );    // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-            ArrayPushDouble(customProfits,     NormalizeDouble((openPrice-Ask)/Pip * PipValue(lotsize, true) * tickValueMultiplier, 2));
+            ArrayPushDouble(customProfits,     NormalizeDouble((openPrice-Ask)/Pip * PipValue(lotsize, true) * config.tickValueMultiplier, 2));
             customShortPosition = NormalizeDouble(customShortPosition + lotsize,            3);
             customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
          }
@@ -3716,9 +3721,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             ArrayPushInt   (customTypes,       fromTypes      [i]);
             ArrayPushDouble(customLots,        fromLots       [i]);
             ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]);
-            ArrayPushDouble(customCommissions, NormalizeDouble(fromCommissions[i] * tickValueMultiplier, 2));
-            ArrayPushDouble(customSwaps,       NormalizeDouble(fromSwaps      [i] * tickValueMultiplier, 2));
-            ArrayPushDouble(customProfits,     NormalizeDouble(fromProfits    [i] * tickValueMultiplier, 2));
+            ArrayPushDouble(customCommissions, fromCommissions[i]);
+            ArrayPushDouble(customSwaps,       fromSwaps      [i]);
+            ArrayPushDouble(customProfits,     fromProfits    [i]);
             if (!isVirtual) {
                if (fromTypes[i] == OP_BUY) fromLongPosition  = NormalizeDouble(fromLongPosition  - fromLots[i], 2);
                else                        fromShortPosition = NormalizeDouble(fromShortPosition - fromLots[i], 2);
@@ -3811,9 +3816,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             hst.discarded   [i] = false;
 
             if (OrderSymbol() == Symbol()) {
-               hst.commissions[i] = NormalizeDouble(hst.commissions[i] * tickValueMultiplier, 2);
-               hst.swaps      [i] = NormalizeDouble(hst.swaps      [i] * tickValueMultiplier, 2);
-               hst.profits    [i] = NormalizeDouble(hst.profits    [i] * tickValueMultiplier, 2);
+               hst.commissions[i] = NormalizeDouble(hst.commissions[i] * config.tickValueMultiplier, 2);
+               hst.swaps      [i] = NormalizeDouble(hst.swaps      [i] * config.tickValueMultiplier, 2);
+               hst.profits    [i] = NormalizeDouble(hst.profits    [i] * config.tickValueMultiplier, 2);
             }
          }
 
@@ -3924,9 +3929,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                ArrayPushInt   (customTypes,       fromTypes      [i]);
                ArrayPushDouble(customLots,        fromLots       [i]);
                ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]);
-               ArrayPushDouble(customCommissions, NormalizeDouble(fromCommissions[i] * tickValueMultiplier, 2));
-               ArrayPushDouble(customSwaps,       NormalizeDouble(fromSwaps      [i] * tickValueMultiplier, 2));
-               ArrayPushDouble(customProfits,     NormalizeDouble(fromProfits    [i] * tickValueMultiplier, 2));
+               ArrayPushDouble(customCommissions, fromCommissions[i]);
+               ArrayPushDouble(customSwaps,       fromSwaps      [i]);
+               ArrayPushDouble(customProfits,     fromProfits    [i]);
                if (!isVirtual) {
                   if (fromTypes[i] == OP_BUY) fromLongPosition  = NormalizeDouble(fromLongPosition  - fromLots[i], 2);
                   else                        fromShortPosition = NormalizeDouble(fromShortPosition - fromLots[i], 2);
@@ -3948,7 +3953,6 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                if (EQ(lotsize, fromLots[i])) {
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(TERM_TICKET, ticket, EMPTY, NULL, termResult1, termResult2,
-                                       tickValueMultiplier,
                                        filter, filterCondition, filterValue,
                                        fromLongPosition,   fromShortPosition,   fromTotalPosition,   fromTickets, fromMagicNumbers, fromTypes,   fromLots, fromOpenTimes, fromOpenPrices,   fromCommissions,   fromSwaps,   fromProfits,
                                        customLongPosition, customShortPosition, customTotalPosition, customTickets,                 customTypes, customLots,              customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity,
@@ -3964,9 +3968,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   ArrayPushInt   (customTypes,       fromTypes      [i]         );
                   ArrayPushDouble(customLots,        lotsize                    ); if (!isVirtual) fromLots[i] = NormalizeDouble(fromLots[i]-lotsize, 2); // reduzieren
                   ArrayPushDouble(customOpenPrices,  fromOpenPrices [i]         );
-                  ArrayPushDouble(customSwaps,       fromSwaps      [i] * tickValueMultiplier         ); if (!isVirtual) fromSwaps      [i]  = NULL;                                    // komplett
-                  ArrayPushDouble(customCommissions, fromCommissions[i] * tickValueMultiplier * factor); if (!isVirtual) fromCommissions[i] *= (1-factor);                              // anteilig
-                  ArrayPushDouble(customProfits,     fromProfits    [i] * tickValueMultiplier * factor); if (!isVirtual) fromProfits    [i] *= (1-factor);                              // anteilig
+                  ArrayPushDouble(customSwaps,       fromSwaps      [i]         ); if (!isVirtual) fromSwaps      [i]  = NULL;                            // komplett
+                  ArrayPushDouble(customCommissions, fromCommissions[i] * factor); if (!isVirtual) fromCommissions[i] *= (1-factor);                      // anteilig
+                  ArrayPushDouble(customProfits,     fromProfits    [i] * factor); if (!isVirtual) fromProfits    [i] *= (1-factor);                      // anteilig
                   if (!isVirtual) {
                      if (fromTypes[i] == OP_BUY) fromLongPosition  = NormalizeDouble(fromLongPosition  - lotsize, 2);
                      else                        fromShortPosition = NormalizeDouble(fromShortPosition - lotsize, 2);
