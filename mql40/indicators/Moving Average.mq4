@@ -13,8 +13,8 @@
  *
  * Trend calculation methods
  * -------------------------
- *  - Slope:   The standard method. Trend changes when MA slope changes direction.
- *  - Channel: Trend changes when bars cross the High/Low channel of the same MA (requires MA.AppliedPrice != High|Low).
+ *  - Slope:   The standard method. Trend changes when MA slope changes sign/direction.
+ *  - Channel: Trend changes when bar close crosses the High/Low channel of the same MA (requires MA.AppliedPrice != High|Low).
  *
  *
  * Input parameters
@@ -647,7 +647,7 @@ bool UpdateMaTrend(int bar) {
       return(true);
    }
 
-   return(!catch("UpdateMaTrend(1)  illegal trendMethod: "+ trendMethod, ERR_ILLEGAL_STATE));
+   return(!catch("UpdateMaTrend(1)  illegal value of trendMethod: "+ trendMethod, ERR_ILLEGAL_STATE));
 }
 
 
