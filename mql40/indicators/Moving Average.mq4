@@ -61,7 +61,7 @@ extern int    Background.Width               = 2;
 extern string ___a__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
-extern int    SaveCPU                        = 0;                 // update current bar every X seconds only
+extern int    SaveCPU                        = 0;                 // update the current bar every X seconds only
 
 extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -69,10 +69,10 @@ extern string Signal.onTrendChange.Types     = "sound* | alert | mail | telegram
 extern string Signal.onTrendChange.SoundUp   = "Signal Up.wav";
 extern string Signal.onTrendChange.SoundDown = "Signal Down.wav";
 
-extern bool   Sound.onCross                  = false;
+extern string Sound.onCross                  = "off* | up | down";
 extern string Sound.onCross.File             = "Signal Cross.wav";
-extern bool   Sound.onCross.Repeat           = 5;                 // how many times to repeat the sound
-extern bool   Sound.onCross.Pause            = 2;                 // how many seconds to pause between consecutive sounds
+extern int    Sound.onCross.Repeat           = 8;                 // how many times to repeat the sound
+extern int    Sound.onCross.Pause            = 2;                 // how many seconds to pause between consecutive sounds
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -123,10 +123,12 @@ bool   signal.onTrendChange.alert;
 bool   signal.onTrendChange.mail;
 bool   signal.onTrendChange.telegram;
 
-bool   signal.onCross.sound;
-bool   signal.onCross.alert;
-bool   signal.onCross.mail;
-bool   signal.onCross.telegram;
+int    sound.onCross;
+int    sound.onCross.played;                             // how many times the sound has been played
+
+// trend/price crossing directions
+#define MODE_UP    MODE_UPTREND
+#define MODE_DOWN  MODE_DOWNTREND
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -204,7 +206,7 @@ int onInit() {
    if (SaveCPU <  0)         return(catch("onInit(9)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
    if (SaveCPU > 59)         return(catch("onInit(10)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
 
-   // signal configuration
+   // Signal.onTrendChange.*
    string signalId = "Signal.onTrendChange";
    legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
@@ -217,19 +219,31 @@ int onInit() {
          legendInfo = "("+ StrLeft(ifString(signal.onTrendChange.sound, "sound,", "") + ifString(signal.onTrendChange.alert, "alert,", "") + ifString(signal.onTrendChange.mail, "mail,", "") + ifString(signal.onTrendChange.telegram, "tgm,", ""), -1) +")";
          legendInfo = StrReplace(legendInfo, "sound,alert", "alert");
       }
+      if (AutoConfiguration) Signal.onTrendChange.SoundUp   = GetConfigString(indicator, "Signal.onTrendChange.SoundUp",   Signal.onTrendChange.SoundUp);
+      if (AutoConfiguration) Signal.onTrendChange.SoundDown = GetConfigString(indicator, "Signal.onTrendChange.SoundDown", Signal.onTrendChange.SoundDown);
    }
-   // Sound.*
-   if (AutoConfiguration) {
-      Signal.onTrendChange.SoundUp   = GetConfigString(indicator, "Signal.onTrendChange.SoundUp",   Signal.onTrendChange.SoundUp);
-      Signal.onTrendChange.SoundDown = GetConfigString(indicator, "Signal.onTrendChange.SoundDown", Signal.onTrendChange.SoundDown);
-      Sound.onCross                  = GetConfigBool  (indicator, "Sound.onCross",                  Sound.onCross);
-      Sound.onCross.File             = GetConfigString(indicator, "Sound.onCross.File",             Sound.onCross.File);
-      Sound.onCross.Repeat           = GetConfigInt   (indicator, "Sound.onCross.Repeat",           Sound.onCross.Repeat);
-      Sound.onCross.Pause            = GetConfigInt   (indicator, "Sound.onCross.Pause",            Sound.onCross.Pause);
+
+   // Sound.onCross.*
+   sound.onCross = NULL;
+   sound.onCross.played = 0;
+   if (AutoConfiguration) Sound.onCross = GetConfigString(indicator, "Sound.onCross", Sound.onCross);
+   sValue = Sound.onCross;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
-   if (Sound.onCross) {
-      if (Sound.onCross.Repeat < 0) return(catch("onInit(12)  invalid input parameter Sound.onCross.Repeat: "+ Sound.onCross.Repeat +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
-      if (Sound.onCross.Pause  < 0) return(catch("onInit(13)  invalid input parameter Sound.onCross.Pause: "+ Sound.onCross.Pause +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   sValue = StrToLower(StrTrim(sValue));
+   if      (sValue == "")                  { Sound.onCross = "off";                             }
+   else if (StrStartsWith("off",  sValue)) { Sound.onCross = "off";                             }
+   else if (StrStartsWith("up",   sValue)) { Sound.onCross = "up";   sound.onCross = MODE_UP;   }
+   else if (StrStartsWith("down", sValue)) { Sound.onCross = "down"; sound.onCross = MODE_DOWN; }
+   else                             return(catch("onInit(12)  invalid input parameter Sound.onCross: "+ DoubleQuoteStr(Sound.onCross), ERR_INVALID_INPUT_PARAMETER));
+   if (sound.onCross != NULL) {
+      if (AutoConfiguration) Sound.onCross.File = GetConfigString(indicator, "Sound.onCross.File", Sound.onCross.File);
+      if (AutoConfiguration) Sound.onCross.Repeat = GetConfigInt(indicator, "Sound.onCross.Repeat", Sound.onCross.Repeat);
+      if (Sound.onCross.Repeat < 0) return(catch("onInit(13)  invalid input parameter Sound.onCross.Repeat: "+ Sound.onCross.Repeat +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+      if (AutoConfiguration) Sound.onCross.Pause = GetConfigInt(indicator, "Sound.onCross.Pause", Sound.onCross.Pause);
+      if (Sound.onCross.Pause < 0)  return(catch("onInit(14)  invalid input parameter Sound.onCross.Pause: "+ Sound.onCross.Pause +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
       if (legendInfo == "") legendInfo = "(c)";
       else                  legendInfo = StrLeft(legendInfo, -1) +",c)";
       ShowChartLegend = 1;
@@ -251,7 +265,7 @@ int onInit() {
    if (ShowChartLegend) legendLabel = CreateChartLegend();
    SetIndicatorOptions();
 
-   return(catch("onInit(14)"));
+   return(catch("onInit(15)"));
 }
 
 
@@ -328,23 +342,33 @@ int onTick() {
    if (!__isSuperContext) {
       if (__isChart && ShowChartLegend) UpdateTrendLegend(legendLabel, indicatorName, legendInfo, UpTrend.Color, DownTrend.Color, main[0], trend[0]);
 
+      // signal price crossings
+      static double lastBid = 0;
+      if (ChangedBars > 2) lastBid = 0;
+
+      if (lastBid > 0) {
+         if (sound.onCross == MODE_UP) {
+            if (Bid >= main[0]) {
+               if (lastBid < main[0] || sound.onCross.played) {
+                  onCross(MODE_UP);
+               }
+            }
+         }
+         else if (sound.onCross == MODE_DOWN) {
+            if (Bid <= main[0]) {
+               if (lastBid > main[0] || sound.onCross.played) {
+                  onCross(MODE_DOWN);
+               }
+            }
+         }
+      }
+      lastBid = _Bid;
+
       // signal trend changes
       if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
          int iTrend = trend[1];
-         if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
-         else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
-      }
-
-      // signal price crossings
-      if (Sound.onCross) {
-         static double lastBid = 0;
-         if (ChangedBars > 2) lastBid = 0;
-
-         if (lastBid && Sign(lastBid-main[0]) != Sign(_Bid-main[0])) {
-            if (_Bid > main[0]) onCross(MODE_UPTREND);
-            else                onCross(MODE_DOWNTREND);
-         }
-         lastBid = _Bid;
+         if      (iTrend ==  1) onTrendChange(MODE_UP);
+         else if (iTrend == -1) onTrendChange(MODE_DOWN);
       }
    }
    return(last_error);
@@ -352,22 +376,49 @@ int onTick() {
 
 
 /**
+ * Event handler for price crossings.
+ *
+ * @param  int direction - direction identifier
+ *
+ * @return bool - success status
+ */
+bool onCross(int direction) {
+   if (direction!=MODE_UP && direction!=MODE_DOWN) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   static int lastSound;
+
+   if (Sound.onCross.Repeat > 0) {
+      int msecPause = Sound.onCross.Pause * 1000;
+
+      if (lastSound + msecPause < GetTickCount()) {      // pause between consecutive sounds
+         if (!PlaySoundEx(Sound.onCross.File)) {
+            lastSound = GetTickCount();
+            sound.onCross.played++;
+            Sound.onCross.Repeat--;
+         }
+      }
+   }
+   return(!catch("onCross(2)"));
+}
+
+
+/**
  * Event handler for trend changes.
  *
- * @param  int direction - direction
+ * @param  int direction - direction identifier
  *
  * @return bool - success status
  */
 bool onTrendChange(int direction) {
-   if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=MODE_UP && direction!=MODE_DOWN) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
    string eventName = "rsf."+ StdSymbol() +","+ sPeriod +"."+ MA.Method +"("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +").onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1  = indicatorName +" turned "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message1  = indicatorName +" turned "+ ifString(direction==MODE_UP, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    string message2  = Symbol() +","+ sPeriod +": "+ message1;
    string localTime = TimeToStr(TimeLocalEx("onTrendChange(2)"), TIME_MINUTES|TIME_SECONDS);
-   string alias     = GetAccountAlias();
+   string acntAlias = GetAccountAlias();
 
    int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
@@ -391,7 +442,7 @@ bool onTrendChange(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) PlaySoundEx(ifString(direction==MODE_UPTREND, Signal.onTrendChange.SoundUp, Signal.onTrendChange.SoundDown));
+      if (eventAction) PlaySoundEx(ifString(direction==MODE_UP, Signal.onTrendChange.SoundUp, Signal.onTrendChange.SoundDown));
    }
 
    // alert: once per terminal
@@ -413,7 +464,7 @@ bool onTrendChange(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ alias +")");
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ acntAlias +")");
    }
 
    // telegram: once per system
@@ -424,32 +475,9 @@ bool onTrendChange(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ alias +")");
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ acntAlias +")");
    }
    return(!catch("onTrendChange(4)"));
-}
-
-
-/**
- * Event handler for price crossings.
- *
- * @param  int direction - direction
- *
- * @return bool - success status
- */
-bool onCross(int direction) {
-   if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-
-   // TODO: skip the signal if it already has been signaled elsewhere
-   static int lastSound;
-
-   int msecPause = Sound.onCross.Pause * 1000;
-
-   if (lastSound + msecPause < GetTickCount()) {      // pause between consecutive sounds
-      int error = PlaySoundEx(Sound.onCross.File);
-      if (!error) lastSound = GetTickCount();
-   }
-   return(!catch("onCross(2)"));
 }
 
 
@@ -612,7 +640,7 @@ string InputsToStr() {
       "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";"+ NL,
       "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";"+ NL,
 
-      "Sound.onCross=",                  BoolToStr(Sound.onCross),                       ";"+ NL,
+      "Sound.onCross=",                  DoubleQuoteStr(Sound.onCross),                  ";"+ NL,
       "Sound.onCross.File=",             DoubleQuoteStr(Sound.onCross.File),             ";"+ NL,
       "Sound.onCross.Repeat=",           Sound.onCross.Repeat,                           ";"+ NL,
       "Sound.onCross.Pause=",            Sound.onCross.Pause,                            ";"+ NL

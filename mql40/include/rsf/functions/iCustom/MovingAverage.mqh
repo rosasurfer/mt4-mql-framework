@@ -39,7 +39,7 @@ double icMovingAverage(int timeframe, string maMethod, int maPeriods, string maA
                           "",                               // string Signal.onTrendChange.SoundUp
                           "",                               // string Signal.onTrendChange.SoundDown
 
-                          false,                            // bool   Sound.onCross
+                          "off",                            // string Sound.onCross
                           "",                               // string Sound.onCross.File
                           0,                                // int    Sound.Repeat
                           0,                                // int    Sound.Pause
