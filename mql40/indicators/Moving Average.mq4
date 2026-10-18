@@ -377,7 +377,7 @@ int onTick() {
             lowerChannelBand[bar] = iMA(NULL, NULL, MA.Periods, 0, maMethod, PRICE_LOW,  bar);
          }
       }
-      UpdateTrend(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      UpdateMaTrend(bar);
    }
 
    if (!__isSuperContext) {
@@ -571,6 +571,83 @@ bool ParameterStepper(int direction, int keys) {
 
    PlaySoundEx("Parameter Step.wav");
    return(true);
+}
+
+
+/**
+ * Update the Moving Average's buffers for trend direction and coloring.
+ *
+ * @param  int bar - bar offset to update
+ *
+ * @return bool - success status
+ */
+bool UpdateMaTrend(int bar) {
+   if (trendMethod == TREND_SLOPE) {
+      return(UpdateTrend(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits));
+   }
+
+   if (trendMethod == TREND_CHANNEL) {
+      if (bar == Bars-1) {
+         trend    [bar] = 0;
+         uptrend  [bar] = EMPTY_VALUE;
+         downtrend[bar] = EMPTY_VALUE;
+         uptrend2 [bar] = EMPTY_VALUE;
+         return(true);
+      }
+
+      // trend direction/length
+      int prevTrend = trend[bar+1];
+      if      (Close[bar] > upperChannelBand[bar]) trend[bar] = Max(prevTrend, 0) + 1;
+      else if (Close[bar] < lowerChannelBand[bar]) trend[bar] = Min(prevTrend, 0) - 1;
+      else                                         trend[bar] = prevTrend + Sign(prevTrend);
+
+      // trend coloring
+      if (trend[bar] > 0) {                                                // uptrend
+         uptrend  [bar] = main[bar];
+         downtrend[bar] = EMPTY_VALUE;
+
+         if (drawType == DRAW_LINE) {                                      // if DRAW_LINE...
+            if      (trend[bar+1] < 0) uptrend  [bar+1] = main[bar+1];     // and downtrend before, set another data point to make the terminal draw the line
+            else if (trend[bar+1] > 0) downtrend[bar+1] = EMPTY_VALUE;
+         }
+      }
+      else if (trend[bar] < 0) {                                           // downtrend
+         uptrend  [bar] = EMPTY_VALUE;
+         downtrend[bar] = main[bar];
+
+         if (drawType == DRAW_LINE) {                                      // if DRAW_LINE...
+            if (trend[bar+1] > 0) {                                        // and uptrend before, set another data point to make the terminal draw the line
+               downtrend[bar+1] = main[bar+1];
+               if (Bars > bar+2) {
+                  if (trend[bar+2] < 0) {                                  // if that uptrend was a 1-bar reversal, copy it to uptrend2 (to overlay),
+                     uptrend2[bar+2] = main[bar+2];                        // otherwise the visual gets lost through the just added data point
+                     uptrend2[bar+1] = main[bar+1];
+                  }
+               }
+            }
+            else if (trend[bar+1] < 0) {
+               uptrend[bar+1] = EMPTY_VALUE;
+            }
+         }
+      }
+      else if (main[bar] != EMPTY_VALUE) {                                 // trend length is 0 (still undefined during the first visible swing)
+         if (main[bar+1] == EMPTY_VALUE) {
+            uptrend  [bar] = EMPTY_VALUE;
+            downtrend[bar] = EMPTY_VALUE;
+         }
+         else if (main[bar] > main[bar+1]) {
+            uptrend  [bar] = main[bar];
+            downtrend[bar] = EMPTY_VALUE;
+         }
+         else /*main[bar] < main[bar+1]*/ {
+            uptrend  [bar] = EMPTY_VALUE;
+            downtrend[bar] = main[bar];
+         }
+      }
+      return(true);
+   }
+
+   return(!catch("UpdateMaTrend(1)  illegal trendMethod: "+ trendMethod, ERR_ILLEGAL_STATE));
 }
 
 
