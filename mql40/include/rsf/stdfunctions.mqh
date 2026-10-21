@@ -958,14 +958,14 @@ string FindStdSymbol(string symbol, bool strict = false) {
       case '#': if      (              _symbol=="#GERMANY40") result = "DAX";
                 else if (StrStartsWith(_symbol, "#DAX."    )) result = "DAX";
                 else if (StrStartsWith(_symbol, "#DJ30_"   )) result = "DJIA";
-                else if (StrStartsWith(_symbol, "#DJI."    )) result = "DJIA";
-                else if (StrStartsWith(_symbol, "#DJT."    )) result = "DJTA";
+                else if (StrStartsWith(_symbol, "#DJI."    )) result = "DJIA";      // DJI = Dow Jones Industrial Average
+                else if (StrStartsWith(_symbol, "#DJT."    )) result = "DJTA";      // DJT = Dow Jones Transportation Average
                 else if (StrStartsWith(_symbol, "#GER40_"  )) result = "DAX";
                 else if (StrStartsWith(_symbol, "#JP225_"  )) result = "NIKKEI";
                 else if (StrStartsWith(_symbol, "#SPX."    )) result = "SP500";
-                else if (StrStartsWith(_symbol, "#US100_"  )) result = "NASDAQ";
-                else if (StrStartsWith(_symbol, "#US2000_" )) result = "RUSSELL";
-                else if (StrStartsWith(_symbol, "#US500_"  )) result = "SP500";
+                else if (StrStartsWith(_symbol, "#US100_"  )) result = "NASDAQ";    // NDX = Nasdaq-100
+                else if (StrStartsWith(_symbol, "#US2000_" )) result = "RUSSELL";   // RTY = Russell 2000
+                else if (StrStartsWith(_symbol, "#US500_"  )) result = "SP500";     // SPX = S&P 500
                 break;
 
       case '0':
