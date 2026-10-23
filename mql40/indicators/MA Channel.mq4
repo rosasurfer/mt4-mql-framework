@@ -3,7 +3,7 @@
  *
  * An indicator calculating a High/Low channel around 1-3 separate Moving Averages.
  *
- * This indicator should be used together with the "MA Channel Colored Bars" indicator to visualize the channel trend.
+ * This indicator can be used together with the "Trend Bars" indicator to visualize the channel trend.
  * Such a channel trend forms the basis of the XARD trend system.
  *
  *
@@ -43,11 +43,11 @@
  *
  * Supported Moving Average methods
  * --------------------------------
- *  • SMA  = Simple Moving Average:          equal bar weighting
- *  • LWMA = Linear Weighted Moving Average: bar weighting using a linear function
- *  • EMA  = Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA = Smoothed Moving Average:        bar weighting using an exponential function (an EMA of a different period)
- *  • ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function (see notes)
+ *  - SMA  = Simple Moving Average:          equal bar weighting
+ *  - LWMA = Linear Weighted Moving Average: bar weighting using a linear function
+ *  - EMA  = Exponential Moving Average:     bar weighting using an exponential function
+ *  - SMMA = Smoothed Moving Average:        bar weighting using an exponential function (@see notes)
+ *  - ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function (@see notes)
  *
  *
  * Usage with iCustom()
@@ -57,13 +57,13 @@
  *
  * Notes
  * -----
- *  • EMA calculation:
+ *  - EMA calculation:
  *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
  *
- *  • SMMA calculation: The SMMA is an EMA with a different period. It holds true: SMMA(n) = EMA(2*n-1)
+ *  - SMMA calculation: The SMMA is an EMA with a different period. It holds true: SMMA(n) = EMA(2*n-1)
  *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
  *
- *  • ALMA calculation:
+ *  - ALMA calculation:
  *    @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
 #include <rsf/stddefines.mqh>

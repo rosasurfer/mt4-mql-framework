@@ -619,39 +619,39 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
  * @return bool - success status
  */
 bool UpdateDescription() {
-   string description = "";
+   string descr = "";
 
    switch (superTimeframe) {
-      case  PERIOD_M1    : description = "Superbars: 1 Minute";         break;
-      case  PERIOD_M5    : description = "Superbars: 5 Minutes";        break;
-      case  PERIOD_M15   : description = "Superbars: 15 Minutes";       break;
-      case  PERIOD_M30   : description = "Superbars: 30 Minutes";       break;
-      case  PERIOD_H1    : description = "Superbars: 1 Hour";           break;
-      case  PERIOD_H4    : description = "Superbars: 4 Hours";          break;
-      case  PERIOD_D1    : description = "Superbars: Days";             break;
-      case  PERIOD_D1_ETH: description = "Superbars: Days + ETH";       break;
-      case  PERIOD_W1    : description = "Superbars: Weeks";            break;
-      case  PERIOD_MN1   : description = "Superbars: Months";           break;
-      case  PERIOD_Q1    : description = "Superbars: Quarters";         break;
+      case  PERIOD_M1    : descr = "SuperBars: M1";               break;
+      case  PERIOD_M5    : descr = "SuperBars: M5";               break;
+      case  PERIOD_M15   : descr = "SuperBars: M15";              break;
+      case  PERIOD_M30   : descr = "SuperBars: M30";              break;
+      case  PERIOD_H1    : descr = "SuperBars: H1";               break;
+      case  PERIOD_H4    : descr = "SuperBars: H4";               break;
+      case  PERIOD_D1    : descr = "SuperBars: Days";             break;
+      case  PERIOD_D1_ETH: descr = "SuperBars: Days + ETH";       break;
+      case  PERIOD_W1    : descr = "SuperBars: Weeks";            break;
+      case  PERIOD_MN1   : descr = "SuperBars: Months";           break;
+      case  PERIOD_Q1    : descr = "SuperBars: Quarters";         break;
 
-      case -PERIOD_M1    : description = "Superbars: 1 Minute (n/a)";   break;
-      case -PERIOD_M5    : description = "Superbars: 5 Minutes (n/a)";  break;
-      case -PERIOD_M15   : description = "Superbars: 15 Minutes (n/a)"; break;
-      case -PERIOD_M30   : description = "Superbars: 30 Minutes (n/a)"; break;
-      case -PERIOD_H1    : description = "Superbars: 1 Hour (n/a)";     break;
-      case -PERIOD_H4    : description = "Superbars: 4 Hours (n/a)";    break;
-      case -PERIOD_D1    : description = "Superbars: Days (n/a)";       break;
-      case -PERIOD_D1_ETH: description = "Superbars: Days + ETH (n/a)"; break;
-      case -PERIOD_W1    : description = "Superbars: Weeks (n/a)";      break;
-      case -PERIOD_MN1   : description = "Superbars: Months (n/a)";     break;
-      case -PERIOD_Q1    : description = "Superbars: Quarters (n/a)";   break;
+      case -PERIOD_M1    : descr = "SuperBars: M1 (n/a)";         break;
+      case -PERIOD_M5    : descr = "SuperBars: M5 (n/a)";         break;
+      case -PERIOD_M15   : descr = "SuperBars: M15 (n/a)";        break;
+      case -PERIOD_M30   : descr = "SuperBars: M30 (n/a)";        break;
+      case -PERIOD_H1    : descr = "SuperBars: H1 (n/a)";         break;
+      case -PERIOD_H4    : descr = "SuperBars: H4 (n/a)";         break;
+      case -PERIOD_D1    : descr = "SuperBars: Days (n/a)";       break;
+      case -PERIOD_D1_ETH: descr = "SuperBars: Days + ETH (n/a)"; break;
+      case -PERIOD_W1    : descr = "SuperBars: Weeks (n/a)";      break;
+      case -PERIOD_MN1   : descr = "SuperBars: Months (n/a)";     break;
+      case -PERIOD_Q1    : descr = "SuperBars: Quarters (n/a)";   break;
 
       case  INT_MIN:
-      case  INT_MAX:       description = "Superbars: off";              break;   // manually deactivated
+      case  INT_MAX:       descr = "SuperBars: off";              break;         // manually deactivated
 
-      default:             description = "Superbars: n/a";                       // programmatically deactivated
+      default:             descr = "SuperBars: n/a";                             // programmatically deactivated
    }
-   ObjectSetText(legendLabel, description, legendFontSize, legendFontName, legendFontColor);
+   ObjectSetText(legendLabel, descr, legendFontSize, legendFontName, legendFontColor);
 
    int error = GetLastError();
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                                // on ObjectDrag or opened "Properties" dialog

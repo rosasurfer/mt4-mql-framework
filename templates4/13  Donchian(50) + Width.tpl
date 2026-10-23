@@ -1,6 +1,6 @@
 <!-- 
 Donchian Channel(50)
-Donchian Channel(30) Width in main window 
+Donchian Channel(50) Width
 -->
 <chart>
 symbol=GBPUSD
@@ -8,7 +8,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=2
+scale=1
 graph=1
 fore=0
 grid=0
@@ -41,7 +41,7 @@ askline_color=13158600
 stops_color=17919
 
 <window>
-height=5000
+height=800
 fixed_height=0
 
 <indicator>
@@ -128,7 +128,7 @@ ShowChannel=1
 Channel.UpperColor=16711680
 Channel.LowerColor=255
 ShowReversals=on* | off | +N | -N
-Reversal.Width=2
+Reversal.Width=1
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
 Sound.onChannelWidening=0
@@ -139,7 +139,11 @@ style_1=2
 style_2=2
 show_data=1
 </indicator>
+</window>
 
+<window>
+height=230
+fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
@@ -155,7 +159,6 @@ level_1=20
 level_2=200
 level_3=500
 level_4=1000
-levels_color=15453831
 show_data=1
 </indicator>
 </window>

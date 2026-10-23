@@ -1,4 +1,6 @@
-<!-- ADR(40) -->
+<!--
+ADR(40)
+-->
 
 <chart>
 symbol=GBPUSD

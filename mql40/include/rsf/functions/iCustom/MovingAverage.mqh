@@ -20,13 +20,14 @@ double icMovingAverage(int timeframe, string maMethod, int maPeriods, string maA
                           maPeriods,                        // int    MA.Periods
                           0,                                // int    MA.Periods.Step
                           maAppliedPrice,                   // string MA.AppliedPrice
+                          "Slope",                          // string Trend.Method
 
                           "Line",                           // string Draw.Type
                           0,                                // int    Draw.Width
+                          0,                                // int    Background.Width
+                          CLR_NONE,                         // color  Background.Color
                           Blue,                             // color  UpTrend.Color
                           Blue,                             // color  DownTrend.Color
-                          CLR_NONE,                         // color  Background.Color
-                          0,                                // int    Background.Width
 
                           "",                               // string __________________________
                           false,                            // bool   ShowChartLegend
@@ -36,8 +37,13 @@ double icMovingAverage(int timeframe, string maMethod, int maPeriods, string maA
                           "",                               // string __________________________
                           false,                            // bool   Signal.onTrendChange
                           "",                               // string Signal.onTrendChange.Types
-                          "",                               // string Signal.Sound.Up
-                          "",                               // string Signal.Sound.Down
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+
+                          "off",                            // string Sound.onCross
+                          "",                               // string Sound.onCross.File
+                          0,                                // int    Sound.Repeat
+                          0,                                // int    Sound.Pause
 
                           "",                               // string __________________________
                           false,                            // bool   AutoConfiguration

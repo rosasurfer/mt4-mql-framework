@@ -1,5 +1,5 @@
 /**
- * MA Channel Colored Bars
+ * Trend Bars
  *
  * Colors price bars according to the defined MA Channel:
  *  - UpTrend:   the close price is above the channel
@@ -276,9 +276,10 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(BUFFER_NOTREND_WICK_B, noTrendWickB); SetIndexEmptyValue(BUFFER_NOTREND_WICK_B, 0);
    IndicatorDigits(Digits);
 
+   // in histograms the larger of both values determines the displayed color
    int drawType = ifInt(BarWidth, DRAW_HISTOGRAM, DRAW_NONE);
-   SetIndexStyle(BUFFER_TREND_BODY_A,   drawType, EMPTY, BarWidth, Color.UpTrend);     // in histograms the larger of both values
-   SetIndexStyle(BUFFER_TREND_BODY_B,   drawType, EMPTY, BarWidth, Color.DownTrend);   // determines the applied color
+   SetIndexStyle(BUFFER_TREND_BODY_A,   drawType, EMPTY, BarWidth, Color.UpTrend);
+   SetIndexStyle(BUFFER_TREND_BODY_B,   drawType, EMPTY, BarWidth, Color.DownTrend);
    SetIndexStyle(BUFFER_TREND_WICK_A,   drawType, EMPTY, 1,        Color.UpTrend);
    SetIndexStyle(BUFFER_TREND_WICK_B,   drawType, EMPTY, 1,        Color.DownTrend);
    SetIndexStyle(BUFFER_NOTREND_BODY_A, drawType, EMPTY, BarWidth, Color.NoTrend);
@@ -306,14 +307,13 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MaChannel.Method=",  DoubleQuoteStr(MaChannel.Method), ";", NL,
-                            "MaChannel.Periods=", MaChannel.Periods,                ";", NL,
-
-                            "Color.UpTrend=",     ColorToStr(Color.UpTrend),        ";", NL,
-                            "Color.NoTrend=",     ColorToStr(Color.NoTrend),        ";", NL,
-                            "Color.DownTrend=",   ColorToStr(Color.DownTrend),      ";", NL,
-                            "BarWidth=",          BarWidth,                         ";", NL,
-
-                            "MaxBarsBack=",       MaxBarsBack,                      ";")
-   );
+   return(StringConcatenate(
+      "MaChannel.Method=",  DoubleQuoteStr(MaChannel.Method), ";", NL,
+      "MaChannel.Periods=", MaChannel.Periods,                ";", NL,
+      "Color.UpTrend=",     ColorToStr(Color.UpTrend),        ";", NL,
+      "Color.NoTrend=",     ColorToStr(Color.NoTrend),        ";", NL,
+      "Color.DownTrend=",   ColorToStr(Color.DownTrend),      ";", NL,
+      "BarWidth=",          BarWidth,                         ";", NL,
+      "MaxBarsBack=",       MaxBarsBack,                      ";", NL
+   ));
 }

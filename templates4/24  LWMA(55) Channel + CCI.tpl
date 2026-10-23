@@ -1,14 +1,18 @@
-<!-- 
+<!--
+EMA(144)
 Donchian Channel(50)
-Donchian Channel(50) Width
+LWMA(55) Channel + Colored Bars
+===============================
+CCI(20)
 -->
+
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=1
+scale=4
 graph=1
 fore=0
 grid=0
@@ -41,7 +45,7 @@ askline_color=13158600
 stops_color=17919
 
 <window>
-height=800
+height=4400
 fixed_height=0
 
 <indicator>
@@ -108,12 +112,31 @@ Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
-ShowChartLegend=1
+ShowChartLegend=0
 SaveCPU=5
 AutoConfiguration=0
 </inputs>
 </expert>
 show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Trend Bars
+flags=339
+window_num=0
+<inputs>
+MaChannel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+MaChannel.Periods=55
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=0
 </indicator>
 
 <indicator>
@@ -128,7 +151,8 @@ ShowChannel=1
 Channel.UpperColor=16711680
 Channel.LowerColor=255
 ShowReversals=on* | off | +N | -N
-Reversal.Width=1
+Reversal.Symbol=dot | thin-ring* | ring | thick-ring
+Reversal.Width=3
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
 Sound.onChannelWidening=0
@@ -139,26 +163,70 @@ style_1=2
 style_2=2
 show_data=1
 </indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+MA1.Method=LWMA
+MA1.Periods=55
+ShowChartLegend=1
+</inputs>
+</expert>
+show_data=1
+</indicator>
+</window>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+MA1.Method=LWMA
+MA1.Periods=55
+ShowChartLegend=1
+</inputs>
+</expert>
+show_data=1
+</indicator>
 </window>
 
 <window>
-height=230
+height=600
 fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Donchian Channel Width
+name=CCI
 flags=339
-window_num=1
+window_num=2
 <inputs>
-Periods=50
+Periods=20
+AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+Signal.Level=170
+Signal.onMomentum=1
+Signal.onMomentum.Types=sound* | alert* | mail | telegram
 </inputs>
 </expert>
-level_0=10
-level_1=20
-level_2=200
-level_3=500
-level_4=1000
+draw_2=2
+color_2=3329330
+weight_2=2
+draw_3=2
+color_3=255
+weight_3=2
+min=-170
+max=170
+levels_color=12632256
+levels_style=2
+levels_weight=1
+level_0=100
+level_1=0
+level_2=-100
 show_data=1
 </indicator>
 </window>

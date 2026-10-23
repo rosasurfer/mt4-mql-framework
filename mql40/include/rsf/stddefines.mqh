@@ -367,14 +367,14 @@ double  INF;                                                      //  1.#INF |  
 #define SuperTrend.MODE_TREND             1     // SuperTrend trend direction and length
 
 
-// sorting modes, see ArraySort()
+// sorting modes, @see ArraySort()
 #define MODE_ASC                          1     // ascending
 #define MODE_DESC                         2     // descending
 #define MODE_ASCEND                MODE_ASC     // MetaQuotes aliases
 #define MODE_DESCEND              MODE_DESC
 
 
-// Market info identifiers, see MarketInfo()
+// MarketInfo() identifiers
 #define MODE_LOW                          1     // session low price (since midnight server time)
 #define MODE_HIGH                         2     // session high price (since midnight server time)
 //                                        3     // ?
