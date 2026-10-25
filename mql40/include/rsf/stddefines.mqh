@@ -57,6 +57,8 @@ int      __virtualTicksTimerId;                                   // timer id fo
 #define EMPTY_STR                   ""
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 
+#define NTS_MONEY_FORMAT            ",'.2R"                       // money format for NumberToStr()
+
 #define HTML_TAB                    "&Tab;"                       // tab                                 \t
 #define HTML_BRVBAR                 "&brvbar;"                    // broken vertical bar                 |
 #define HTML_PIPE                   "&brvbar;"                    // pipe (alias of HTML_BRVBAR)         |        MQL4.0 bug: string constants cannot reference each other
