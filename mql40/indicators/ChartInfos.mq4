@@ -1,9 +1,9 @@
 /**
  * ChartInfos
  *
- * An indicator which displays various market infos, account infos and trade statistics:
+ * This indicator displays the following market infos, account infos and trade statistics:
  *
- *  - The current instrument name (in terminals <= build 509).
+ *  - The current instrument name (in terminals <= build 509 only).
  *  - The current price and spread.
  *  - The pre-calculated unitsize for a standard position.
  *  - The total open position with resulting risk and leverage values.
@@ -1601,10 +1601,10 @@ bool UpdatePositions() {
             configAsPercent = (positions.data[i][I_PROFIT_MARKER_AS_PCT] != 0);
             // marker text with configured unit
             if (configAsPercent) markerText = StringConcatenate(NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+"), "%");
-            else                 markerText = StringConcatenate(DoubleToStr(positions.data[i][I_PROFIT_MARKER_MONEY], 2), " ", AccountCurrency());
-            if (positions.showAbsProfits) {  // add the remaining unit
-               if (configAsPercent) markerText = StringConcatenate(markerText, " = ", DoubleToStr(positions.data[i][I_PROFIT_MARKER_MONEY], 2), " ", AccountCurrency());
-               else                 markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+"), "%");
+            else                 markerText = StringConcatenate(NumberToStr(positions.data[i][I_PROFIT_MARKER_MONEY], ",'.2"), " ", AccountCurrency());
+            // add percent value
+            if (positions.showAbsProfits && configAsPercent) {
+               markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_PROFIT_MARKER_MONEY], ",'.2"), " ", AccountCurrency());
             }
             markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerText);
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
@@ -1623,10 +1623,10 @@ bool UpdatePositions() {
             configAsPercent = (positions.data[i][I_LOSS_MARKER_AS_PCT] != 0);
             // marker text with configured unit
             if (configAsPercent) markerText = StringConcatenate(NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+"), "%");
-            else                 markerText = StringConcatenate(DoubleToStr(positions.data[i][I_LOSS_MARKER_MONEY], 2), " ", AccountCurrency());
-            if (positions.showAbsProfits) {  // add the remaining unit
-               if (configAsPercent) markerText = StringConcatenate(markerText, " = ", DoubleToStr(positions.data[i][I_LOSS_MARKER_MONEY], 2), " ", AccountCurrency());
-               else                 markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+"), "%");
+            else                 markerText = StringConcatenate(NumberToStr(positions.data[i][I_LOSS_MARKER_MONEY], ",'.2"), " ", AccountCurrency());
+            // add percent value
+            if (positions.showAbsProfits && configAsPercent) {
+               markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_LOSS_MARKER_MONEY], ",'.2"), " ", AccountCurrency());
             }
             markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerText);
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
