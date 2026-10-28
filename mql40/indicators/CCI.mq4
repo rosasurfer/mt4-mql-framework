@@ -1,15 +1,14 @@
 /**
- * Commodity Channel Index - a true momentum indicator. Measures sudden price acceleration.
+ * Commodity Channel Index - a true momentum indicator developed by Donald Lambert. Measures sudden price acceleration.
  *
- * Defined as the upscaled ratio of current distance to average distance from a Moving Average (default: SMA).
- * The upscaling factor of 66.67 was chosen so that the majority of indicator values falls between +200 and -200.
+ * Defined as the upscaled ratio of current distance to average distance from a Moving Average. Default is SMA(20).
+ * The upscaling factor of 1/0.015 = 66.67 was chosen so that the majority of indicator values falls between -100 and +100.
  *
- * The signal level determines when the CCI histogram changes color. It changes upon the first cross of the signal level in
- * the other direction.
  *
- * A CCI crossing the signal level says nothing about trend. It simply says that above-average momentum has occurred in that
- * particular bar - nothing more, nothing less. Whether such a crossing leads to a trend becomes apparent only if price
- * continues to move in the same direction.
+ * The signal level in this version determines when the CCI histogram changes color. Color changes upon the first cross of
+ * the level in the other direction. A CCI crossing that level says nothing about trend. It simply says that above-average
+ * momentum has occurred in that particular bar - nothing more, nothing less. Whether such momentum leads to a new trend
+ * becomes apparent only if price continues to move in the same direction.
  *
  *
  * Input parameters
@@ -35,6 +34,9 @@
  *
  * TODO
  * ----
+ *  - additional coloring/signal mode:
+ *     current: on every crossing of the signal level after crossing of the opposite level
+ *     new:     on every crossing of the signal level after crossing of 0 (zero)
  *  - parameter stepper for Signal.Level
  *  - display additional indicator levels at signal level != 100 (needs input option)
  */
@@ -221,16 +223,16 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      // CCI: upscaled ratio of current to average distance from MA
-      // ----------------------------------------------------------
-      // double ma       = iMA(NULL, NULL, CCI.Periods, 0, MODE_SMA, cci.appliedPrice, bar);
-      // double distance = GetPrice(bar) - ma;
-      // double sum = 0;
-      // for (int n=bar+CCI.Periods-1; n >= bar; n--) {
-      //    sum += MathAbs(GetPrice(n) - ma);
+      // CCI: upscaled ratio of current to average distance from SMA
+      // -----------------------------------------------------------
+      // double ma          = iMA(NULL, NULL, cci.periods, 0, MODE_SMA, cci.appliedPrice, bar);
+      // double curDistance = Price(bar) - ma;
+      // double sumDistance = 0;
+      // for (int i=bar + cci.periods - 1; i >= bar; i--) {
+      //    sumDistance += MathAbs(Price(i) - ma);
       // }
-      // double avgDistance = sum / CCI.Periods;
-      // cci[bar] = MathDiv(distance, avgDistance) / 0.015;    // 1/0.015 = 66.6667
+      // double avgDistance = sumDistance / cci.periods;
+      // cci[bar] = curDistance/avgDistance / 0.015;
 
       cci[bar] = iCCI(NULL, NULL, Periods, appliedPrice, bar);
 
