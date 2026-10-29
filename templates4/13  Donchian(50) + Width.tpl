@@ -1,5 +1,6 @@
 <!-- 
 Donchian Channel(50)
+Donchian Channel(10) sound-on-widening
 Donchian Channel(50) Width
 -->
 <chart>
@@ -132,6 +133,25 @@ Reversal.Width=1
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
 Sound.onChannelWidening=0
+</inputs>
+</expert>
+style_0=2
+style_1=2
+style_2=2
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Donchian Channel
+flags=339
+window_num=0
+<inputs>
+Periods=10
+ShowChannel=0
+ShowReversals=on | off* | +N | -N
+Sound.onChannelWidening=1
 </inputs>
 </expert>
 style_0=2
