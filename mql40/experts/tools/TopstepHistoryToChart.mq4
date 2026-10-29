@@ -474,7 +474,7 @@ bool ParseUint32(string sUnsigned, int &signed) {
  * Without a timezone offset GMT time (offset +00:00) is assumed.
  *
  * @param  _In_  string   sDateTime - datetime string to parse
- * @param  _Out_ datetime timestamp - parsed datetime string
+ * @param  _Out_ datetime timestamp - parsed UNIX timestamp (GMT)
  *
  * @return bool - success status
  */

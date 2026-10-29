@@ -1,9 +1,9 @@
 /**
  * ChartInfos
  *
- * An indicator which displays various market infos, account infos and trade statistics:
+ * This indicator displays the following market infos, account infos and trade statistics:
  *
- *  - The current instrument name (in terminals <= build 509).
+ *  - The current instrument name (in terminals <= build 509 only).
  *  - The current price and spread.
  *  - The pre-calculated unitsize for a standard position.
  *  - The total open position with resulting risk and leverage values.
@@ -1501,7 +1501,7 @@ bool UpdatePositions() {
             else                                                                    fontColor = positions.fontColor.open;
 
             if (positions.showAbsProfits) {
-               sProfitAbs = NumberToStr(positions.data[i][I_PROFIT], ",'.2");
+               sProfitAbs = NumberToStr(positions.data[i][I_PROFIT], NTS_MONEY_FORMAT);
                sProfitPct = " ";
             }
             else {
@@ -1600,11 +1600,14 @@ bool UpdatePositions() {
          else {
             configAsPercent = (positions.data[i][I_PROFIT_MARKER_AS_PCT] != 0);
             // marker text with configured unit
-            if (configAsPercent) markerText = StringConcatenate(NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+"), "%");
-            else                 markerText = StringConcatenate(DoubleToStr(positions.data[i][I_PROFIT_MARKER_MONEY], 2), " ", AccountCurrency());
-            if (positions.showAbsProfits) {  // add the remaining unit
-               if (configAsPercent) markerText = StringConcatenate(markerText, " = ", DoubleToStr(positions.data[i][I_PROFIT_MARKER_MONEY], 2), " ", AccountCurrency());
-               else                 markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+"), "%");
+            if (configAsPercent) {
+               markerText = StringConcatenate(NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.+"), "%");
+               if (positions.showAbsProfits) {
+                  markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_PROFIT_MARKER_MONEY], NTS_MONEY_FORMAT), " ", AccountCurrency());
+               }
+            }
+            else {
+               markerText = StringConcatenate(NumberToStr(positions.data[i][I_PROFIT_MARKER_MONEY], NTS_MONEY_FORMAT), " ", AccountCurrency());
             }
             markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerText);
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
@@ -1622,11 +1625,14 @@ bool UpdatePositions() {
          else {
             configAsPercent = (positions.data[i][I_LOSS_MARKER_AS_PCT] != 0);
             // marker text with configured unit
-            if (configAsPercent) markerText = StringConcatenate(NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+"), "%");
-            else                 markerText = StringConcatenate(DoubleToStr(positions.data[i][I_LOSS_MARKER_MONEY], 2), " ", AccountCurrency());
-            if (positions.showAbsProfits) {  // add the remaining unit
-               if (configAsPercent) markerText = StringConcatenate(markerText, " = ", DoubleToStr(positions.data[i][I_LOSS_MARKER_MONEY], 2), " ", AccountCurrency());
-               else                 markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+"), "%");
+            if (configAsPercent) {
+               markerText = StringConcatenate(NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.+"), "%");
+               if (positions.showAbsProfits) {
+                  markerText = StringConcatenate(markerText, " = ", NumberToStr(positions.data[i][I_LOSS_MARKER_MONEY], NTS_MONEY_FORMAT), " ", AccountCurrency());
+               }
+            }
+            else {
+               markerText = StringConcatenate(NumberToStr(positions.data[i][I_LOSS_MARKER_MONEY], NTS_MONEY_FORMAT), " ", AccountCurrency());
             }
             markerText = StringConcatenate(StringSubstr(sPositionType, 0, 1), " ", sLotSize, "   PL ", markerText);
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
@@ -1747,10 +1753,10 @@ bool UpdateBalanceDisplay() {
          string sBalance = "";
 
          if (display.externalBalance) {
-            sBalance = "Balance: "+ NumberToStr(balance + externalAssets, ",'.2") +" "+ AccountCurrency() +" ("+ NumberToStr(externalAssets, "+,'.2") +")";
+            sBalance = "Balance: "+ NumberToStr(balance + externalAssets, NTS_MONEY_FORMAT) +" "+ AccountCurrency() +" ("+ NumberToStr(externalAssets, "+"+ NTS_MONEY_FORMAT) +")";
          }
          else {
-            sBalance = "Balance: " + NumberToStr(balance, ",'.2") +" "+ AccountCurrency();
+            sBalance = "Balance: " + NumberToStr(balance, NTS_MONEY_FORMAT) +" "+ AccountCurrency();
          }
          ObjectSetText(label.accountBalance, sBalance, 9, "Tahoma", SlateGray);
          ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
