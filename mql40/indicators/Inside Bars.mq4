@@ -101,28 +101,36 @@ int onTick() {
       SetIndicatorOptions();
    }
 
+   // For compatibility with offline charts and/or synthetic symbols, analysis must always use the current chart timeframe.
+   if (Period() > insideBarTF) return(last_error);
+   if (ChangedBars < 2)        return(last_error);    // skip regular ticks, they never change IB status
+
+
+
+
+
+
+
+
    double rates[][6];
-   int ratesTF, changedBars;
-
-   if (insideBarTF == PERIOD_M1) ratesTF = PERIOD_M1;
-   else                          ratesTF = PERIOD_M5;
-
+   int ratesTF = ifInt(insideBarTF == PERIOD_M1, PERIOD_M1, PERIOD_M5), changedBars;
    if (!CopyRates(ratesTF, rates, changedBars)) return(last_error);
 
-   if (!ValidBars) {                         // if the chart changed rates must be marked as changed accordingly
-      changedBars = ArrayRange(rates, 0);    // TODO: find rates offset of the actual change and modify 'changedBars'
+   if (!ValidBars) {                                  // if the chart changed rates must be marked as changed accordingly
+      changedBars = ArrayRange(rates, 0);             // TODO: find rates offset of the actual change and modify 'changedBars'
    }
+   if (changedBars < 2) return(last_error);           // skip regular ticks, they never change IB status
 
    switch (insideBarTF) {
-      case PERIOD_M1 :
-      case PERIOD_M5 : CheckInsideBars   (rates, changedBars, insideBarTF); break;
-      case PERIOD_M15: CheckInsideBarsM15(rates, changedBars);              break;
-      case PERIOD_M30: CheckInsideBarsM30(rates, changedBars);              break;
-      case PERIOD_H1 : CheckInsideBarsH1 (rates, changedBars);              break;
-      case PERIOD_H4 : CheckInsideBarsH4 (rates, changedBars);              break;
-      case PERIOD_D1 : CheckInsideBarsD1 (rates, changedBars);              break;
-      case PERIOD_W1 : CheckInsideBarsW1 (rates, changedBars);              break;
-      case PERIOD_MN1: CheckInsideBarsMN1(rates, changedBars);              break;
+      case PERIOD_M1:  CheckInsideBarsM1 (rates, changedBars); break;
+      case PERIOD_M5:  CheckInsideBarsM5 (rates, changedBars); break;
+      case PERIOD_M15: CheckInsideBarsM15(rates, changedBars); break;
+      case PERIOD_M30: CheckInsideBarsM30(rates, changedBars); break;
+      case PERIOD_H1:  CheckInsideBarsH1 (rates, changedBars); break;
+      case PERIOD_H4:  CheckInsideBarsH4 (rates, changedBars); break;
+      case PERIOD_D1:  CheckInsideBarsD1 (rates, changedBars); break;
+      case PERIOD_W1:  CheckInsideBarsW1 (rates, changedBars); break;
+      case PERIOD_MN1: CheckInsideBarsMN1(rates, changedBars); break;
    }
    return(last_error);
 }
@@ -146,33 +154,59 @@ bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
 
 
 /**
- * Check the passed rates[] for new or changed inside bars.
+ * Check rates for M1 inside bars.
  *
- * @param  double rates[][]   - rates array
- * @param  int    changedBars - number of changed bars in rates[]
- * @param  int    timeframe   - inside bar timeframe
+ * @param  double ratesM1[][] - M1 rates array
+ * @param  int    changedBars - number of changed M1 bars
  *
  * @return bool - success status
  */
-bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
-   // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of M1/M5 are
-   // correctly aligned. On timeframes > M5 this assumption may be wrong.
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
-   int bars = ArrayRange(rates, 0), more;
+bool CheckInsideBarsM1(double ratesM1[][], int changedBars) {
+   int bars = ArrayRange(ratesM1, 0), more;
 
    if (changedBars == 2) {
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 3;
    }
    else {
-      if (!DeleteInsideBars(timeframe)) return(false);            // on init() or additional data: delete all existing IBs
+      if (!DeleteInsideBars(insideBarTF)) return(false);          // on init() or additional data: delete all existing IBs
       more = maxInsideBars;                                       // check the configured number of IBs
    }
 
    for (int i=2; i < bars; i++) {
-      if (rates[i][BAR400_HIGH] >= rates[i-1][BAR400_HIGH] && rates[i][BAR400_LOW] <= rates[i-1][BAR400_LOW]) {
-         if (!CreateInsideBar(timeframe, rates[i-1][BAR400_TIME], rates[i-1][BAR400_HIGH], rates[i-1][BAR400_LOW])) return(false);
+      if (ratesM1[i][BAR400_HIGH] >= ratesM1[i-1][BAR400_HIGH] && ratesM1[i][BAR400_LOW] <= ratesM1[i-1][BAR400_LOW]) {
+         if (!CreateInsideBar(insideBarTF, ratesM1[i-1][BAR400_TIME], ratesM1[i-1][BAR400_HIGH], ratesM1[i-1][BAR400_LOW])) return(false);
+         more--;
+         if (!more) break;
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Check rates for M5 inside bars.
+ *
+ * @param  double ratesM5[][] - M5 rates array
+ * @param  int    changedBars - number of changed M5 bars
+ *
+ * @return bool - success status
+ */
+bool CheckInsideBarsM5(double ratesM5[][], int changedBars) {
+   int bars = ArrayRange(ratesM5, 0), more;
+
+   if (changedBars == 2) {
+      more = 1;                                                   // on BarOpen: check the last IB only
+      bars = 3;
+   }
+   else {
+      if (!DeleteInsideBars(insideBarTF)) return(false);          // on init() or additional data: delete all existing IBs
+      more = maxInsideBars;                                       // check the configured number of IBs
+   }
+
+   for (int i=2; i < bars; i++) {
+      if (ratesM5[i][BAR400_HIGH] >= ratesM5[i-1][BAR400_HIGH] && ratesM5[i][BAR400_LOW] <= ratesM5[i-1][BAR400_LOW]) {
+         if (!CreateInsideBar(insideBarTF, ratesM5[i-1][BAR400_TIME], ratesM5[i-1][BAR400_HIGH], ratesM5[i-1][BAR400_LOW])) return(false);
          more--;
          if (!more) break;
       }
@@ -190,8 +224,6 @@ bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
  * @return bool - success status
  */
 bool CheckInsideBarsM15(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
    int bars = ArrayRange(ratesM5, 0), more;
 
    if (changedBars == 2) {
@@ -244,8 +276,6 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBars) {
  * @return bool - success status
  */
 bool CheckInsideBarsM30(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
    int bars = ArrayRange(ratesM5, 0), more;
 
    if (changedBars == 2) {
@@ -298,8 +328,6 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBars) {
  * @return bool - success status
  */
 bool CheckInsideBarsH1(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
    int bars = ArrayRange(ratesM5, 0), more;
 
    if (changedBars == 2) {
@@ -352,8 +380,6 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBars) {
  * @return bool - success status
  */
 bool CheckInsideBarsH4(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
    int bars = ArrayRange(ratesM5, 0), more;
 
    if (changedBars == 2) {
@@ -406,8 +432,6 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBars) {
  * @return bool - success status
  */
 bool CheckInsideBarsD1(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
    int bars = ArrayRange(ratesM5, 0), more;
 
    if (changedBars == 2) {
@@ -460,8 +484,6 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBars) {
  * @return bool - success status
  */
 bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
    int bars = ArrayRange(ratesM5, 0), more;
 
    if (changedBars == 2) {
@@ -516,8 +538,6 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
  * @return bool - success status
  */
 bool CheckInsideBarsMN1(double ratesM5[][], int changedBars) {
-   if (changedBars <= 1) return(true);                            // skip regular ticks, they don't change IB status
-
    int bars = ArrayRange(ratesM5, 0), more;
 
    if (changedBars == 2) {
