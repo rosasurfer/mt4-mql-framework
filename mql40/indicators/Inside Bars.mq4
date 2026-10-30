@@ -105,6 +105,10 @@ int onTick() {
    if (Period() > insideBarTF) return(last_error);
    if (ChangedBars < 2)        return(last_error);    // skip regular ticks, they never change IB status
 
+   switch (insideBarTF) {
+      case PERIOD_M1: CheckInsideBarsM1(); return(last_error);
+   }
+
 
 
 
@@ -122,7 +126,6 @@ int onTick() {
    if (changedBars < 2) return(last_error);           // skip regular ticks, they never change IB status
 
    switch (insideBarTF) {
-      case PERIOD_M1:  CheckInsideBarsM1 (rates, changedBars); break;
       case PERIOD_M5:  CheckInsideBarsM5 (rates, changedBars); break;
       case PERIOD_M15: CheckInsideBarsM15(rates, changedBars); break;
       case PERIOD_M30: CheckInsideBarsM30(rates, changedBars); break;
@@ -154,28 +157,25 @@ bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
 
 
 /**
- * Check rates for M1 inside bars.
- *
- * @param  double ratesM1[][] - M1 rates array
- * @param  int    changedBars - number of changed M1 bars
+ * Check the current timeseries for new or changed M1 inside bars.
  *
  * @return bool - success status
  */
-bool CheckInsideBarsM1(double ratesM1[][], int changedBars) {
-   int bars = ArrayRange(ratesM1, 0), more;
+bool CheckInsideBarsM1() {
+   int bars = Bars, more;
 
-   if (changedBars == 2) {
+   if (ChangedBars == 2) {
       more = 1;                                                   // on BarOpen: check the last IB only
       bars = 3;
    }
    else {
-      if (!DeleteInsideBars(insideBarTF)) return(false);          // on init() or additional data: delete all existing IBs
+      if (!DeleteInsideBars(PERIOD_M1)) return(false);            // on init() or additional data: delete all existing IBs
       more = maxInsideBars;                                       // check the configured number of IBs
    }
 
    for (int i=2; i < bars; i++) {
-      if (ratesM1[i][BAR400_HIGH] >= ratesM1[i-1][BAR400_HIGH] && ratesM1[i][BAR400_LOW] <= ratesM1[i-1][BAR400_LOW]) {
-         if (!CreateInsideBar(insideBarTF, ratesM1[i-1][BAR400_TIME], ratesM1[i-1][BAR400_HIGH], ratesM1[i-1][BAR400_LOW])) return(false);
+      if (High[i] >= High[i-1] && Low[i] <= Low[i-1]) {
+         if (!CreateInsideBar(PERIOD_M1, Time[i-1], High[i-1], Low[i-1])) return(false);
          more--;
          if (!more) break;
       }
@@ -185,7 +185,7 @@ bool CheckInsideBarsM1(double ratesM1[][], int changedBars) {
 
 
 /**
- * Check rates for M5 inside bars.
+ * Check the current timeseries for new or changed M5 inside bars.
  *
  * @param  double ratesM5[][] - M5 rates array
  * @param  int    changedBars - number of changed M5 bars
@@ -216,7 +216,7 @@ bool CheckInsideBarsM5(double ratesM5[][], int changedBars) {
 
 
 /**
- * Check rates for M15 inside bars. Operates on M5 rates as M15 bars may be unevenly aligned.
+ * Check the current timeseries for new or changed M15 inside bars.
  *
  * @param  double ratesM5[][] - M5 rates array
  * @param  int    changedBars - number of changed M5 bars
@@ -268,7 +268,7 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBars) {
 
 
 /**
- * Check rates for M30 inside bars. Operates on M5 rates as M30 bars may be unevenly aligned.
+ * Check the current timeseries for new or changed M30 inside bars.
  *
  * @param  double ratesM5[][] - M5 rates array
  * @param  int    changedBars - number of changed M5 bars
@@ -320,7 +320,7 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBars) {
 
 
 /**
- * Check rates for H1 inside bars. Operates on M5 rates as H1 bars may be unevenly aligned.
+ * Check the current timeseries for new or changed H1 inside bars.
  *
  * @param  double ratesM5[][] - M5 rates array
  * @param  int    changedBars - number of changed M5 bars
@@ -372,7 +372,7 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBars) {
 
 
 /**
- * Check rates for H4 inside bars. Operates on M5 rates as H4 bars may be unevenly aligned.
+ * Check the current timeseries for new or changed H4 inside bars.
  *
  * @param  double ratesM5[][] - M5 rates array
  * @param  int    changedBars - number of changed M5 bars
@@ -424,7 +424,7 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBars) {
 
 
 /**
- * Check rates for D1 inside bars. Operates on M5 rates as D1 bars may be unevenly aligned.
+ * Check the current timeseries for new or changed D1 inside bars.
  *
  * @param  double ratesM5[][] - M5 rates array
  * @param  int    changedBars - number of changed M5 bars
@@ -476,7 +476,7 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBars) {
 
 
 /**
- * Check rates for W1 inside bars. Operates on M5 rates as W1 bars may be unevenly aligned.
+ * Check the current timeseries for new or changed W1 inside bars.
  *
  * @param  double ratesM5[][] - M5 rates array
  * @param  int    changedBars - number of changed M5 bars
@@ -530,7 +530,7 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
 
 
 /**
- * Check rates for MN1 inside bars. Operates on M5 rates as MN1 bars may be unevenly aligned.
+ * Check the current timeseries for new or changed MN1 inside bars.
  *
  * @param  double ratesM5[][] - M5 rates array
  * @param  int    changedBars - number of changed M5 bars
