@@ -101,39 +101,36 @@ int onTick() {
       SetIndicatorOptions();
    }
 
-   // For compatibility with offline charts and/or synthetic symbols, analysis must always use the current chart timeframe.
+   // For compatibility with offline charts and synthetic symbols, analysis must always use the current chart timeframe.
    if (Period() > insideBarTF) return(last_error);
    if (ChangedBars < 2)        return(last_error);    // skip regular ticks, they never change IB status
 
-   switch (insideBarTF) {
-      case PERIOD_M1: CheckInsideBarsM1(); return(last_error);
+   if (Period() == insideBarTF) {
+      CheckSameTimeframeIB();
+      return(last_error);
    }
 
 
 
 
+   double ratesM5[][6];
+   int changedBars;
+   if (!CopyRates(PERIOD_M5, ratesM5, changedBars)) return(last_error);
 
-
-
-
-   double rates[][6];
-   int ratesTF = ifInt(insideBarTF == PERIOD_M1, PERIOD_M1, PERIOD_M5), changedBars;
-   if (!CopyRates(ratesTF, rates, changedBars)) return(last_error);
-
-   if (!ValidBars) {                                  // if the chart changed rates must be marked as changed accordingly
-      changedBars = ArrayRange(rates, 0);             // TODO: find rates offset of the actual change and modify 'changedBars'
+   if (!ValidBars) {                                  // if the chart changed passed rates must be marked as changed, too
+      changedBars = ArrayRange(ratesM5, 0);
    }
    if (changedBars < 2) return(last_error);           // skip regular ticks, they never change IB status
 
    switch (insideBarTF) {
-      case PERIOD_M5:  CheckInsideBarsM5 (rates, changedBars); break;
-      case PERIOD_M15: CheckInsideBarsM15(rates, changedBars); break;
-      case PERIOD_M30: CheckInsideBarsM30(rates, changedBars); break;
-      case PERIOD_H1:  CheckInsideBarsH1 (rates, changedBars); break;
-      case PERIOD_H4:  CheckInsideBarsH4 (rates, changedBars); break;
-      case PERIOD_D1:  CheckInsideBarsD1 (rates, changedBars); break;
-      case PERIOD_W1:  CheckInsideBarsW1 (rates, changedBars); break;
-      case PERIOD_MN1: CheckInsideBarsMN1(rates, changedBars); break;
+      case PERIOD_M5:  CheckInsideBarsM5 (ratesM5, changedBars); break;
+      case PERIOD_M15: CheckInsideBarsM15(ratesM5, changedBars); break;
+      case PERIOD_M30: CheckInsideBarsM30(ratesM5, changedBars); break;
+      case PERIOD_H1:  CheckInsideBarsH1 (ratesM5, changedBars); break;
+      case PERIOD_H4:  CheckInsideBarsH4 (ratesM5, changedBars); break;
+      case PERIOD_D1:  CheckInsideBarsD1 (ratesM5, changedBars); break;
+      case PERIOD_W1:  CheckInsideBarsW1 (ratesM5, changedBars); break;
+      case PERIOD_MN1: CheckInsideBarsMN1(ratesM5, changedBars); break;
    }
    return(last_error);
 }
@@ -157,11 +154,11 @@ bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
 
 
 /**
- * Check the current timeseries for new or changed M1 inside bars.
+ * Check current bars for new or changed inside bars of the same timeframe.
  *
  * @return bool - success status
  */
-bool CheckInsideBarsM1() {
+bool CheckSameTimeframeIB() {
    int bars = Bars, more;
 
    if (ChangedBars == 2) {
@@ -169,13 +166,13 @@ bool CheckInsideBarsM1() {
       bars = 3;
    }
    else {
-      if (!DeleteInsideBars(PERIOD_M1)) return(false);            // on init() or additional data: delete all existing IBs
+      if (!DeleteInsideBars(Period())) return(false);             // on init() or additional data: delete all existing IBs
       more = maxInsideBars;                                       // check the configured number of IBs
    }
 
    for (int i=2; i < bars; i++) {
       if (High[i] >= High[i-1] && Low[i] <= Low[i-1]) {
-         if (!CreateInsideBar(PERIOD_M1, Time[i-1], High[i-1], Low[i-1])) return(false);
+         if (!CreateInsideBar(Period(), Time[i-1], High[i-1], Low[i-1])) return(false);
          more--;
          if (!more) break;
       }
