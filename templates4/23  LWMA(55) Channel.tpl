@@ -1,7 +1,8 @@
 <!--
-EMA(144)
+EMA(144,Median)
+EMA(36,Median) hidden
 Donchian Channel(50) 
-LWMA(55) Channel + Colored Bars
+LWMA(55) Channel + Trend Bars
 -->
 
 <chart>
@@ -105,11 +106,39 @@ window_num=0
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
 MA.Periods.Step=0
+MA.AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+Trend.Method=Slope | Channel*
 Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
+Draw.Width=4
+Background.Width=2
 Background.Color=11119017
+UpTrend.Color=16748574
+DownTrend.Color=65535
+ShowChartLegend=0
+SaveCPU=5
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=36
+MA.Periods.Step=0
+MA.AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+Trend.Method=Slope | Channel*
+Draw.Type=Line* | Dot
+Draw.Width=0
+Background.Width=0
+Background.Color=11119017
+UpTrend.Color=16748574
+DownTrend.Color=65535
 ShowChartLegend=0
 SaveCPU=5
 AutoConfiguration=0
@@ -149,7 +178,7 @@ ShowChannel=1
 Channel.UpperColor=16711680
 Channel.LowerColor=255
 ShowReversals=on* | off | +N | -N
-Reversal.Symbol=dot | thin-ring* | ring | thick-ring
+Reversal.Symbol=dot | thin-ring | ring | thick-ring*
 Reversal.Width=3
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
