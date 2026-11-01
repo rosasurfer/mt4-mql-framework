@@ -106,50 +106,12 @@ int onTick() {
    if (ChangedBars < 2)        return(last_error);    // skip regular ticks, they never change IB status
 
    if (Period() == insideBarTF) {
-      CheckSameTimeframeIB();
-      return(last_error);
+      CheckSameTimeframeIBs();
    }
-
-
-
-
-   double ratesM5[][6];
-   int changedBars;
-   if (!CopyRates(PERIOD_M5, ratesM5, changedBars)) return(last_error);
-
-   if (!ValidBars) {                                  // if the chart changed passed rates must be marked as changed, too
-      changedBars = ArrayRange(ratesM5, 0);
-   }
-   if (changedBars < 2) return(last_error);           // skip regular ticks, they never change IB status
-
-   switch (insideBarTF) {
-      case PERIOD_M5:  CheckInsideBarsM5 (ratesM5, changedBars); break;
-      case PERIOD_M15: CheckInsideBarsM15(ratesM5, changedBars); break;
-      case PERIOD_M30: CheckInsideBarsM30(ratesM5, changedBars); break;
-      case PERIOD_H1:  CheckInsideBarsH1 (ratesM5, changedBars); break;
-      case PERIOD_H4:  CheckInsideBarsH4 (ratesM5, changedBars); break;
-      case PERIOD_D1:  CheckInsideBarsD1 (ratesM5, changedBars); break;
-      case PERIOD_W1:  CheckInsideBarsW1 (ratesM5, changedBars); break;
-      case PERIOD_MN1: CheckInsideBarsMN1(ratesM5, changedBars); break;
+   else {
+      CheckHigherTimeframeIBs();
    }
    return(last_error);
-}
-
-
-/**
- * Copy the rates of the specified timeframe to the passed array and resolve the number of changed bars since the last tick.
- *
- * @param  _In_  int    timeframe   - rates timeframe
- * @param  _Out_ double rates[][]   - array receiving the rates
- * @param  _Out_ int    changedBars - variable receiving the number of changed bars
- *
- * @return bool - success status
- */
-bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
-   int changed = iCopyRates(rates, NULL, timeframe);
-   if (changed < 0) return(false);
-   changedBars = changed;
-   return(true);
 }
 
 
@@ -158,7 +120,7 @@ bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
  *
  * @return bool - success status
  */
-bool CheckSameTimeframeIB() {
+bool CheckSameTimeframeIBs() {
    int bars = Bars, more;
 
    if (ChangedBars == 2) {
@@ -177,6 +139,52 @@ bool CheckSameTimeframeIB() {
          if (!more) break;
       }
    }
+   return(true);
+}
+
+
+/**
+ * Check current bars for new or changed inside bars of a higher timeframe.
+ *
+ * @return bool - success status
+ */
+bool CheckHigherTimeframeIBs() {
+   double ratesM5[][6];
+   int changed;
+   CopyRates(PERIOD_M5, ratesM5, changed);
+
+   if (!ValidBars) {                                  // if the chart changed passed rates must be marked as changed, too
+      changed = ArrayRange(ratesM5, 0);
+   }
+   if (changed < 2) return(last_error);               // skip regular ticks, they never change IB status
+
+   switch (insideBarTF) {
+      case PERIOD_M5:  CheckInsideBarsM5 (ratesM5, changed); break;
+      case PERIOD_M15: CheckInsideBarsM15(ratesM5, changed); break;
+      case PERIOD_M30: CheckInsideBarsM30(ratesM5, changed); break;
+      case PERIOD_H1:  CheckInsideBarsH1 (ratesM5, changed); break;
+      case PERIOD_H4:  CheckInsideBarsH4 (ratesM5, changed); break;
+      case PERIOD_D1:  CheckInsideBarsD1 (ratesM5, changed); break;
+      case PERIOD_W1:  CheckInsideBarsW1 (ratesM5, changed); break;
+      case PERIOD_MN1: CheckInsideBarsMN1(ratesM5, changed); break;
+   }
+   return(last_error);
+}
+
+
+/**
+ * Copy the rates of the specified timeframe to the passed array and resolve the number of changed bars since the last tick.
+ *
+ * @param  _In_  int    timeframe   - rates timeframe
+ * @param  _Out_ double rates[][]   - array receiving the rates
+ * @param  _Out_ int    changedBars - variable receiving the number of changed bars
+ *
+ * @return bool - success status
+ */
+bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
+   int changed = iCopyRates(rates, NULL, timeframe);
+   if (changed < 0) return(false);
+   changedBars = changed;
    return(true);
 }
 
