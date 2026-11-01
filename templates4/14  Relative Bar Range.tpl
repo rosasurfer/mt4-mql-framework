@@ -401,9 +401,9 @@ MA.Periods.Step=0
 MA.AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
 Draw.Type=Line* | Dot
 Draw.Width=0
+Background.Width=0
 UpTrend.Color=16711680
 DownTrend.Color=16711680
-Background.Width=0
 ShowChartLegend=0
 SaveCPU=5
 </inputs>
