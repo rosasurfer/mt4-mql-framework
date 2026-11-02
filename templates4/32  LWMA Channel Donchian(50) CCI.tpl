@@ -1,8 +1,9 @@
 <!--
-EMA(144,Median)
-EMA(36,Median) hidden
-Donchian Channel(50) 
-LWMA(55) Channel + Trend Bars
+EMA(144,36,Median)
+Donchian Channel(50)
+LWMA(55) Channel + Bars
+=======================
+CCI(20)
 -->
 
 <chart>
@@ -44,7 +45,7 @@ askline_color=13158600
 stops_color=17919
 
 <window>
-height=4640
+height=4400
 fixed_height=0
 
 <indicator>
@@ -134,14 +135,13 @@ MA.Periods.Step=0
 MA.AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
 Trend.Method=Slope | Channel*
 Draw.Type=Line* | Dot
-Draw.Width=0
-Background.Width=0
+Draw.Width=3
+Background.Width=2
 Background.Color=11119017
 UpTrend.Color=16748574
 DownTrend.Color=65535
 ShowChartLegend=0
 SaveCPU=5
-AutoConfiguration=0
 </inputs>
 </expert>
 show_data=1
@@ -203,6 +203,57 @@ MA1.Periods=55
 ShowChartLegend=1
 </inputs>
 </expert>
+show_data=1
+</indicator>
+</window>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+MA1.Method=LWMA
+MA1.Periods=55
+ShowChartLegend=1
+</inputs>
+</expert>
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=600
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=CCI
+flags=339
+window_num=2
+<inputs>
+Periods=20
+AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+Signal.Level=170
+Signal.onMomentum=1
+Signal.onMomentum.Types=sound* | alert* | mail | telegram
+</inputs>
+</expert>
+draw_2=2
+color_2=3329330
+weight_2=2
+draw_3=2
+color_3=255
+weight_3=2
+min=-170
+max=170
+levels_color=12632256
+levels_style=2
+levels_weight=1
+level_0=100
+level_1=0
+level_2=-100
 show_data=1
 </indicator>
 </window>

@@ -1,7 +1,7 @@
 <!--
 EMA(144,36,Median)
 Donchian Channel(20) 
-LWMA(55) Channel + Trend Bars
+LWMA(55) Channel + Bars
 -->
 
 <chart>
@@ -177,7 +177,8 @@ Channel.UpperColor=16711680
 Channel.LowerColor=255
 ShowReversals=on* | off | +N | -N
 Reversal.Symbol=dot | thin-ring | ring | thick-ring*
-Reversal.Width=3
+Reversal.Width=2
+Reversal.Color=0
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
 Sound.onChannelWidening=0
