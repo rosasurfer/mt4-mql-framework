@@ -1,7 +1,7 @@
 /**
  * Chart grid
  *
- * Maintains horizontal and vertical chart separators.
+ * Draws horizontal and vertical chart separators.
  *
  *
  * TODO:
@@ -29,14 +29,14 @@ extern string WeekendSessions.Symbols     = "";          // comma-separated list
 
 #property indicator_chart_window
 
-// vertical grid properties (time)
+// vertical grid properties: time
 bool dailySeparators;
 bool weeklySeparators;
 bool monthlySeparators;
 bool yearlySeparators;
 bool weekendSessions;            // whether the symbol has weekend sessions
 
-// horizontal grid properties (price)
+// horizontal grid properties: price
 int    lastChartHeight;
 double lastChartMinPrice;
 double lastChartMaxPrice;
@@ -72,16 +72,15 @@ int onInit() {
    }
    weekendSessions = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
 
-   // initialize the time interval for the vertical grid
-   dailySeparators = false;
-   weeklySeparators = false;
+   // initialize the time interval of the vertical grid
+   dailySeparators   = false;
+   weeklySeparators  = false;
    monthlySeparators = false;
-   yearlySeparators = false;
-
-   if      (Period() <  PERIOD_H4) dailySeparators = true;
-   else if (Period() == PERIOD_H4) weeklySeparators = true;
+   yearlySeparators  = false;
+   if      (Period() <  PERIOD_H4) dailySeparators   = true;
+   else if (Period() == PERIOD_H4) weeklySeparators  = true;
    else if (Period() == PERIOD_D1) monthlySeparators = true;
-   else                            yearlySeparators = true;
+   else                            yearlySeparators  = true;
 
    return(catch("onInit(2)"));
 }
@@ -106,6 +105,7 @@ int onDeinit() {
 int onTick() {
    if (__isChart) {
       UpdateHorizontalGrid();
+
       if (ChangedBars > 2) {
          UpdateVerticalGrid();
       }
