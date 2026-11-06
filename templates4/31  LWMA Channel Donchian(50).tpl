@@ -98,6 +98,19 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Chart Legend
+flags=339
+window_num=0
+<inputs>
+Text=LWMA Channel Bars
+</inputs>
+</expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=Moving Average
 flags=339
 window_num=0
@@ -199,7 +212,7 @@ window_num=0
 <inputs>
 MA1.Method=LWMA
 MA1.Periods=55
-ShowChartLegend=1
+ShowChartLegend=0
 </inputs>
 </expert>
 show_data=1
