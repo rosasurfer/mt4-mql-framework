@@ -1087,69 +1087,67 @@ bool SaveStatus() {
    if (last_error != NULL)              return(false);
    if (!instance.id || Instance.ID=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
    if (__isTesting) {
-      if (test.reduceStatusWrites) {                           // in tester skip all writes except file creation, instance stop and test end
+      if (test.reduceStatusWrites) {                             // in tester skip all writes except file creation, instance stop and test end
          static bool saved = false;
          if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
          saved = true;
       }
    }
-   else if (IsTestInstance()) return(true);                    // don't modify the status file of a finished test
+   else if (IsTestInstance()) return(true);                      // don't modify the status file of a finished test
 
-   string section="", separator="", file=GetStatusFileName();
+   string file = GetStatusFileName(), section="", separator="";
    bool fileExists = IsFile(file);
-   if (!fileExists) separator = CRLF;                          // an empty line separator
-   SS.All();                                                   // update trade stats and global string representations
+   if (!fileExists) separator = CRLF;                            // an empty line separator
+   SS.All();                                                     // update trade stats and global string representations
 
    // [General]
-   if (!SaveStatus.General(file, fileExists)) return(false);   // account, symbol and test infos
+   if (!SaveStatus.General(file, fileExists)) return(false);     // account, symbol and test infos
 
    // [Inputs]
    section = "Inputs";
-   WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
-   WriteIniString(file, section, "Instance.StartAt",           /*string  */ Instance.StartAt);
-   WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
-   WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
-   WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "Entry.onChannelWidening",    /*bool    */ Entry.onChannelWidening);
-   WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
-
-   // trade stats
-   if (!SaveStatus.TradeStats(file, fileExists)) return(false);
+   WriteIniString(file, section, "Instance.ID",                  /*string  */ Instance.ID);
+   WriteIniString(file, section, "Instance.StartAt",             /*string  */ Instance.StartAt);
+   WriteIniString(file, section, "Instance.StopAt",              /*string  */ Instance.StopAt);
+   WriteIniString(file, section, "ZigZag.Periods",               /*int     */ ZigZag.Periods);
+   WriteIniString(file, section, "Lots",                         /*double  */ NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "Entry.onChannelWidening",      /*bool    */ Entry.onChannelWidening);
+   WriteIniString(file, section, "EA.Recorder",                  /*string  */ EA.Recorder + separator);
 
    // [Runtime status]
    section = "Runtime status";
-   WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
-   WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
-   WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "instance.started",           /*datetime*/ instance.started + ifString(!instance.started, "", GmtTimeFormat(instance.started, " (%a, %Y.%m.%d %H:%M:%S)")));
-   WriteIniString(file, section, "instance.stopped",           /*datetime*/ instance.stopped + ifString(!instance.stopped, "", GmtTimeFormat(instance.stopped, " (%a, %Y.%m.%d %H:%M:%S)")));
-   WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
-   WriteIniString(file, section, "instance.startEquity",       /*double  */ DoubleToStr(instance.startEquity, 2));
-   WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
+   WriteIniString(file, section, "instance.id",                  /*int     */ instance.id);
+   WriteIniString(file, section, "instance.name",                /*string  */ instance.name);
+   WriteIniString(file, section, "instance.created",             /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.started",             /*datetime*/ instance.started + ifString(!instance.started, "", GmtTimeFormat(instance.started, " (%a, %Y.%m.%d %H:%M:%S)")));
+   WriteIniString(file, section, "instance.stopped",             /*datetime*/ instance.stopped + ifString(!instance.stopped, "", GmtTimeFormat(instance.stopped, " (%a, %Y.%m.%d %H:%M:%S)")));
+   WriteIniString(file, section, "instance.isTest",              /*bool    */ instance.isTest);
+   WriteIniString(file, section, "instance.status",              /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
+   WriteIniString(file, section, "instance.startEquity",         /*double  */ DoubleToStr(instance.startEquity, 2));
+   WriteIniString(file, section, "recorder.accountEquitySymbol", /*string  */ recorder.accountEquitySymbol + separator);
 
-   WriteIniString(file, section, "start.time.condition",       /*bool    */ start.time.condition);
-   WriteIniString(file, section, "start.time.value",           /*datetime*/ start.time.value);
-   WriteIniString(file, section, "start.time.isDaily",         /*bool    */ start.time.isDaily);
-   WriteIniString(file, section, "start.time.descr",           /*string  */ start.time.descr + separator);
+   WriteIniString(file, section, "start.time.condition",         /*bool    */ start.time.condition);
+   WriteIniString(file, section, "start.time.value",             /*datetime*/ start.time.value);
+   WriteIniString(file, section, "start.time.isDaily",           /*bool    */ start.time.isDaily);
+   WriteIniString(file, section, "start.time.descr",             /*string  */ start.time.descr + separator);
 
-   WriteIniString(file, section, "stop.time.condition",        /*bool    */ stop.time.condition);
-   WriteIniString(file, section, "stop.time.value",            /*datetime*/ stop.time.value);
-   WriteIniString(file, section, "stop.time.isDaily",          /*bool    */ stop.time.isDaily);
-   WriteIniString(file, section, "stop.time.descr",            /*string  */ stop.time.descr + separator);
+   WriteIniString(file, section, "stop.time.condition",          /*bool    */ stop.time.condition);
+   WriteIniString(file, section, "stop.time.value",              /*datetime*/ stop.time.value);
+   WriteIniString(file, section, "stop.time.isDaily",            /*bool    */ stop.time.isDaily);
+   WriteIniString(file, section, "stop.time.descr",              /*string  */ stop.time.descr + separator);
 
-   WriteIniString(file, section, "stop.profitPct.condition",   /*bool    */ stop.profitPct.condition);
-   WriteIniString(file, section, "stop.profitPct.value",       /*double  */ NumberToStr(stop.profitPct.value, ".1+"));
-   WriteIniString(file, section, "stop.profitPct.absValue",    /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
-   WriteIniString(file, section, "stop.profitPct.descr",       /*string  */ stop.profitPct.descr + separator);
+   WriteIniString(file, section, "stop.profitPct.condition",     /*bool    */ stop.profitPct.condition);
+   WriteIniString(file, section, "stop.profitPct.value",         /*double  */ NumberToStr(stop.profitPct.value, ".1+"));
+   WriteIniString(file, section, "stop.profitPct.absValue",      /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
+   WriteIniString(file, section, "stop.profitPct.descr",         /*string  */ stop.profitPct.descr + separator);
 
-   WriteIniString(file, section, "stop.profitPunit.condition", /*bool    */ stop.profitPunit.condition);
-   WriteIniString(file, section, "stop.profitPunit.value",     /*double  */ NumberToStr(stop.profitPunit.value, ".1+"));
-   WriteIniString(file, section, "stop.profitPunit.descr",     /*string  */ stop.profitPunit.descr + separator);
+   WriteIniString(file, section, "stop.profitPunit.condition",   /*bool    */ stop.profitPunit.condition);
+   WriteIniString(file, section, "stop.profitPunit.value",       /*double  */ NumberToStr(stop.profitPunit.value, ".1+"));
+   WriteIniString(file, section, "stop.profitPunit.descr",       /*string  */ stop.profitPunit.descr + separator);
 
-   // open/closed trades
+   // open/closed trades and stats
    if (!SaveStatus.OpenPosition(file, fileExists)) return(false);
    if (!SaveStatus.TradeHistory(file, fileExists)) return(false);
+   if (!SaveStatus.TradeStats  (file, fileExists)) return(false);
 
    return(!catch("SaveStatus(2)"));
 }
@@ -1173,45 +1171,45 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   Instance.ID                = GetIniStringA(file, section, "Instance.ID",         "");           // string   Instance.ID                = T123
-   Instance.StartAt           = GetIniStringA(file, section, "Instance.StartAt",    "");           // string   Instance.StartAt           = @time(datetime|time)
-   Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",     "");           // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
-   ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"         );           // int      ZigZag.Periods             = 40
-   Lots                       = GetIniDouble (file, section, "Lots"                   );           // double   Lots                       = 0.1
-   Entry.onChannelWidening    = GetIniBool   (file, section, "Entry.onChannelWidening");           // bool     Entry.onChannelWidening    = 0
-   EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",         "");           // string   EA.Recorder                = 1,2,4
+   Instance.ID                  = GetIniStringA(file, section, "Instance.ID",         "");            // string   Instance.ID                  = T123
+   Instance.StartAt             = GetIniStringA(file, section, "Instance.StartAt",    "");            // string   Instance.StartAt             = @time(datetime|time)
+   Instance.StopAt              = GetIniStringA(file, section, "Instance.StopAt",     "");            // string   Instance.StopAt              = @time(datetime|time) | @profit(numeric[%])
+   ZigZag.Periods               = GetIniInt    (file, section, "ZigZag.Periods"         );            // int      ZigZag.Periods               = 40
+   Lots                         = GetIniDouble (file, section, "Lots"                   );            // double   Lots                         = 0.1
+   Entry.onChannelWidening      = GetIniBool   (file, section, "Entry.onChannelWidening");            // bool     Entry.onChannelWidening      = 0
+   EA.Recorder                  = GetIniStringA(file, section, "EA.Recorder",         "");            // string   EA.Recorder                  = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";
-   instance.id                = GetIniInt    (file, section, "instance.id"         );              // int      instance.id                = 123
-   instance.name              = GetIniStringA(file, section, "instance.name",    "");              // string   instance.name              = Z.123
-   instance.created           = GetIniInt    (file, section, "instance.created"    );              // datetime instance.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.started           = GetIniInt    (file, section, "instance.started"    );              // datetime instance.started           = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.stopped           = GetIniInt    (file, section, "instance.stopped"    );              // datetime instance.stopped           = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.isTest            = GetIniBool   (file, section, "instance.isTest"     );              // bool     instance.isTest            = 1
-   instance.status            = GetIniInt    (file, section, "instance.status"     );              // int      instance.status            = 1 (waiting)
-   instance.startEquity       = GetIniDouble (file, section, "instance.startEquity");              // double   instance.startEquity       = 1000.00
-   recorder.stdEquitySymbol   = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");      // string   recorder.stdEquitySymbol   = GBPJPY.001
+   instance.id                  = GetIniInt    (file, section, "instance.id"         );               // int      instance.id                  = 123
+   instance.name                = GetIniStringA(file, section, "instance.name",    "");               // string   instance.name                = Z.123
+   instance.created             = GetIniInt    (file, section, "instance.created"    );               // datetime instance.created             = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.started             = GetIniInt    (file, section, "instance.started"    );               // datetime instance.started             = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.stopped             = GetIniInt    (file, section, "instance.stopped"    );               // datetime instance.stopped             = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.isTest              = GetIniBool   (file, section, "instance.isTest"     );               // bool     instance.isTest              = 1
+   instance.status              = GetIniInt    (file, section, "instance.status"     );               // int      instance.status              = 1 (waiting)
+   instance.startEquity         = GetIniDouble (file, section, "instance.startEquity");               // double   instance.startEquity         = 1000.00
+   recorder.accountEquitySymbol = GetIniStringA(file, section, "recorder.accountEquitySymbol", "");   // string   recorder.accountEquitySymbol = GBPJPY.001
    SS.InstanceName();
 
-   start.time.condition       = GetIniBool   (file, section, "start.time.condition");              // bool     start.time.condition       = 1
-   start.time.value           = GetIniInt    (file, section, "start.time.value"    );              // datetime start.time.value           = 1624924800
-   start.time.isDaily         = GetIniBool   (file, section, "start.time.isDaily"  );              // bool     start.time.isDaily         = 0
-   start.time.descr           = GetIniStringA(file, section, "start.time.descr", "");              // string   start.time.descr           = text
+   start.time.condition         = GetIniBool   (file, section, "start.time.condition");               // bool     start.time.condition         = 1
+   start.time.value             = GetIniInt    (file, section, "start.time.value"    );               // datetime start.time.value             = 1624924800
+   start.time.isDaily           = GetIniBool   (file, section, "start.time.isDaily"  );               // bool     start.time.isDaily           = 0
+   start.time.descr             = GetIniStringA(file, section, "start.time.descr", "");               // string   start.time.descr             = text
 
-   stop.time.condition        = GetIniBool   (file, section, "stop.time.condition");               // bool     stop.time.condition        = 1
-   stop.time.value            = GetIniInt    (file, section, "stop.time.value"    );               // datetime stop.time.value            = 1624924800
-   stop.time.isDaily          = GetIniBool   (file, section, "stop.time.isDaily"  );               // bool     stop.time.isDaily          = 0
-   stop.time.descr            = GetIniStringA(file, section, "stop.time.descr", "");               // string   stop.time.descr            = text
+   stop.time.condition          = GetIniBool   (file, section, "stop.time.condition");                // bool     stop.time.condition          = 1
+   stop.time.value              = GetIniInt    (file, section, "stop.time.value"    );                // datetime stop.time.value              = 1624924800
+   stop.time.isDaily            = GetIniBool   (file, section, "stop.time.isDaily"  );                // bool     stop.time.isDaily            = 0
+   stop.time.descr              = GetIniStringA(file, section, "stop.time.descr", "");                // string   stop.time.descr              = text
 
-   stop.profitPct.condition   = GetIniBool   (file, section, "stop.profitPct.condition"        );  // bool     stop.profitPct.condition   = 0
-   stop.profitPct.value       = GetIniDouble (file, section, "stop.profitPct.value"            );  // double   stop.profitPct.value       = 0
-   stop.profitPct.absValue    = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);  // double   stop.profitPct.absValue    = 0.00
-   stop.profitPct.descr       = GetIniStringA(file, section, "stop.profitPct.descr",         "");  // string   stop.profitPct.descr       = text
+   stop.profitPct.condition     = GetIniBool   (file, section, "stop.profitPct.condition"        );   // bool     stop.profitPct.condition     = 0
+   stop.profitPct.value         = GetIniDouble (file, section, "stop.profitPct.value"            );   // double   stop.profitPct.value         = 0
+   stop.profitPct.absValue      = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);   // double   stop.profitPct.absValue      = 0.00
+   stop.profitPct.descr         = GetIniStringA(file, section, "stop.profitPct.descr",         "");   // string   stop.profitPct.descr         = text
 
-   stop.profitPunit.condition = GetIniBool   (file, section, "stop.profitPunit.condition");        // bool     stop.profitPunit.condition = 1
-   stop.profitPunit.value     = GetIniDouble (file, section, "stop.profitPunit.value"    );        // double   stop.profitPunit.value     = 1.23456
-   stop.profitPunit.descr     = GetIniStringA(file, section, "stop.profitPunit.descr", "");        // string   stop.profitPunit.descr     = text
+   stop.profitPunit.condition   = GetIniBool   (file, section, "stop.profitPunit.condition");         // bool     stop.profitPunit.condition   = 1
+   stop.profitPunit.value       = GetIniDouble (file, section, "stop.profitPunit.value"    );         // double   stop.profitPunit.value       = 1.23456
+   stop.profitPunit.descr       = GetIniStringA(file, section, "stop.profitPunit.descr", "");         // string   stop.profitPunit.descr       = text
 
    // open/closed trades and stats
    if (!ReadStatus.OpenPosition(file)) return(false);
