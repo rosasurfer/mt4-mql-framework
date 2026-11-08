@@ -7,7 +7,7 @@
  */
 string SignalTypeToStr(int type) {
    switch (type) {
-      case NULL:                return("(undefined)"        );
+      case NULL:                return("NULL"               );
       case SIG_TYPE_TIME:       return("SIG_TYPE_TIME"      );
       case SIG_TYPE_STOPLOSS:   return("SIG_TYPE_STOPLOSS"  );
       case SIG_TYPE_TAKEPROFIT: return("SIG_TYPE_TAKEPROFIT");
