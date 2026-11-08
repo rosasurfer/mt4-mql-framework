@@ -70,8 +70,8 @@ int init() {
          error = Toolbar.Experts(true);
          if (HandleErrors("init(10)", error)) return(last_error);
 
-         PlaySoundEx("Windows Notify.wav");                    // we must return as scripts don't update their internal auto-trading status
-         MessageBox("Auto-trading was not enabled!"+ NL + "Please call the script again.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+         PlaySoundEx("Windows Chord.wav");                     // we must return as scripts don't update their internal auto-trading status
+         MessageBox("Auto-trading was not enabled!"+ NL + "Please call the script again.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
          return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
       }
    }
