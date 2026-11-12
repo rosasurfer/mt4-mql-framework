@@ -100,19 +100,6 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Chart Legend
-flags=339
-window_num=0
-<inputs>
-Text=LWMA Channel Bars
-</inputs>
-</expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Moving Average
 flags=339
 window_num=0
@@ -163,20 +150,38 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Trend Bars
+name=MA Channel Bars
 flags=339
 window_num=0
 <inputs>
 MaChannel.Method=SMA | LWMA* | EMA | SMMA | ALMA
 MaChannel.Periods=55
-Color.UpTrend=16711680
-Color.DownTrend=255
-Color.NoTrend=11119017
+MaChannel.Width.Pct=120
+Color.AboveChannel=16711680
+Color.InChannel=11119017
+Color.BelowChannel=255
 BarWidth=2
+ChartLegend=LWMA Channel +20% Bars
 AutoConfiguration=0
 </inputs>
 </expert>
 show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+MA1.Method=LWMA
+MA1.Periods=55
+MA1.ChannelWidth.Pct=120
+ShowChartLegend=1
+</inputs>
+</expert>
+show_data=1
 </indicator>
 
 <indicator>
@@ -201,37 +206,6 @@ Sound.onChannelWidening=0
 style_0=2
 style_1=2
 style_2=2
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=MA Channel
-flags=339
-window_num=0
-<inputs>
-MA1.Method=LWMA
-MA1.Periods=55
-ShowChartLegend=1
-</inputs>
-</expert>
-show_data=1
-</indicator>
-</window>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=MA Channel
-flags=339
-window_num=0
-<inputs>
-MA1.Method=LWMA
-MA1.Periods=55
-ShowChartLegend=0
-</inputs>
-</expert>
 show_data=1
 </indicator>
 </window>
