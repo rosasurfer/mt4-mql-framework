@@ -2,9 +2,7 @@
  * MA Channel
  *
  * An indicator calculating a High/Low channel around 1-3 separate Moving Averages.
- *
- * This indicator can be used together with the "Trend Bars" indicator to visualize the channel trend.
- * Such a channel trend forms the basis of the XARD trend system.
+ * The "Trend Bars" indicator can be used to visualize the trend of an MA Channel.
  *
  *
  * Input parameters
