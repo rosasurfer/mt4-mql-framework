@@ -131,7 +131,7 @@ Channel.LowerColor=255
 ShowReversals=on* | off | +N | -N
 Reversal.Width=2
 Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | telegram
+Signal.onReversal.Types=sound* | alert* | mail | telegram*
 Sound.onChannelWidening=0
 </inputs>
 </expert>

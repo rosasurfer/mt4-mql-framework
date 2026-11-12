@@ -426,7 +426,7 @@ ShowReversals=on* | off | +N | -N
 Reversal.Symbol=dot | thin-ring | ring | thick-ring*
 Reversal.Width=3
 Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | telegram
+Signal.onReversal.Types=sound* | alert* | mail | telegram*
 Sound.onChannelWidening=1
 </inputs>
 </expert>
