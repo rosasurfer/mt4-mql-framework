@@ -21,6 +21,7 @@ int __DeinitFlags[];
 extern string ___a__________________________ = "=== MA Channel settings ===";
 extern string MaChannel.Method               = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern int    MaChannel.Periods              = 100;
+extern int    MaChannel.Width.Pct            = 100;            // scaling in % of High/Low range
 
 extern string ___b__________________________ = "=== Bar settings ===";
 extern color  Color.UpTrend                  = Blue;
@@ -70,9 +71,7 @@ double noTrendBodyB[];
 double noTrendWickA[];
 double noTrendWickB[];
 
-int    maChannel.method;
-int    maChannel.periods;
-string maChannel.definition = "";
+int maChannel.method;
 
 
 /**
@@ -92,13 +91,14 @@ int onInit() {
       sValue = sValues[size-1];
    }
    maChannel.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maChannel.method == -1) return(catch("onInit(1)  invalid input parameter MaChannel.Method: "+ DoubleQuoteStr(MaChannel.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maChannel.method == -1)  return(catch("onInit(1)  invalid input parameter MaChannel.Method: "+ DoubleQuoteStr(MaChannel.Method), ERR_INVALID_INPUT_PARAMETER));
    MaChannel.Method = MaMethodDescription(maChannel.method);
    // MaChannel.Periods
    if (AutoConfiguration) MaChannel.Periods = GetConfigInt(indicator, "MaChannel.Periods", MaChannel.Periods);
-   if (MaChannel.Periods < 1)  return(catch("onInit(2)  invalid input parameter MaChannel.Periods: "+ MaChannel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   maChannel.periods = MaChannel.Periods;
-   maChannel.definition = MaChannel.Method +"("+ maChannel.periods+")";
+   if (MaChannel.Periods < 1)   return(catch("onInit(2)  invalid input parameter MaChannel.Periods: "+ MaChannel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   // MaChannel.Width.Pct
+   if (AutoConfiguration) MaChannel.Width.Pct = GetConfigInt(indicator, "MaChannel.Width.Pct", MaChannel.Width.Pct);
+   if (MaChannel.Width.Pct < 1) return(catch("onInit(3)  invalid input parameter MaChannel.Width.Pct: "+ MaChannel.Width.Pct +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
    // Color.*: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
    if (AutoConfiguration) Color.NoTrend   = GetConfigColor(indicator, "Color.NoTrend",   Color.NoTrend);
@@ -108,11 +108,11 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // BarWidth
    if (AutoConfiguration) BarWidth = GetConfigInt(indicator, "BarWidth", BarWidth);
-   if (BarWidth < 0)           return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (BarWidth > 13)          return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (BarWidth < 0)            return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (BarWidth > 13)           return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)       return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)        return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // reset the command handler
@@ -160,7 +160,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maChannel.periods);
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-MaChannel.Periods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
@@ -245,12 +245,9 @@ bool onCommand(string cmd, string params, int keys) {
  * @return double - band value or NULL in case of errors
  */
 double GetMaChannel(int mode, int bar) {
-   if (maChannel.method == MODE_ALMA) {
-      static int buffers[] = { 0, MaChannel.MODE_MA1_UPPER_BAND, MaChannel.MODE_MA1_LOWER_BAND };
-      return(icMaChannel(NULL, MODE_ALMA, maChannel.periods, 100, 0, 0, 0, 0, 0, 0, buffers[mode], bar));
-   }
-   static int priceTypes[] = { 0, PRICE_HIGH, PRICE_LOW };
-   return(iMA(NULL, NULL, maChannel.periods, 0, maChannel.method, priceTypes[mode], bar));
+   static int buffers[] = { 0, MaChannel.MODE_MA1_UPPER_BAND, MaChannel.MODE_MA1_LOWER_BAND };
+
+   return(icMaChannel(NULL, maChannel.method, MaChannel.Periods, MaChannel.Width.Pct, 0, 0, 0, 0, 0, 0, buffers[mode], bar));
 }
 
 
@@ -308,12 +305,13 @@ bool SetIndicatorOptions(bool redraw = false) {
  */
 string InputsToStr() {
    return(StringConcatenate(
-      "MaChannel.Method=",  DoubleQuoteStr(MaChannel.Method), ";", NL,
-      "MaChannel.Periods=", MaChannel.Periods,                ";", NL,
-      "Color.UpTrend=",     ColorToStr(Color.UpTrend),        ";", NL,
-      "Color.NoTrend=",     ColorToStr(Color.NoTrend),        ";", NL,
-      "Color.DownTrend=",   ColorToStr(Color.DownTrend),      ";", NL,
-      "BarWidth=",          BarWidth,                         ";", NL,
-      "MaxBarsBack=",       MaxBarsBack,                      ";", NL
+      "MaChannel.Method=",    DoubleQuoteStr(MaChannel.Method), ";", NL,
+      "MaChannel.Periods=",   MaChannel.Periods,                ";", NL,
+      "MaChannel.Width.Pct=", MaChannel.Width.Pct,              ";", NL,
+      "Color.UpTrend=",       ColorToStr(Color.UpTrend),        ";", NL,
+      "Color.NoTrend=",       ColorToStr(Color.NoTrend),        ";", NL,
+      "Color.DownTrend=",     ColorToStr(Color.DownTrend),      ";", NL,
+      "BarWidth=",            BarWidth,                         ";", NL,
+      "MaxBarsBack=",         MaxBarsBack,                      ";", NL
    ));
 }
