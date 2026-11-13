@@ -1120,7 +1120,7 @@ void UpdateChartLegend() {
       if (reversals.show && reversals.countFrom) {
          sFilter = "  filter("+ NumberToStr(reversals.countFrom, "+.") +")";
       }
-      string sReversal = "  next rev. @"+ NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
+      string sReversal = "  reversal @"+ NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
       string sSignal   = ifString(Signal.onReversal || Sound.onChannelWidening, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sFilter, sReversal, sSignal);
 
