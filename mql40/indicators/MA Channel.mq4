@@ -2,7 +2,7 @@
  * MA Channel
  *
  * An indicator calculating a High/Low channel around 1-3 separate Moving Averages.
- * The "Trend Bars" indicator can be used to visualize the trend of an MA Channel.
+ * The "MA Channel Bars" indicator can be used to color bars according to such a channel.
  *
  *
  * Input parameters
