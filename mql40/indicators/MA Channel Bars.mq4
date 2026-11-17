@@ -1,10 +1,7 @@
 /**
  * MA Channel Bars
  *
- * Colors price bars according to the defined MA Channel:
- *  - UpTrend:   the close price is above the channel
- *  - DownTrend: the close price is below the channel
- *  - NoTrend:   the close price is in the channel
+ * Colors price bars according to the position of BarClose relative to the defined MA Channel.
  *
  * Bar width can be increased using hotkey CTRL-SHIFT-K (calls script SuperBars.TimeframeUp)
  * Bar width can be decreased using hotkey CTRL-SHIFT-L (calls script SuperBars.TimeframeDown)
@@ -24,9 +21,9 @@ extern int    MaChannel.Periods              = 100;
 extern int    MaChannel.Width.Pct            = 100;            // scaling in % of High/Low range
 
 extern string ___b__________________________ = "=== Bar settings ===";
-extern color  Color.UpTrend                  = Blue;
-extern color  Color.NoTrend                  = Silver;
-extern color  Color.DownTrend                = Red;
+extern color  Color.AboveChannel             = Blue;
+extern color  Color.InChannel                = Silver;
+extern color  Color.BelowChannel             = Red;
 extern int    BarWidth                       = 2;
 
 extern string ___c__________________________ = "=== Display options ===";
@@ -100,12 +97,12 @@ int onInit() {
    if (AutoConfiguration) MaChannel.Width.Pct = GetConfigInt(indicator, "MaChannel.Width.Pct", MaChannel.Width.Pct);
    if (MaChannel.Width.Pct < 1) return(catch("onInit(3)  invalid input parameter MaChannel.Width.Pct: "+ MaChannel.Width.Pct +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
    // Color.*: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
-   if (AutoConfiguration) Color.NoTrend   = GetConfigColor(indicator, "Color.NoTrend",   Color.NoTrend);
-   if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
-   if (Color.NoTrend   == 0xFF000000) Color.NoTrend   = CLR_NONE;
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+   if (AutoConfiguration) Color.AboveChannel = GetConfigColor(indicator, "Color.AboveChannel", Color.AboveChannel);
+   if (AutoConfiguration) Color.InChannel    = GetConfigColor(indicator, "Color.InChannel",    Color.InChannel   );
+   if (AutoConfiguration) Color.BelowChannel = GetConfigColor(indicator, "Color.BelowChannel", Color.BelowChannel);
+   if (Color.AboveChannel == 0xFF000000) Color.AboveChannel = CLR_NONE;
+   if (Color.InChannel    == 0xFF000000) Color.InChannel    = CLR_NONE;
+   if (Color.BelowChannel == 0xFF000000) Color.BelowChannel = CLR_NONE;
    // BarWidth
    if (AutoConfiguration) BarWidth = GetConfigInt(indicator, "BarWidth", BarWidth);
    if (BarWidth < 0)            return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
@@ -275,14 +272,14 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    // in histograms the larger of both values determines the displayed color
    int drawType = ifInt(BarWidth, DRAW_HISTOGRAM, DRAW_NONE);
-   SetIndexStyle(BUFFER_TREND_BODY_A,   drawType, EMPTY, BarWidth, Color.UpTrend);
-   SetIndexStyle(BUFFER_TREND_BODY_B,   drawType, EMPTY, BarWidth, Color.DownTrend);
-   SetIndexStyle(BUFFER_TREND_WICK_A,   drawType, EMPTY, 1,        Color.UpTrend);
-   SetIndexStyle(BUFFER_TREND_WICK_B,   drawType, EMPTY, 1,        Color.DownTrend);
-   SetIndexStyle(BUFFER_NOTREND_BODY_A, drawType, EMPTY, BarWidth, Color.NoTrend);
-   SetIndexStyle(BUFFER_NOTREND_BODY_B, drawType, EMPTY, BarWidth, Color.NoTrend);
-   SetIndexStyle(BUFFER_NOTREND_WICK_A, drawType, EMPTY, 1,        Color.NoTrend);
-   SetIndexStyle(BUFFER_NOTREND_WICK_B, drawType, EMPTY, 1,        Color.NoTrend);
+   SetIndexStyle(BUFFER_TREND_BODY_A,   drawType, EMPTY, BarWidth, Color.AboveChannel);
+   SetIndexStyle(BUFFER_TREND_BODY_B,   drawType, EMPTY, BarWidth, Color.BelowChannel);
+   SetIndexStyle(BUFFER_TREND_WICK_A,   drawType, EMPTY, 1,        Color.AboveChannel);
+   SetIndexStyle(BUFFER_TREND_WICK_B,   drawType, EMPTY, 1,        Color.BelowChannel);
+   SetIndexStyle(BUFFER_NOTREND_BODY_A, drawType, EMPTY, BarWidth, Color.InChannel);
+   SetIndexStyle(BUFFER_NOTREND_BODY_B, drawType, EMPTY, BarWidth, Color.InChannel);
+   SetIndexStyle(BUFFER_NOTREND_WICK_A, drawType, EMPTY, 1,        Color.InChannel);
+   SetIndexStyle(BUFFER_NOTREND_WICK_B, drawType, EMPTY, 1,        Color.InChannel);
 
    SetIndexLabel(BUFFER_TREND_BODY_A,   NULL);
    SetIndexLabel(BUFFER_TREND_BODY_B,   NULL);
@@ -308,9 +305,9 @@ string InputsToStr() {
       "MaChannel.Method=",    DoubleQuoteStr(MaChannel.Method), ";", NL,
       "MaChannel.Periods=",   MaChannel.Periods,                ";", NL,
       "MaChannel.Width.Pct=", MaChannel.Width.Pct,              ";", NL,
-      "Color.UpTrend=",       ColorToStr(Color.UpTrend),        ";", NL,
-      "Color.NoTrend=",       ColorToStr(Color.NoTrend),        ";", NL,
-      "Color.DownTrend=",     ColorToStr(Color.DownTrend),      ";", NL,
+      "Color.AboveChannel=",  ColorToStr(Color.AboveChannel),   ";", NL,
+      "Color.InChannel=",     ColorToStr(Color.InChannel),      ";", NL,
+      "Color.BelowChannel=",  ColorToStr(Color.BelowChannel),   ";", NL,
       "BarWidth=",            BarWidth,                         ";", NL,
       "MaxBarsBack=",         MaxBarsBack,                      ";", NL
    ));
