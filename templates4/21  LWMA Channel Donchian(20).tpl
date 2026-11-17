@@ -1,15 +1,16 @@
-<!-- 
-Donchian Channel(50)
-Donchian Channel(10) sound-on-widening
-Donchian Channel(50) Width
+<!--
+EMA(144,36,Median)
+Donchian Channel(20) 
+LWMA(55) Channel + Bars
 -->
+
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=1
+scale=4
 graph=1
 fore=0
 grid=0
@@ -42,7 +43,7 @@ askline_color=13158600
 stops_color=17919
 
 <window>
-height=800
+height=4640
 fixed_height=0
 
 <indicator>
@@ -104,14 +105,78 @@ window_num=0
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
 MA.Periods.Step=0
+MA.AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+Trend.Method=Slope | Channel*
 Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
+Draw.Width=4
+Background.Width=2
 Background.Color=11119017
+UpTrend.Color=16748574
+DownTrend.Color=65535
 ShowChartLegend=0
 SaveCPU=5
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=36
+MA.Periods.Step=0
+MA.AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
+Trend.Method=Slope | Channel*
+Draw.Type=Line* | Dot
+Draw.Width=3
+Background.Width=2
+Background.Color=11119017
+UpTrend.Color=16748574
+DownTrend.Color=65535
+ShowChartLegend=0
+SaveCPU=5
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel Bars
+flags=339
+window_num=0
+<inputs>
+MaChannel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+MaChannel.Periods=55
+MaChannel.Width.Pct=120
+Color.AboveChannel=16711680
+Color.InChannel=11119017
+Color.BelowChannel=255
+BarWidth=2
+ChartLegend=LWMA Channel +20% Bars
 AutoConfiguration=0
+</inputs>
+</expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+MA1.Method=LWMA
+MA1.Periods=55
+MA1.ChannelWidth.Pct=120
+ShowChartLegend=0
 </inputs>
 </expert>
 show_data=1
@@ -124,12 +189,14 @@ name=Donchian Channel
 flags=339
 window_num=0
 <inputs>
-Periods=50
+Periods=20
 ShowChannel=1
 Channel.UpperColor=16711680
 Channel.LowerColor=255
 ShowReversals=on* | off | +N | -N
-Reversal.Width=1
+Reversal.Symbol=dot | thin-ring | ring | thick-ring*
+Reversal.Width=2
+Reversal.Color=0
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
 Sound.onChannelWidening=0
@@ -138,47 +205,6 @@ Sound.onChannelWidening=0
 style_0=2
 style_1=2
 style_2=2
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Donchian Channel
-flags=339
-window_num=0
-<inputs>
-Periods=10
-ShowChannel=0
-ShowReversals=on | off* | +N | -N
-Sound.onChannelWidening=1
-</inputs>
-</expert>
-style_0=2
-style_1=2
-style_2=2
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=230
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=Donchian Channel Width
-flags=339
-window_num=1
-<inputs>
-Periods=50
-</inputs>
-</expert>
-level_0=10
-level_1=20
-level_2=200
-level_3=500
-level_4=1000
 show_data=1
 </indicator>
 </window>

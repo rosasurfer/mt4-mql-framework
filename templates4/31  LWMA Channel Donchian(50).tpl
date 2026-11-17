@@ -1,8 +1,7 @@
 <!--
-EMA(144,Median)
-EMA(36,Median) hidden
+EMA(144,36,Median)
 Donchian Channel(50) 
-LWMA(55) Channel + Trend Bars
+LWMA(55) Channel + Bars
 -->
 
 <chart>
@@ -134,8 +133,8 @@ MA.Periods.Step=0
 MA.AppliedPrice=Open | High | Low | Close | Median | Typical | Weighted*
 Trend.Method=Slope | Channel*
 Draw.Type=Line* | Dot
-Draw.Width=0
-Background.Width=0
+Draw.Width=3
+Background.Width=2
 Background.Color=11119017
 UpTrend.Color=16748574
 DownTrend.Color=65535
@@ -150,20 +149,38 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Trend Bars
+name=MA Channel Bars
 flags=339
 window_num=0
 <inputs>
 MaChannel.Method=SMA | LWMA* | EMA | SMMA | ALMA
 MaChannel.Periods=55
-Color.UpTrend=16711680
-Color.DownTrend=255
-Color.NoTrend=11119017
+MaChannel.Width.Pct=120
+Color.AboveChannel=16711680
+Color.InChannel=11119017
+Color.BelowChannel=255
 BarWidth=2
+ChartLegend=LWMA Channel +20% Bars
 AutoConfiguration=0
 </inputs>
 </expert>
 show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+MA1.Method=LWMA
+MA1.Periods=55
+MA1.ChannelWidth.Pct=120
+ShowChartLegend=0
+</inputs>
+</expert>
+show_data=1
 </indicator>
 
 <indicator>
@@ -181,28 +198,13 @@ ShowReversals=on* | off | +N | -N
 Reversal.Symbol=dot | thin-ring | ring | thick-ring*
 Reversal.Width=3
 Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | telegram
+Signal.onReversal.Types=sound* | alert* | mail | telegram*
 Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_0=2
 style_1=2
 style_2=2
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=MA Channel
-flags=339
-window_num=0
-<inputs>
-MA1.Method=LWMA
-MA1.Periods=55
-ShowChartLegend=1
-</inputs>
-</expert>
 show_data=1
 </indicator>
 </window>

@@ -20,5 +20,5 @@ string status.closedTrades = "";
 string status.totalProfit = "";
 string status.profitStats = "";
 
-// comment prefix used by composition of the status display (adapts to existing chart legends)
+// prefix used for composition of the status display (adjusts vertical positioning)
 string status.commentPrefix = "";

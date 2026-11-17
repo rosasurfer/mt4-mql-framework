@@ -1,7 +1,7 @@
 /**
  * Generate a new instance id. Unique for all instances per symbol (instances on different symbols may have the same id).
  *
- * @return int - instance id in the range of INSTANCE_ID_MIN...INSTANCE_ID_MAX or NULL (0) in case of errors
+ * @return int - instance id in the range of INSTANCE_ID_MIN..INSTANCE_ID_MAX or NULL (0) in case of errors
  *
  *
  * TODO:

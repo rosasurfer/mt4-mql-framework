@@ -2,7 +2,7 @@
  * Instance id related constants and global vars.
  */
 
-#define INSTANCE_ID_MIN       1        // range of valid instance ids
+#define INSTANCE_ID_MIN     100        // range of valid instance ids
 #define INSTANCE_ID_MAX     999        //
 
 

@@ -29,7 +29,7 @@ extern string EA.Recorder                    = "on | off* | 1,2,3,...";
 
 // recorder settings
 bool   recorder.initialized;
-string recorder.stdEquitySymbol = "";        // symbol used with mode = RECORDER_ON
+string recorder.accountEquitySymbol = "";    // symbol used for recording the standard account equity
 string recorder.hstDirectory    = "";
 int    recorder.hstFormat;
 
@@ -282,7 +282,7 @@ bool Recorder_init() {
             group = recorder.defaultGroup;
          }
          if (!Recorder_AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
-         recorder.stdEquitySymbol = symbol;
+         recorder.accountEquitySymbol = symbol;
       }
    }
 

@@ -7,7 +7,7 @@
  */
 string SignalOperationDescr(int flag) {
    switch (flag) {
-      case NULL:               return("(undefined)"       );
+      case NULL:               return("NULL"       );
       case SIG_OP_LONG:        return("long"       );
       case SIG_OP_SHORT:       return("short"      );
       case SIG_OP_CLOSE_ALL:   return("close all"  );

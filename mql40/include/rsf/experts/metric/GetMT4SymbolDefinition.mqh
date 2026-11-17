@@ -1,7 +1,7 @@
 /**
  * Return a symbol definition for the specified metric to be recorded.
  *
- * @param  _In_  int    id         - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
+ * @param  _In_  int    id         - metric id; 0 = standard account equity, positive integer for custom metrics
  * @param  _Out_ bool   ready      - whether metric details are complete and the metric is ready to be recorded
  * @param  _Out_ string symbol     - unique MT4 timeseries symbol
  * @param  _Out_ string descr      - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
@@ -10,7 +10,7 @@
  * @param  _Out_ double baseValue  - quotes base value (if EMPTY recorder default settings are used)
  * @param  _Out_ int    multiplier - quotes multiplier
  *
- * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
+ * @return int - error status, ERR_INVALID_INPUT_PARAMETER if the passed metric id is not supported
  */
 int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descr, string &group, int &digits, double &baseValue, int &multiplier) {
    string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
@@ -23,14 +23,14 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descr, s
       default:                 sBarModel = "Live";      break;
    }
 
-   ready     = false;
-   group     = "";
+   ready = false;
+   group = "";
    baseValue = EMPTY;
 
    switch (id) {
       // --- symbol for recorder.mode = RECORDER_ON (standard account equity graph) -----------------------------------------
       case NULL:
-         symbol     = recorder.stdEquitySymbol;
+         symbol     = recorder.accountEquitySymbol;
          descr      = "";
          digits     = 2;
          multiplier = 1;
