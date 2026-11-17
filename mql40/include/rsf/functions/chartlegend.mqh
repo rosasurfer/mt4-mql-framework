@@ -144,14 +144,14 @@ int CountChartLegends() {
 /**
  * Update the chart legend of a band indicator.
  *
- * @param  string legendName    - the legend's chart object name
+ * @param  string legendLabel   - the legend's chart object label
  * @param  string indicatorName - displayed indicator name
  * @param  string status        - additional status info (if any)
  * @param  color  bandsColor    - the band color
  * @param  double upperValue    - current upper band value
  * @param  double lowerValue    - current lower band value
  */
-void UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue) {
+void UpdateBandLegend(string legendLabel, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue) {
    string sUpperValue = NumberToStr(upperValue, PriceFormat);
    string sLowerValue = NumberToStr(lowerValue, PriceFormat);
 
@@ -162,7 +162,7 @@ void UpdateBandLegend(string legendName, string indicatorName, string status, co
    else if (textColor == LightSkyBlue) textColor = C'94,174,255';
    else if (textColor == Lime        ) textColor = LimeGreen;
    else if (textColor == Yellow      ) textColor = Orange;
-   ObjectSetText(legendName, text, 9, "Arial Fett", textColor);
+   ObjectSetText(legendLabel, text, 9, "Arial Fett", textColor);
 
    int error = GetLastError();                                    // on ObjectDrag or opened "Properties" dialog
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateBandLegend(1)", error);
@@ -172,7 +172,7 @@ void UpdateBandLegend(string legendName, string indicatorName, string status, co
 /**
  * Update the chart legend of a trend indicator.
  *
- * @param  string legendName       - the legend's chart object name
+ * @param  string legendLabel      - the legend's chart object label
  * @param  string indicatorName    - displayed indicator name
  * @param  string info             - additional status info (if any)
  * @param  color  uptrendColor     - the uptrend color
@@ -180,7 +180,7 @@ void UpdateBandLegend(string legendName, string indicatorName, string status, co
  * @param  double value            - indicator value to display
  * @param  int    trend [optional] - trend direction of the value to display (default: none)
  */
-void UpdateTrendLegend(string legendName, string indicatorName, string info, color uptrendColor, color downtrendColor, double value, int trend = 0) {
+void UpdateTrendLegend(string legendLabel, string indicatorName, string info, color uptrendColor, color downtrendColor, double value, int trend = 0) {
    static string lastName = "";
    static double lastValue;
    static int    lastTrend;
@@ -206,7 +206,7 @@ void UpdateTrendLegend(string legendName, string indicatorName, string info, col
       else if (textColor == Lime        ) textColor = LimeGreen;
       else if (textColor == Yellow      ) textColor = Orange;
 
-      ObjectSetText(legendName, text, 9, "Arial Fett", textColor);
+      ObjectSetText(legendLabel, text, 9, "Arial Fett", textColor);
 
       int error = GetLastError();                                       // on ObjectDrag or opened "Properties" dialog
       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateTrendLegend(1)", error);

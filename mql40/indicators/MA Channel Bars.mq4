@@ -27,6 +27,8 @@ extern color  Color.BelowChannel             = Red;
 extern int    BarWidth                       = 2;
 
 extern string ___c__________________________ = "=== Display options ===";
+extern bool   ShowChartLegend                = true;
+extern string ChartLegend                    = "";
 extern int    MaxBarsBack                    = 10000;          // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +36,9 @@ extern int    MaxBarsBack                    = 10000;          // max. values to
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
+#include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/iCustom/MaChannel.mqh>
 
 #define BUFFER_TREND_BODY_A      0        // indicator buffer ids
@@ -69,6 +73,8 @@ double noTrendWickA[];
 double noTrendWickB[];
 
 int maChannel.method;
+
+string legendLabel = "";
 
 
 /**
@@ -107,6 +113,10 @@ int onInit() {
    if (AutoConfiguration) BarWidth = GetConfigInt(indicator, "BarWidth", BarWidth);
    if (BarWidth < 0)            return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
    if (BarWidth > 13)           return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
+   // ShowChartLegend
+   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
+   // ChartLegend
+   if (AutoConfiguration) ChartLegend = StrTrim(GetConfigString(indicator, "ChartLegend", ChartLegend));
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)        return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
@@ -115,7 +125,21 @@ int onInit() {
    // reset the command handler
    if (__isChart) GetChartCommand("TrendBars", sValues);
 
+   // buffer management
    SetIndicatorOptions();
+
+   // display options
+   if (ShowChartLegend) {
+      legendLabel = CreateChartLegend();
+      if (ChartLegend == "") {
+         string legendInfo = "";
+         if (MaChannel.Width.Pct != 100) {
+            if (MaChannel.Width.Pct > 100) legendInfo = " +"+ (MaChannel.Width.Pct-100) +"%";
+            else                           legendInfo = " -"+ (100-MaChannel.Width.Pct) +"%";
+         }
+         ChartLegend = MaChannel.Method +"("+ MaChannel.Periods +") Channel Bars"+ legendInfo;
+      }
+   }
    return(catch("onInit(6)"));
 }
 
@@ -160,6 +184,8 @@ int onTick() {
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-MaChannel.Periods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
+   double upperBand, lowerBand;
+
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
       trendBodyA  [bar] = 0;
@@ -171,8 +197,8 @@ int onTick() {
       noTrendWickA[bar] = 0;
       noTrendWickB[bar] = 0;
 
-      double upperBand = GetMaChannel(MODE_UPPER, bar);
-      double lowerBand = GetMaChannel(MODE_LOWER, bar);
+      upperBand = GetMaChannel(MODE_UPPER, bar);
+      lowerBand = GetMaChannel(MODE_LOWER, bar);
 
       if (Close[bar] > upperBand) {
          if (Open[bar] > Close[bar]) {
@@ -205,7 +231,11 @@ int onTick() {
          noTrendWickB[bar] = Low  [bar];
       }
    }
-   return(catch("onTick(1)"));
+
+   if (!__isSuperContext && __isChart && ShowChartLegend) {
+      UpdateChartLegend(upperBand, lowerBand);
+   }
+   return(last_error);
 }
 
 
@@ -245,6 +275,31 @@ double GetMaChannel(int mode, int bar) {
    static int buffers[] = { 0, MaChannel.MODE_MA1_UPPER_BAND, MaChannel.MODE_MA1_LOWER_BAND };
 
    return(icMaChannel(NULL, maChannel.method, MaChannel.Periods, MaChannel.Width.Pct, 0, 0, 0, 0, 0, 0, buffers[mode], bar));
+}
+
+
+/**
+ * Update the chart legend.
+ *
+ * @param  double upperBand - current upper channel band value
+ * @param  double lowerBand - current lower channel band value
+ */
+void UpdateChartLegend(double upperBand, double lowerBand) {
+   color legendColor;
+   if      (Close[0] > upperBand) legendColor = Color.AboveChannel;
+   else if (Close[0] < lowerBand) legendColor = Color.BelowChannel;
+   else                           legendColor = Color.InChannel;
+
+   if      (legendColor == Aqua        ) legendColor = DodgerBlue;
+   else if (legendColor == Gold        ) legendColor = Orange;
+   else if (legendColor == LightSkyBlue) legendColor = C'94,174,255';
+   else if (legendColor == Lime        ) legendColor = LimeGreen;
+   else if (legendColor == Yellow      ) legendColor = Orange;
+
+   ObjectSetText(legendLabel, ChartLegend, 9, "Arial Fett", legendColor);
+
+   int error = GetLastError();                                    // on ObjectDrag or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateChartLegend(1)", error);
 }
 
 
@@ -305,10 +360,14 @@ string InputsToStr() {
       "MaChannel.Method=",    DoubleQuoteStr(MaChannel.Method), ";", NL,
       "MaChannel.Periods=",   MaChannel.Periods,                ";", NL,
       "MaChannel.Width.Pct=", MaChannel.Width.Pct,              ";", NL,
+
       "Color.AboveChannel=",  ColorToStr(Color.AboveChannel),   ";", NL,
       "Color.InChannel=",     ColorToStr(Color.InChannel),      ";", NL,
       "Color.BelowChannel=",  ColorToStr(Color.BelowChannel),   ";", NL,
       "BarWidth=",            BarWidth,                         ";", NL,
+
+      "ShowChartLegend=",     BoolToStr(ShowChartLegend),       ";", NL,
+      "ChartLegend=",         DoubleQuoteStr(ChartLegend),      ";", NL,
       "MaxBarsBack=",         MaxBarsBack,                      ";", NL
    ));
 }
