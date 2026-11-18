@@ -11,12 +11,14 @@ int __DeinitFlags[];
 
 extern string Timeframe                      = "H1";                          // IB timeframe
 extern int    NumberOfInsideBars             = 3;                             // number of IBs to display (-1: all)
-extern bool   SkipEmptyTickTime              = true;
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onInsideBar             = false;
 extern string Signal.onInsideBar.Types       = "sound* | alert | mail | telegram";
 extern string Signal.SoundFile               = "Inside Bar.wav";
+
+extern string ___b__________________________ = "=== Debug ===";
+extern bool   SkipEmptyTickTime              = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,7 +27,6 @@ extern string Signal.SoundFile               = "Inside Bar.wav";
 #include <rsf/stdlib.mqh>
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/iBarShiftNext.mqh>
-#include <rsf/functions/iCopyRates.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
@@ -37,10 +38,10 @@ int    insideBarTF;                             // IB timeframe to process
 int    maxInsideBars;
 string labels[];                                // chart object labels
 
-bool   signal.sound;
-bool   signal.alert;
-bool   signal.mail;
-bool   signal.telegram;
+bool signal.sound;
+bool signal.alert;
+bool signal.mail;
+bool signal.telegram;
 
 
 /**
@@ -132,9 +133,9 @@ bool CheckSameTimeframeIBs() {
       if (!DeleteInsideBars(Period())) return(false);             // on init() or additional data: delete all existing IBs
    }
 
-   for (int i=2; i < bars; i++) {
-      if (High[i] > High[i-1]-HalfPoint && Low[i] < Low[i-1]+HalfPoint) {
-         if (!CreateInsideBar(Period(), Time[i-1], High[i-1], Low[i-1])) return(false);
+   for (int bar=2; bar < bars; bar++) {
+      if (High[bar] > High[bar-1]-HalfPoint && Low[bar] < Low[bar-1]+HalfPoint) {
+         if (!CreateInsideBar(Period(), Time[bar-1], High[bar-1], Low[bar-1])) return(false);
          more--;
          if (!more) break;
       }
@@ -149,17 +150,18 @@ bool CheckSameTimeframeIBs() {
  * @return bool - success status
  */
 bool CheckHigherTimeframeIBs() {
-   if (insideBarTF > PERIOD_W1) {
-      return(CheckHigherTimeframeIBs_old());
-   }
-
    int bars=Bars, more=maxInsideBars;
 
    if (ChangedBars == 2) {
       if (!IsMyBarOpen(insideBarTF)) return(!last_error);      // if not BarOpen, treat like a regular tick
       more = 1;                                                // BarOpen: check the finished HigherTF bar only
-      bars = 2 + 2 * insideBarTF/Period();                     // cover chart bars of 2 finished HigherTF bars,
-   }                                                           // that's current bar + possible IB + preceding outside bar + next bar (trigger)
+      if (insideBarTF == PERIOD_MN1) {                         // cover chart bars of 2 finished HigherTF bars,
+         bars = 2 + 2 * MathCeil(31. * DAYS/MINUTES/Period()); // PERIOD_MN1 doesn't cover a full month
+      }
+      else {
+         bars = 2 + 2 * insideBarTF/Period();                  // that's current bar + possible IB + preceding outside bar + next bar (trigger)
+      }
+   }
    else {
       if (!DeleteInsideBars(insideBarTF)) return(false);       // on init() or additional data: delete all existing IBs
    }
@@ -174,6 +176,13 @@ bool CheckHigherTimeframeIBs() {
             int dow     = TimeDayOfWeek(openTimeHtf);
             openTimeHtf = openTimeHtf - ((dow+6) % 7) * DAYS;  // opentime of the corresponding W1 bar (Monday 00:00)
             break;
+
+         case PERIOD_MN1:
+            openTimeHtf = Time[bar] - Time[bar] % DAY;         // opentime of the corresponding D1 bar (Midnight)
+            int day     = TimeDay(openTimeHtf);
+            openTimeHtf = openTimeHtf - (day-1) * DAYS;        // opentime of the corresponding MN1 bar (1st of month 00:00)
+            break;
+
          default:
             openTimeHtf = Time[bar] - (Time[bar] % (insideBarTF * MINUTES));
       }
@@ -195,96 +204,6 @@ bool CheckHigherTimeframeIBs() {
          pLow          = low;
          high          = High[bar];
          low           = Low [bar];
-      }
-   }
-   return(true);
-}
-
-
-/**
- * Check current bars for new or changed inside bars of a higher timeframe.
- *
- * @return bool - success status
- */
-bool CheckHigherTimeframeIBs_old() {
-   double rates[][6];
-   int changed;
-   CopyRates(PERIOD_M5, rates, changed);
-
-   if (!ValidBars) {                                  // if the chart changed, passed rates must be marked as changed, too
-      changed = ArrayRange(rates, 0);
-   }
-   if (changed < 2) return(last_error);               // skip regular ticks, they don't change IB status
-
-   switch (insideBarTF) {
-      case PERIOD_MN1: CheckInsideBarsMN1(rates, changed); break;
-   }
-   return(last_error);
-}
-
-
-/**
- * Copy the rates of the specified timeframe to the passed array and resolve the number of changed bars since the last tick.
- *
- * @param  _In_  int    timeframe   - rates timeframe
- * @param  _Out_ double rates[][]   - array receiving the rates
- * @param  _Out_ int    changedBars - variable receiving the number of changed bars
- *
- * @return bool - success status
- */
-bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
-   int changed = iCopyRates(rates, NULL, timeframe);
-   if (changed < 0) return(false);
-   changedBars = changed;
-   return(true);
-}
-
-
-/**
- * Check M5 rates for new or changed MN1 inside bars.
- *
- * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
- *
- * @return bool - success status
- */
-bool CheckInsideBarsMN1(double ratesM5[][], int changedBars) {
-   int bars=ArrayRange(ratesM5, 0), more=maxInsideBars;
-
-   if (changedBars == 2) {
-      if (!IsMyBarOpen(PERIOD_MN1)) return(!last_error);          // same as changedBars = 1
-      more = 1;                                                   // on BarOpen: check the last IB only
-      bars = 17858;                                               // cover M5 periods of 2 finished MN1 bars
-   }
-   else {
-      if (!DeleteInsideBars(PERIOD_MN1)) return(false);           // on init() or additional data: delete all existing IBs
-   }
-
-   datetime openTimeM5, openTimeD1, openTimeMN1, pOpenTimeMN1, ppOpenTimeMN1;
-   double high, pHigh, low, pLow;
-
-   for (int i, mn1=-1; i < bars; i++) {                           // mn1: MN1 bar index
-      openTimeM5 = ratesM5[i][BAR400_TIME];
-      openTimeD1 = openTimeM5 - openTimeM5 % DAY;                 // opentime of the corresponding D1 bar (Midnight)
-      openTimeMN1 = openTimeD1 - (TimeDay(openTimeD1)-1) * DAYS;  // opentime of the corresponding MN1 bar (1st of month 00:00)
-
-      if (openTimeMN1 == pOpenTimeMN1) {                          // the current H1 bar belongs to the same MN1 bar
-         high = MathMax(ratesM5[i][BAR400_HIGH], high);
-         low  = MathMin(ratesM5[i][BAR400_LOW ], low);
-      }
-      else {                                                      // the current H1 bar belongs to a new MN1 bar
-         mn1++;
-         if (mn1 > 2 && high > pHigh-HalfPoint && low < pLow+HalfPoint) {
-            if (!CreateInsideBar(PERIOD_MN1, ppOpenTimeMN1, pHigh, pLow)) return(false);
-            more--;
-            if (!more) break;
-         }
-         ppOpenTimeMN1 = pOpenTimeMN1;
-         pOpenTimeMN1  = openTimeMN1;
-         pHigh         = high;
-         pLow          = low;
-         high          = ratesM5[i][BAR400_HIGH];
-         low           = ratesM5[i][BAR400_LOW];
       }
    }
    return(true);
@@ -329,7 +248,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
-      ObjectSet      (label, OBJPROP_BACK,  false);            // must be FALSE for old builds (old overlay logic conflicts with grid separators)
+      ObjectSet      (label, OBJPROP_BACK,  false);            // must be FALSE for old terminals (old overlay logic conflicts with grid separators)
       ArrayPushString(labels, label);
    }
 
@@ -529,7 +448,7 @@ string InputsToStr() {
 
       "Signal.onInsideBar=",       BoolToStr(Signal.onInsideBar),            ";", NL,
       "Signal.onInsideBar.Types=", DoubleQuoteStr(Signal.onInsideBar.Types), ";", NL,
-      "Signal.SoundFile=",         DoubleQuoteStr(Signal.SoundFile),         ";"
+      "Signal.SoundFile=",         DoubleQuoteStr(Signal.SoundFile),         ";", NL
    ));
 }
 
