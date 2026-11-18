@@ -1,7 +1,7 @@
 /**
  * Inside Bars
  *
- * Marks inside bars and IB 100% extension levels.
+ * Marks inside bars and their 100% extension levels.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = { INIT_TIMEZONE };
@@ -149,7 +149,7 @@ bool CheckSameTimeframeIBs() {
  * @return bool - success status
  */
 bool CheckHigherTimeframeIBs() {
-   if (insideBarTF >= PERIOD_W1) {
+   if (insideBarTF > PERIOD_W1) {
       return(CheckHigherTimeframeIBs_old());
    }
 
@@ -164,17 +164,25 @@ bool CheckHigherTimeframeIBs() {
       if (!DeleteInsideBars(insideBarTF)) return(false);       // on init() or additional data: delete all existing IBs
    }
 
-   datetime openTimeHtf, pOpenTimeHtf, ppOpenTimeHtf;          // prevOpenTimeHtf, prevPrevOpenTimeHtf
+   datetime openTimeHtf, pOpenTimeHtf, ppOpenTimeHtf;          // that's prevOpenTimeHtf, prevPrevOpenTimeHtf
    double high, low, pHigh, pLow;
 
    for (int bar, htfBar=-1; bar < bars; bar++) {
-      openTimeHtf = Time[bar] - (Time[bar] % (insideBarTF * MINUTES));
+      switch (insideBarTF) {
+         case PERIOD_W1:
+            openTimeHtf = Time[bar] - Time[bar] % DAY;         // opentime of the corresponding D1 bar (Midnight)
+            int dow     = TimeDayOfWeek(openTimeHtf);
+            openTimeHtf = openTimeHtf - ((dow+6) % 7) * DAYS;  // opentime of the corresponding W1 bar (Monday 00:00)
+            break;
+         default:
+            openTimeHtf = Time[bar] - (Time[bar] % (insideBarTF * MINUTES));
+      }
 
       if (openTimeHtf == pOpenTimeHtf) {                       // still the same HTF bar
          high = MathMax(High[bar], high);
          low  = MathMin(Low [bar], low);
       }
-      else {                                                   // new/older HTF bar
+      else {                                                   // next HTF bar
          htfBar++;
          if (htfBar > 2 && high > pHigh-HalfPoint && low < pLow+HalfPoint) {
             if (!CreateInsideBar(insideBarTF, ppOpenTimeHtf, pHigh, pLow)) return(false);
@@ -199,18 +207,17 @@ bool CheckHigherTimeframeIBs() {
  * @return bool - success status
  */
 bool CheckHigherTimeframeIBs_old() {
-   double ratesM5[][6];
+   double rates[][6];
    int changed;
-   CopyRates(PERIOD_M5, ratesM5, changed);
+   CopyRates(PERIOD_M5, rates, changed);
 
    if (!ValidBars) {                                  // if the chart changed, passed rates must be marked as changed, too
-      changed = ArrayRange(ratesM5, 0);
+      changed = ArrayRange(rates, 0);
    }
    if (changed < 2) return(last_error);               // skip regular ticks, they don't change IB status
 
    switch (insideBarTF) {
-      case PERIOD_W1:  CheckInsideBarsW1 (ratesM5, changed); break;
-      case PERIOD_MN1: CheckInsideBarsMN1(ratesM5, changed); break;
+      case PERIOD_MN1: CheckInsideBarsMN1(rates, changed); break;
    }
    return(last_error);
 }
@@ -229,58 +236,6 @@ bool CopyRates(int timeframe, double &rates[][], int &changedBars) {
    int changed = iCopyRates(rates, NULL, timeframe);
    if (changed < 0) return(false);
    changedBars = changed;
-   return(true);
-}
-
-
-/**
- * Check M5 rates for new or changed W1 inside bars.
- *
- * @param  double ratesM5[][] - M5 rates array
- * @param  int    changedBars - number of changed M5 bars
- *
- * @return bool - success status
- */
-bool CheckInsideBarsW1(double ratesM5[][], int changedBars) {
-   int bars=ArrayRange(ratesM5, 0), more=maxInsideBars;
-
-   if (changedBars == 2) {
-      if (!IsMyBarOpen(PERIOD_W1)) return(!last_error);           // same as changedBars = 1
-      more = 1;                                                   // on BarOpen: check the last IB only
-      bars = 4034;                                                // cover M5 periods of 2 finished W1 bars
-   }
-   else {
-      if (!DeleteInsideBars(PERIOD_W1)) return(false);            // on init() or additional data: delete all existing IBs
-   }
-
-   datetime openTimeM5, openTimeD1, openTimeW1, pOpenTimeW1, ppOpenTimeW1;
-   double high, pHigh, low, pLow;
-
-   for (int i, w1=-1; i < bars; i++) {                            // w1: W1 bar index
-      openTimeM5 = ratesM5[i][BAR400_TIME];
-      openTimeD1 = openTimeM5 - openTimeM5 % DAY;                 // opentime of the corresponding D1 bar (Midnight)
-      int dow    = TimeDayOfWeek(openTimeD1);
-      openTimeW1 = openTimeD1 - ((dow+6) % 7) * DAYS;             // opentime of the corresponding W1 bar (Monday 00:00)
-
-      if (openTimeW1 == pOpenTimeW1) {                            // the current H1 bar belongs to the same W1 bar
-         high = MathMax(ratesM5[i][BAR400_HIGH], high);
-         low  = MathMin(ratesM5[i][BAR400_LOW ], low);
-      }
-      else {                                                      // the current H1 bar belongs to a new W1 bar
-         w1++;
-         if (w1 > 2 && high > pHigh-HalfPoint && low < pLow+HalfPoint) {
-            if (!CreateInsideBar(PERIOD_W1, ppOpenTimeW1, pHigh, pLow)) return(false);
-            more--;
-            if (!more) break;
-         }
-         ppOpenTimeW1 = pOpenTimeW1;
-         pOpenTimeW1  = openTimeW1;
-         pHigh        = high;
-         pLow         = low;
-         high         = ratesM5[i][BAR400_HIGH];
-         low          = ratesM5[i][BAR400_LOW];
-      }
-   }
    return(true);
 }
 
