@@ -148,7 +148,7 @@ int afterInit() {
          if (IsFile(filename)) {
             // offline ticker to update synthetic charts
             milliseconds = 1000;
-            __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);
+            __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, TICK_CHART_REFRESH);
             if (!__virtualTicksTimerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
 
             // display ticker status
@@ -162,7 +162,7 @@ int afterInit() {
          else {
             // virtual ticks to update chart infos/custom positions without waiting for the next tick
             milliseconds = 600;
-            __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, TICK_IF_WINDOW_VISIBLE);
+            __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, NULL);
             if (!__virtualTicksTimerId) return(catch("afterInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
          }
       }
