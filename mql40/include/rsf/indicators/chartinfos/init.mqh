@@ -134,7 +134,7 @@ int afterInit() {
    else {
       // register an order event listener
       if (mode.intern && TrackOrders) {
-         orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
+         orderTracker.key = "rsf.order-tracker."+ GetAccountNumber() +".";
          string property = orderTracker.key + StrToLower(Symbol());
          int counter = Max(GetWindowPropertyA(hWndDesktop, property), 0) + 1;
          SetWindowPropertyA(hWndDesktop, property, counter);
@@ -143,9 +143,9 @@ int afterInit() {
       // setup a chart ticker
       if (!__virtualTicksTimerId) {
          int hWnd = __ExecutionContext[EC.chart], milliseconds;
-         string accountServer = StrToLower(GetAccountServer());
 
-         if (StrStartsWith(accountServer, "rosasurfer-") || StrStartsWith(accountServer, "xtrade-")) {
+         string filename = GetAccountServerPath() +"/custom-symbols.txt";
+         if (IsFile(filename)) {
             // offline ticker to update synthetic charts
             milliseconds = 1000;
             __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);

@@ -3354,7 +3354,7 @@ string StrTrimRight(string value) {
 
 
 /**
- * URL-kodiert einen String.  Leerzeichen werden als "+"-Zeichen kodiert.
+ * URL-kodiert einen String. Leerzeichen werden als "+"-Zeichen kodiert.
  *
  * @param  string value
  *
@@ -3375,8 +3375,9 @@ string UrlEncode(string value) {
       else                            result = StringConcatenate(result, "%", CharToHexStr(chr));
    }
 
-   if (!catch("UrlEncode(1)"))
+   if (!catch("UrlEncode(1)")) {
       return(result);
+   }
    return("");
 }
 
@@ -4670,14 +4671,14 @@ string InitReasonDescription(int reason) {
  */
 string GetAccountServer() {
    // AccountServer() can't be used directly for two reasons:
-   //  - Without a server connection it returns an empty value.
+   //  - Without a server connection it returns an empty string.
    //  - On account change it reports the new account already during the last tick on old data in the old history directory.
 
    static int lpAccountServer = 0;
    static string sAccountServer = "";
    if (__ExecutionContext[EC.accountServer] != lpAccountServer) {
       lpAccountServer = __ExecutionContext[EC.accountServer];
-      sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetString() only once
+      sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetStringA() only once
    }
 
    if (!lpAccountServer || !StringLen(sAccountServer)) { // MT4 static string bug: in library::deinit() strings are released too early
