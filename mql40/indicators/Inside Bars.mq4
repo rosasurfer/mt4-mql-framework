@@ -98,6 +98,8 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   if (__isSuperContext) return(NO_ERROR);
+
    // reset indicator options before first usage
    if (!ValidBars) {
       SetIndicatorOptions();
@@ -123,6 +125,10 @@ int onTick() {
  * @return bool - success status
  */
 bool CheckSameTimeframeIBs() {
+   if (!SkipEmptyTickTime) {
+      debug("CheckSameTF(0.1)  Bars="+ Bars +"  ChangedBars="+ ChangedBars +"  ShiftedBars="+ ShiftedBars);
+   }
+
    int bars=Bars, more=maxInsideBars;
 
    if (ChangedBars == 2) {
@@ -150,6 +156,10 @@ bool CheckSameTimeframeIBs() {
  * @return bool - success status
  */
 bool CheckHigherTimeframeIBs() {
+   if (!SkipEmptyTickTime) {
+      debug("CheckHigherTF(0.1)  Bars="+ Bars +"  ChangedBars="+ ChangedBars +"  ShiftedBars="+ ShiftedBars);
+   }
+
    int bars=Bars, more=maxInsideBars;
 
    if (ChangedBars == 2) {
@@ -164,6 +174,10 @@ bool CheckHigherTimeframeIBs() {
    }
    else {
       if (!DeleteInsideBars(insideBarTF)) return(false);       // on init() or additional data: delete all existing IBs
+   }
+
+   if (!SkipEmptyTickTime) {
+      debug("CheckHigherTF(0.2)  Bars="+ Bars +"  ChangedBars="+ ChangedBars +"  ShiftedBars="+ ShiftedBars);
    }
 
    datetime openTimeHtf, pOpenTimeHtf, ppOpenTimeHtf;          // that's prevOpenTimeHtf, prevPrevOpenTimeHtf
@@ -276,7 +290,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    }
 
    // signal new inside bars
-   if (!__isSuperContext && Signal.onInsideBar) {
+   if (Signal.onInsideBar) {
       if (IsMyBarOpen(timeframe)) {
          return(onInsideBar(timeframe, closeTime, high, low));
       }

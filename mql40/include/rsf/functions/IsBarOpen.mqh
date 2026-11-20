@@ -1,6 +1,6 @@
 /**
- * Whether the current tick represents a BarOpen event in the specified timeframe. Can be used to detect BarOpen events in
- * timeframes other than the current chart timeframe. Supports custom timeframes.
+ * Whether the current tick represents a BarOpen event in the specified timeframe.
+ * The function can be used with any timeframe and also supports custom timeframes.
  *
  * @param  int timeframe [optional] - timeframe to check (default: current timeframe)
  *
@@ -9,29 +9,53 @@
  *
  * Notes
  * -----
- *  - The function correctly resolves BarOpen events even if the bar alignment of the stored history is incorrect.
- *  - The function cannot resolve BarOpen events without a previous tick (except in tester).
+ *  - The function also resolves BarOpen events if the bar alignment of the stored history is incorrect.
+ *  - The function needs a previous tick. It cannot resolve BarOpen events on the first tick of a program.
  */
 bool IsBarOpen(int timeframe = NULL) {
    static bool contextChecked = false; if (!contextChecked) {
-      if (IsLibrary())         return(!catch("IsBarOpen(1)  can't be used in a library (no tick support)", ERR_FUNC_NOT_ALLOWED));
-      if (IsScript())          return(!catch("IsBarOpen(2)  can't be used in a script (no tick support)", ERR_FUNC_NOT_ALLOWED));
+      if (IsScript())          return(!catch("IsBarOpen(1)  can't be used in scripts (no tick support)", ERR_FUNC_NOT_ALLOWED));
       if (IsIndicator()) {
-         if (__isSuperContext) return(!catch("IsBarOpen(3)  can't be used in iCustom() (no tick support)", ERR_FUNC_NOT_ALLOWED));
+         if (__isSuperContext) return(!catch("IsBarOpen(2)  can't be used in iCustom() (no tick support)", ERR_FUNC_NOT_ALLOWED));
          if (__isTesting) {
-            if (!IsTesting())  return(!catch("IsBarOpen(4)  can't be used in a standalone indicator in tester (tick time not available)", ERR_FUNC_NOT_ALLOWED));
+            if (!IsTesting())  return(!catch("IsBarOpen(3)  can't be used in standalone indicators in tester (tick time not available)", ERR_FUNC_NOT_ALLOWED));
             // TODO: check tick details/support
             // TODO: check VisualMode On/Off
          }
       }
       contextChecked = true;
    }
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(!catch("IsBarOpen(5)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_FUNC_NOT_ALLOWED));
-   if (!Tick.time)                                             return(!catch("IsBarOpen(6)  tick time not available: Tick.time=0", ERR_ILLEGAL_STATE));
-   if (timeframe < 0)                                          return(!catch("IsBarOpen(7)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
+   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(!catch("IsBarOpen(4)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_FUNC_NOT_ALLOWED));
+   if (timeframe < 0)                                          return(!catch("IsBarOpen(5)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
    if (!timeframe) timeframe = Period();
 
-   // to improve performance start/end times of standard timeframes are cached
+   if (!Tick.time) return(!catch("IsBarOpen(6)  tick time not available: Tick.time=0", ERR_ILLEGAL_STATE));
+
+
+   // scenarios
+   // -----------------------------------------------------------------------------------------------------------------------
+   // 1) online chart with correctly aligned bars
+
+   // 2) online chart with incorrectly aligned bars
+
+   // 3) offline chart: all ticks are synthetic and triggered by the user, a server Tick.time is not available
+   //    - only the first tick received for a new bar will be considered a BarOpen event
+   //    - on such a first tick OHLC may already be set with different values
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   // start/end times of standard timeframes are cached to improve performance
    #define IBO_STARTTIME 0                // period open time
    #define IBO_ENDTIME   1                // period close time
    static int stdTimeframes[9][2];
@@ -91,5 +115,5 @@ bool IsBarOpen(int timeframe = NULL) {
 
    int error = GetLastError();
    if (!error) return(result);
-   return(!catch("IsBarOpen(8)", error));
+   return(!catch("IsBarOpen(7)", error));
 }
