@@ -59,7 +59,7 @@
 #define EC.changedBars                     148
 #define EC.ticks                           149
 #define EC.currentTickTime                 150
-#define EC.currReal                        151
+#define EC.currentTickReal                 151
 #define EC.prevTickTime                    152
 #define EC.prevReal                        153
 #define EC.lastRealTick                    154
