@@ -61,7 +61,7 @@
 #define EC.currentTickTime                 150
 #define EC.currentTickReal                 151
 #define EC.prevTickTime                    152
-#define EC.prevReal                        153
+#define EC.prevTickReal                    153
 #define EC.lastRealTick                    154
 #define EC.digits                          155
 #define EC.pipDigits                       156
