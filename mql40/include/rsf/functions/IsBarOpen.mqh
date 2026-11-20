@@ -81,12 +81,12 @@ bool IsBarOpen(int timeframe = NULL) {
 
    // resolve event status by checking the previous tick
    bool result = false;
-   datetime lastTick = __ExecutionContext[EC.lastRealTick];
-   if (!lastTick) {
+   datetime lastTickTime = __ExecutionContext[EC.lastRealTickTime];
+   if (!lastTickTime) {
       result = IsTesting();                                 // in tester the first tick is always a BarOpen event
    }
    else {
-      result = (lastTick < starttime);
+      result = (lastTickTime < starttime);
    }
 
    int error = GetLastError();
