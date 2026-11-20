@@ -4782,7 +4782,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       if (success) {
          WaitForTicket(ticket, /*select=*/true);
 
-         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, __ExecutionContext[EC.currTick], prevOpenPrice, prevStopLoss, prevTakeProfit)) {
+         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, __ExecutionContext[EC.currentTickTime], prevOpenPrice, prevStopLoss, prevTakeProfit)) {
             return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(30)")));
          }
 
