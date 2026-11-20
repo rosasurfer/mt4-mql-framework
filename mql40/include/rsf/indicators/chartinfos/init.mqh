@@ -134,7 +134,7 @@ int afterInit() {
    else {
       // register an order event listener
       if (mode.intern && TrackOrders) {
-         orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
+         orderTracker.key = "rsf.order-tracker."+ GetAccountNumber() +".";
          string property = orderTracker.key + StrToLower(Symbol());
          int counter = Max(GetWindowPropertyA(hWndDesktop, property), 0) + 1;
          SetWindowPropertyA(hWndDesktop, property, counter);
@@ -143,12 +143,12 @@ int afterInit() {
       // setup a chart ticker
       if (!__virtualTicksTimerId) {
          int hWnd = __ExecutionContext[EC.chart], milliseconds;
-         string accountServer = StrToLower(GetAccountServer());
 
-         if (StrStartsWith(accountServer, "rosasurfer-") || StrStartsWith(accountServer, "xtrade-")) {
+         string filename = GetAccountServerPath() +"/custom-symbols.txt";
+         if (IsFile(filename)) {
             // offline ticker to update synthetic charts
             milliseconds = 1000;
-            __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);
+            __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, TICK_CHART_REFRESH);
             if (!__virtualTicksTimerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
 
             // display ticker status
@@ -162,7 +162,7 @@ int afterInit() {
          else {
             // virtual ticks to update chart infos/custom positions without waiting for the next tick
             milliseconds = 600;
-            __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, TICK_IF_WINDOW_VISIBLE);
+            __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, NULL);
             if (!__virtualTicksTimerId) return(catch("afterInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
          }
       }

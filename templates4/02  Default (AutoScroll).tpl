@@ -86,6 +86,7 @@ window_num=0
 <inputs>
 Timeframe=D1
 NumberOfInsideBars=3
+Signal.onInsideBar=1
 </inputs>
 </expert>
 period_flags=31

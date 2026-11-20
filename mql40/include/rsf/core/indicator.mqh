@@ -199,7 +199,7 @@ bool initGlobals() {
    pUnitFormat = ",'R."+ pDigits;
 
    Ticks     = __ExecutionContext[EC.ticks];
-   Tick.time = __ExecutionContext[EC.currTick];
+   Tick.time = __ExecutionContext[EC.currentTickTime];
    _Bid      = NormalizeDouble(Bid, Digits);                // normalized versions of Bid/Ask
    _Ask      = NormalizeDouble(Ask, Digits);                //
 
