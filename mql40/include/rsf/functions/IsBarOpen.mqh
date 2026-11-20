@@ -26,9 +26,9 @@ bool IsBarOpen(int timeframe = NULL) {
       }
       contextChecked = true;
    }
-   if (__CoreFunction != CF_START) return(!catch("IsBarOpen(5)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__CoreFunction), ERR_FUNC_NOT_ALLOWED));
-   if (!Tick.time)                 return(!catch("IsBarOpen(6)  tick time not available: Tick.time=0", ERR_ILLEGAL_STATE));
-   if (timeframe < 0)              return(!catch("IsBarOpen(7)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
+   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(!catch("IsBarOpen(5)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_FUNC_NOT_ALLOWED));
+   if (!Tick.time)                                             return(!catch("IsBarOpen(6)  tick time not available: Tick.time=0", ERR_ILLEGAL_STATE));
+   if (timeframe < 0)                                          return(!catch("IsBarOpen(7)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
    if (!timeframe) timeframe = Period();
 
    // to improve performance start/end times of standard timeframes are cached
